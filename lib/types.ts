@@ -44,3 +44,17 @@ export type Citation = {
 
 /** O único nome público de inteligência da Keew. */
 export type ProviderKind = "keew";
+
+/** What the local reasoning core returns for a single request. */
+export type EngineResult = {
+  /** which skill answered: math, units, datetime, text, knowledge, plan, list, social, fallback */
+  skill: string;
+  /** true when the answer is complete and needs no language engine */
+  terminal: boolean;
+  /** 0–1; below 0.8 the route prefers the engine when one is connected */
+  confidence: number;
+  /** the path taken, kept for auditability */
+  reasoning: string;
+  /** the markdown answer shown to the user */
+  answer: string;
+};

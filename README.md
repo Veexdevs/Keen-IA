@@ -1,179 +1,92 @@
-<div align="center">
-
-<img src="public/mark.svg" alt="Keew IA" width="96" />
-
 # Keew IA
 
-**Inteligência artificial própria — web, APK, IPA e EXE.**
+Your own intelligence — a chat interface with accounts, saved conversations and a
+deterministic reasoning core that works without calling anything external.
 
-Um modelo. Uma API. Nenhum menu de fornecedores.
+## What is real today
 
-</div>
+- **Interface** — dark shell, brand sidebar, chat history, message actions, pill composer
+  with attachments, login and profile modals, share link, toasts. Motion throughout.
+- **Accounts** — email/password and Google sign-in through Supabase Auth. Sessions live in
+  cookies, so the server knows who is talking to it.
+- **Chats in the database** — every chat and message is a row in Postgres, protected by row
+  level security. Sign in on another device and the history is there.
+- **Local core** — arithmetic, percentages, units and temperature, dates and deadlines,
+  extractive summaries, text transforms (slug, base64, JSON, word count) and retrieval over
+  the knowledge base. Deterministic, auditable, no network.
+- **Honest fallback** — for open-ended language questions the app says it has no language
+  engine connected instead of inventing an answer.
 
----
+Without Supabase credentials the app still runs: it switches to a guest mode where chats stay
+in that browser only, and the login screen says so plainly.
 
-## O que é
-
-A Keew IA é uma inteligência artificial construída do zero pela Veexdevs, em duas camadas
-que formam um único sistema:
-
-| Camada | Onde roda | O que resolve | Precisa de rede |
-| --- | --- | --- | --- |
-| **Keew Core** | dentro do app e do motor | aritmética de precisão, porcentagem, unidades, datas, resumo extrativo, JSON/base64/slug, busca na base de conhecimento, planos | **não** |
-| **Keew Reason** | servidor 24/7 | conversa aberta, código, redação, análise, raciocínio longo passo a passo | sim |
-
-O mundo enxerga **um** modelo: `keew-1`. Não há seletor de modelo, nem catálogo de terceiros,
-nem nome de fornecedor em lugar nenhum da interface ou das respostas — nem quando algo falha.
-A Keew decide sozinha qual camada usar em cada pergunta.
-
-```
-pergunta
-   │
-   ├─▶ Keew Core   matemática · datas · unidades · texto · conhecimento · plano
-   │      responde na hora quando tem certeza
-   │
-   ├─▶ Keew Reason raciocínio profundo com streaming
-   │
-   └─▶ se o motor oscilar, o Core assume — a Keew nunca fica muda
-```
-
-## A API da Keew
-
-A Keew tem API própria, no formato que o mercado já conhece, para que qualquer cliente
-funcione apontando a base URL para ela.
+## Setup
 
 ```bash
-# catálogo — existe um modelo
-curl $URL/api/v1/models
-
-# conversa
-curl -X POST $URL/api/v1/chat \
-  -H "content-type: application/json" \
-  -H "x-keew-key: $KEEW_ACCESS_KEY" \
-  -d '{
-    "model": "keew-1",
-    "messages": [{"role":"user","content":"calcule 15% de 240"}]
-  }'
-```
-
-```json
-{
-  "model": "keew-1",
-  "engine": "keew-core",
-  "choices": [{ "message": { "role": "assistant", "content": "**15% de 240 = 36**" } }]
-}
-```
-
-| Rota | O que faz |
-| --- | --- |
-| `POST /api/v1/chat` | conversa em JSON, ou SSE com `"stream": true` |
-| `GET /api/v1/models` | catálogo (só `keew-1`) |
-| `GET /api/v1` | descrição da API |
-| `GET /api/health` | status do serviço 24/7 |
-
-Pedir outro modelo devolve erro — a API é nossa e serve só a Keew.
-
-## 24/7 sem você
-
-O servidor não depende do seu computador nem do navegador aberto:
-
-- **GitHub Actions** acorda o serviço a cada 10 minutos e executa automações vencidas.
-- **Vercel Cron** roda uma rede de segurança diária.
-- **Supabase (Postgres)** guarda conversas, conhecimento, automações e telemetria.
-- Se o motor de raciocínio falhar, o Keew Core responde — o serviço não sai do ar.
-
-```bash
-curl $URL/api/health
-```
-
-## O que tem dentro
-
-**Conversa** — streaming de tokens com trilha de raciocínio recolhível, markdown completo
-(GFM, tabelas, KaTeX, ~190 linguagens de highlight), anexos de texto, CSV, JSON, PDF e imagens.
-
-**14 temas** — Onyx · Midnight · Obsidian · Aurora · Ember · Matrix · Cyber · Sakura ·
-Graphite · Depth, e os claros Arctic · Papyrus · Linen · Solar. Cor de destaque livre,
-raio, densidade, 5 tipografias e 5 fundos. Tudo aplicado antes do primeiro paint, sem flash.
-
-**6 agentes** — Core, Engenheiro, Analista, Redator, Pesquisador, Tutor, cada um com prompt,
-temperatura e ferramentas próprios. Clone, edite ou crie os seus.
-
-**Conhecimento** — RAG com BM25 e stemming de português, sem infraestrutura extra.
-
-**Automação** — agentes que rodam em horário definido, com histórico de execução.
-
-**Plataformas** — Web/PWA offline, **APK** (Capacitor), **IPA** (Capacitor + Xcode),
-**EXE** (Electron, NSIS + portable), DMG e AppImage.
-
-## Rodar
-
-```bash
-git clone https://github.com/Veexdevs/Keew-IA.git
-cd Keew-IA
 npm install
-npm run setup        # cria o .env.local e confere o motor
-npm run dev          # http://localhost:3000
+
+cp .env.example .env.local   # fill in the Supabase values
+npm run dev
 ```
 
-Sem chave do motor a Keew já funciona com o Keew Core. Com a chave, o Keew Reason entra e a
-conversa fica completa.
+### Database
+
+Run `supabase/schema.sql` once in the Supabase SQL editor (or `supabase db push`). It creates
+`profiles`, `chats` and `messages`, the trigger that creates a profile on signup, and the RLS
+policies that keep each account's data private.
+
+Then, in Supabase → Authentication:
+
+- **URL configuration** — set the site URL to your deployment and add `http://localhost:3000`
+  to the redirect allow list.
+- **Providers** — email is on by default. For Google sign-in, enable the Google provider and
+  paste the client ID and secret from Google Cloud Console.
+
+Environment variables live in `.env.local` and are never committed:
+
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key (public, RLS protects the data) |
+| `NEXT_PUBLIC_APP_URL` | Public URL, used in metadata and auth redirects |
+| `KEEW_MODEL_BASE_URL` | Optional language engine, OpenAI-compatible |
+| `KEEW_MODEL_NAME` | Model name the engine expects |
+
+## Scripts
 
 ```bash
-npm test             # 19 testes do núcleo
-npm run build
-npm run mobile:android    # APK
-npm run desktop:win       # EXE
+npm run dev        # development server on 0.0.0.0:3000
+npm run build      # production build
+npm start          # production server
+npm run typecheck  # tsc --noEmit
 ```
 
-## Variáveis de ambiente
-
-Só três importam para a inteligência:
-
-```env
-KEEW_MODEL_BASE_URL=https://api.deepseek.com/v1   # onde o motor roda
-KEEW_MODEL_NAME=deepseek-reasoner                 # pesos do motor
-KEEW_MODEL_API_KEY=                               # chave do motor (nunca vai ao navegador)
-```
-
-Opcionais: `KEEW_ACCESS_KEY` (protege `/api/v1`), `KEEW_CRON_SECRET` (agendador),
-`NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY`
-(memória na nuvem).
-
-## Deploy
-
-```bash
-vercel --prod
-```
-
-Depois, em *Settings → Environment Variables*, cole as três do motor. O cron vai junto com o
-`vercel.json`. Para a memória na nuvem, rode `supabase/schema.sql` e preencha as três chaves.
-
-## Estrutura
+## Structure
 
 ```
-app/api/v1/             a API da Keew (chat, models, índice)
-app/api/chat/           endpoint interno do workspace
-app/api/health/         liveness 24/7
-lib/keew-api.ts         identidade da API: keew-1, autorização, erros
-lib/local-engine.ts     Keew Core — parser próprio, sem eval
-lib/provider.ts         motor de raciocínio (interno; nunca exposto)
-lib/themes.ts           14 temas
-components/             interface
-apps/mobile · apps/desktop   shells nativos
-docs/OWN-MODEL.md       como servir o motor na sua infraestrutura
+app/
+  layout.tsx        fonts, metadata, icons
+  page.tsx          renders the chat screen
+  globals.css       design tokens and the .md typography
+  api/chat/         the single endpoint: local core → engine → honest fallback
+components/
+  chat.tsx          the screen, wiring everything together
+  sidebar.tsx       brand, new chat, history grouped by day, profile card
+  composer.tsx      pill input, attachments, send / stop
+  message.tsx       message stream with actions, typing dots, read aloud
+  welcome.tsx       logo, wordmark, suggestion cards
+  modals.tsx        login, profile, share
+lib/
+  store.ts          app state: session, chats, streaming
+  local-engine.ts   the deterministic reasoning core
+  knowledge.ts      knowledge base and retrieval
+  supabase/         browser client, server client, row types
+supabase/schema.sql tables, triggers and RLS policies
+public/             mark, icons, manifest, OG image
 ```
 
-Stack: Next.js 15 · React 19 · TypeScript estrito · Tailwind 4 · Zustand · Supabase ·
-Capacitor · Electron.
+## Design
 
-## Sobre os pesos
-
-O raciocínio profundo da Keew é construído sobre a família **DeepSeek-R1** (licença MIT),
-usada como base de pesos — a mesma liberdade que qualquer projeto tem ao partir de um modelo
-aberto. A engenharia da Keew está na camada de produto, no roteamento entre as duas camadas,
-nas 14 personalizações, nos agentes, na memória e na operação 24/7. Os detalhes de como servir
-esses pesos na sua própria infraestrutura estão em [`docs/OWN-MODEL.md`](docs/OWN-MODEL.md).
-
-<div align="center">
-<sub>Feito por <b>Veexdevs</b> · Keew IA © 2026</sub>
-</div>
+Black `#000`, panels `#0c0c0c`, borders `#151515`, one accent: the brand blue `#0048f8`.
+Type is Plus Jakarta Sans, served locally so no font request leaves your server. The mark is
+`public/mark.svg`, traced from the original artwork.

@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   try {
     body = (await req.json()) as Body;
   } catch {
-    return new Response(JSON.stringify({ error: "JSON inválido" }), { status: 400 });
+    return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400 });
   }
 
   const messages = (body.messages || []).filter(
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   );
   const last = [...messages].reverse().find((m) => m.role === "user");
   if (!last) {
-    return new Response(JSON.stringify({ error: "Mensagem ausente" }), { status: 400 });
+    return new Response(JSON.stringify({ error: "Missing message" }), { status: 400 });
   }
 
   // chave do motor: vem do navegador a cada pedido, o servidor não guarda nada
@@ -165,13 +165,13 @@ export async function POST(req: NextRequest) {
 
 function buildSystem(context: string, local: ReturnType<typeof reason>) {
   const parts = [
-    "Você é a Keew IA, inteligência artificial própria da Veexdevs.",
-    "Responda em português do Brasil, direto ao ponto, sem rodeios e sem se apresentar a cada mensagem.",
-    "Formato markdown. Títulos curtos, listas e tabelas quando ajudarem. Código em blocos com linguagem.",
-    "Nunca invente fatos, números ou fontes. Se não souber, diga exatamente o que falta saber.",
+    "You are Keew IA, the artificial intelligence built and owned by Veexdevs.",
+    "Answer in English, directly, without filler and without introducing yourself in every message.",
+    "Markdown format. Short headings, lists and tables when they help. Code in fenced blocks with a language.",
+    "Never invent facts, numbers or sources. If you do not know, say exactly what is missing.",
   ];
-  if (context) parts.push(`Documentos da base de conhecimento da Keew:\n\n${context}`);
-  if (local.answer && !local.terminal) parts.push(`Contexto do núcleo local:\n${local.answer}`);
+  if (context) parts.push(`Documents from the Keew knowledge base:\n\n${context}`);
+  if (local.answer && !local.terminal) parts.push(`Context from the local core:\n${local.answer}`);
   return parts.join("\n\n");
 }
 
