@@ -121,55 +121,67 @@ export function toContext(docs: IndexedDoc[], maxChars = 6000): string {
 export const KEEW_CORPUS: KnowledgeDoc[] = [
   {
     id: "keew-identity",
-    title: "Quem é a Keew IA",
+    title: "What Keew IA is",
     content:
-      "A Keew IA é uma inteligência artificial própria, criada pela Veexdevs, que roda em infraestrutura própria na web " +
-      "e em app. Funciona em duas camadas integradas: o núcleo Keew Core, determinístico, que resolve matemática, datas, " +
-      "conversões e busca de conhecimento sem depender de rede, e o Keew Reason, o raciocínio profundo que sustenta " +
-      "conversa aberta, código e análise. A marca é um arco triplo circular em azul #004CFD. " +
-      "A Keew é objetiva, técnica e direta: responde em português do Brasil por padrão, sem floreios, com código " +
-      "executável e passos verificáveis.",
+      "Keew IA is an artificial intelligence built and owned by Veexdevs. It runs on its own infrastructure, in the " +
+      "browser and as an installable app. It works in two integrated layers: the Keew Core, deterministic, which " +
+      "resolves mathematics, dates, unit conversions, text transforms and knowledge retrieval without depending on " +
+      "the network; and the Keew Reason, the deeper reasoning that carries open conversation, code and analysis when " +
+      "an engine is connected. The mark is a broken triple arc in blue #0048F8. Keew is objective, technical and " +
+      "direct: no filler, code that actually runs, verifiable steps. The interface is in English.",
     createdAt: 0,
     updatedAt: 0,
-    tags: ["identidade", "marca"],
+    tags: ["identity", "brand"],
   },
   {
     id: "keew-architecture",
-    title: "Arquitetura da plataforma Keew IA",
+    title: "How the Keew IA platform is built",
     content:
-      "A plataforma tem quatro camadas. 1) Cliente: Next.js 15 (App Router) com React 19, funciona no navegador, como PWA, " +
-      "APK Android (Capacitor), IPA iOS (Capacitor) e EXE Windows/macOS/Linux (Electron). 2) Motor: a API própria da " +
-      "Keew em /api/v1 expõe um único modelo, o keew-1, com streaming SSE e roteamento automático entre o núcleo " +
-      "determinístico e o raciocínio profundo. 3) Memória: Supabase (Postgres) para conversas, conhecimento e " +
-      "telemetria; localStorage como fallback offline-first. 4) Automação 24/7: GitHub Actions (cron a cada 10 minutos) " +
-      "e Vercel Cron chamando /api/automations/run, que executa agentes agendados, mantém o modelo aquecido e registra " +
-      "saúde do serviço.",
+      "The platform has four layers. 1) Client: Next.js 15 with the App Router and React 19, running in the browser " +
+      "and installable to the home screen as a PWA. 2) Engine: a single endpoint, /api/chat, streams answers over SSE " +
+      "and routes automatically between the deterministic core and the language engine. 3) Storage: Supabase " +
+      "(Postgres) holds accounts, chats and messages, protected by row level security so one account can never read " +
+      "another's data. Without an account, chats stay in that browser only. 4) Identity: email and password, or Google " +
+      "sign-in, handled by Supabase Auth.",
     createdAt: 0,
     updatedAt: 0,
-    tags: ["arquitetura", "engenharia"],
+    tags: ["architecture", "engineering"],
   },
   {
     id: "keew-code-style",
-    title: "Padrão de código Keew",
+    title: "Keew code standard",
     content:
-      "Ao gerar código a Keew segue: TypeScript estrito, funções pequenas e nomeadas, zero dependências desnecessárias, " +
-      "tratamento explícito de erro, acessibilidade (aria, foco visível), responsividade mobile-first e comentários " +
-      "apenas onde o 'por quê' não é óbvio. Em Python: tipagem, pathlib, sem globals. Sempre entrega o arquivo completo " +
-      "quando o usuário for colar o resultado, e explica o diff quando edita algo existente.",
+      "When writing code, Keew follows: strict TypeScript, small named functions, no unnecessary dependencies, " +
+      "explicit error handling, accessibility (aria attributes, visible focus), mobile-first responsiveness, and " +
+      "comments only where the why is not obvious. In Python: type hints, pathlib, no globals. It always delivers the " +
+      "complete file when the result is going to be pasted, and explains the diff when editing something that exists.",
     createdAt: 0,
     updatedAt: 0,
-    tags: ["código"],
+    tags: ["code"],
   },
   {
     id: "keew-privacy",
-    title: "Privacidade e dados",
+    title: "Privacy and your data",
     content:
-      "Nada é enviado a terceiros além do necessário para inferência: o texto da conversa e anexos vão ao provedor " +
-      "configurado. Chaves de API ficam em variáveis de ambiente do servidor ou no armazenamento local do navegador, " +
-      "nunca em logs. O usuário pode apagar todo o histórico em Configurações → Dados, exportar tudo em JSON e " +
-      "desativar a telemetria de uso. A automação 24/7 guarda apenas status e resumo dos jobs, não conversas.",
+      "Your account, your chats and your messages live in the Keew database, in rows that only your account can read. " +
+      "Deleting a chat deletes its messages. When no account is signed in, chats are stored only in that browser and " +
+      "never leave the device. Nothing is sent to a third party beyond what the answer needs. Secrets stay in server " +
+      "environment variables, never in logs and never in the browser bundle.",
     createdAt: 0,
     updatedAt: 0,
-    tags: ["privacidade"],
+    tags: ["privacy", "data"],
+  },
+  {
+    id: "keew-limits",
+    title: "What Keew can and cannot do",
+    content:
+      "Keew answers with certainty on: arithmetic and percentages, unit and temperature conversion, dates, deadlines " +
+      "and weekdays, extractive summaries of long texts, text transforms (slug, base64, JSON validation, word counts) " +
+      "and questions about what is written in its knowledge base. Open-ended writing, free-form analysis and topics " +
+      "outside that set need a language engine connected to the app. When it has none, Keew says so instead of " +
+      "inventing an answer. This limit is deliberate: an honest refusal is worth more than a confident guess.",
+    createdAt: 0,
+    updatedAt: 0,
+    tags: ["limits", "honesty"],
   },
 ];

@@ -1,57 +1,33 @@
 /**
- * Keew IA — Núcleo de Raciocínio Local (KRL)
- * ═════════════════════════════════════════════════════════════════════════════
- * A camada de IA que a Keew executa com recursos próprios, sem depender de
- * sem depender de nada externo: análise simbólica, matemática de precisão,
- * conversão de unidades, raciocínio temporal, sumarização extrativa,
- * transformações de texto e recuperação sobre a base de conhecimento.
+ * Keew IA — local reasoning core
  *
- * É determinístico e auditável — cada resposta mostra o caminho de raciocínio.
- * Quando o pedido excede o que o núcleo resolve com confiança, o gateway
- * escala para o modelo de linguagem e o KRL funde as duas respostas.
+ * What Keew runs on its own, without calling anything external: symbolic
+ * analysis, exact arithmetic, unit conversion, dates, extractive summaries,
+ * text transforms and retrieval over the knowledge base.
+ *
+ * It is deterministic and auditable. When a request is beyond what the core
+ * answers with confidence, the route hands it up to the language engine — or
+ * says plainly that no engine is connected.
+ *
+ * Everything user-facing here is in English. Input is still understood in
+ * English and Portuguese, because people type in both.
  */
 
-import type { KnowledgeDoc } from "./types";
-import { tokenize } from "./knowledge";
+import type { EngineResult, KnowledgeDoc } from "./types";
 
-export type EngineResult = {
-  answer: string;
-  reasoning?: string;
-  confidence: number;
-  skill: string;
-  /** true when the answer is complete without the LLM */
-  terminal: boolean;
+const fmtNum = (n: number) => {
+  if (!Number.isFinite(n)) return String(n);
+  if (Number.isInteger(n) && Math.abs(n) < 1e15) return n.toLocaleString("en-US");
+  return parseFloat(n.toPrecision(10)).toLocaleString("en-US", { maximumFractionDigits: 10 });
 };
 
-/* ══════════════════════════════════════════════════════════════════ MATH ══ */
+/* ══════════════════════════════════════════════════════════════ MATH ══ */
 
-type Tok = { t: "num" | "op" | "fn" | "lp" | "rp" | "comma"; v: string };
-
-const FUNCS: Record<string, (n: number, n2?: number) => number> = {
-  sqrt: Math.sqrt, cbrt: Math.cbrt, abs: Math.abs, ln: Math.log, log: Math.log10,
-  log2: Math.log2, exp: Math.exp, sin: Math.sin, cos: Math.cos, tan: Math.tan,
-  asin: Math.asin, acos: Math.acos, atan: Math.atan, round: Math.round,
-  floor: Math.floor, ceil: Math.ceil, sign: Math.sign,
-  pow: (a, b) => Math.pow(a, b ?? 1),
-  min: (a, b) => Math.min(a, b ?? a), max: (a, b) => Math.max(a, b ?? a),
-};
+type Tok = { t: "num" | "op" | "lp" | "rp"; v: string };
 
 const CONSTS: Record<string, number> = { pi: Math.PI, e: Math.E, tau: Math.PI * 2 };
 
-function lex(expr: string): Tok[] {
-  const s = expr
-    .toLowerCase()
-    .replace(/,/g, ".")               // decimal comma (pt-BR) → dot
-    .replace(/×/g, "*").replace(/÷/g, "/").replace(/−/g, "-")
-    .replace(/\bx\b/g, "*")           // 2 x 3
-    .replace(/\^/g, "^")
-    // "15% de 240" / "15% of 240" → "15/100*240"
-    .replace(/(\d+(?:[.,]\d+)?)\s*%\s*(?:de|do|da|of)\s*/g, "$1/100*")
-    .replace(/(\d)\s*%/g, " $1/100")  // other percentages become fractions
-    .replace(/%/g, "/100")
-    .replace(/\b(?:de|do|da|of|vezes|times)\b/g, "*")
-    .replace(/\bpi\b/g, `${Math.PI}`)
-    .replace(/\btau\b/g, `${Math.PI * 2}`);
+function lex(s: string): Tok[] {
   const out: Tok[] = [];
   let i = 0;
   while (i < s.length) {
@@ -60,28 +36,29 @@ function lex(expr: string): Tok[] {
     if (/[0-9.]/.test(c)) {
       let j = i;
       while (j < s.length && /[0-9.]/.test(s[j])) j++;
-      if (s[j] === "e" && /[0-9+\-]/.test(s[j + 1] ?? "")) { j++; while (j < s.length && /[0-9+\-]/.test(s[j])) j++; }
-      out.push({ t: "num", v: s.slice(i, j) });
+      const raw = s.slice(i, j);
+      if ((raw.match(/\./g) || []).length > 1) return [];
+      out.push({ t: "num", v: raw });
       i = j;
       continue;
     }
-    if (/[a-z]/.test(c)) {
+    if (/[a-zA-Z]/.test(c)) {
       let j = i;
-      while (j < s.length && /[a-z0-9]/.test(s[j])) j++;
-      const word = s.slice(i, j);
-      out.push(CONSTS[word] !== undefined ? { t: "num", v: String(CONSTS[word]) } : { t: "fn", v: word });
+      while (j < s.length && /[a-zA-Z]/.test(s[j])) j++;
+      const word = s.slice(i, j).toLowerCase();
+      if (!(word in CONSTS)) return [];
+      out.push({ t: "num", v: String(CONSTS[word]) });
       i = j;
       continue;
     }
     if ("+-*/^%".includes(c)) { out.push({ t: "op", v: c }); i++; continue; }
     if (c === "(") { out.push({ t: "lp", v: c }); i++; continue; }
     if (c === ")") { out.push({ t: "rp", v: c }); i++; continue; }
-    return [];                        // unknown char → not an expression
+    return [];
   }
   return out;
 }
 
-/** Recursive-descent evaluator (no eval, no injection surface). */
 function evaluate(tokens: Tok[]): number | null {
   let pos = 0;
   const peek = () => tokens[pos];
@@ -91,90 +68,93 @@ function evaluate(tokens: Tok[]): number | null {
     const tk = peek();
     if (!tk) return null;
     if (tk.t === "num") { eat(); return parseFloat(tk.v); }
-    if (tk.t === "op" && (tk.v === "-" || tk.v === "+")) { eat(); const v = primary(); return v === null ? null : tk.v === "-" ? -v : v; }
-    if (tk.t === "lp") { eat(); const v = expr(); if (!peek() || peek().t !== "rp") return null; eat(); return v; }
-    if (tk.t === "fn") {
+    if (tk.t === "lp") {
       eat();
-      const fn = FUNCS[tk.v];
-      if (!fn) return null;
-      let a = 1; let b: number | undefined;
-      if (peek()?.t === "lp") {
-        eat();
-        const first = expr(); if (first === null) return null;
-        a = first;
-        if (peek()?.t === "comma") { eat(); const second = expr(); if (second === null) return null; b = second; }
-        if (peek()?.t !== "rp") return null; eat();
-      }
-      return fn(a, b);
+      const v = expr();
+      if (!peek() || peek().t !== "rp") return null;
+      eat();
+      return v;
     }
+    if (tk.t === "op" && tk.v === "-") { eat(); const v = primary(); return v === null ? null : -v; }
     return null;
   }
 
   function power(): number | null {
     const base = primary();
     if (base === null) return null;
-    const tk = peek();
-    if (tk?.t === "op" && tk.v === "^") { eat(); const e = power(); return e === null ? null : Math.pow(base, e); }
-    // implicit multiplication: 2(3+4) or 2pi
-    if (tk && (tk.t === "lp" || tk.t === "fn" || (tk.t === "num" && false))) {
-      const rhs = power(); return rhs === null ? null : base * rhs;
+    if (peek()?.t === "op" && peek().v === "^") {
+      eat();
+      const exp = power();
+      if (exp === null) return null;
+      return Math.pow(base, exp);
     }
     return base;
   }
 
   function term(): number | null {
-    let v = power();
-    if (v === null) return null;
-    while (peek()?.t === "op" && "*/%".includes(peek()!.v)) {
-      const op = eat()!.v;
-      const rhs = power();
-      if (rhs === null) return null;
-      v = op === "*" ? v * rhs : op === "/" ? v / rhs : v % rhs;
+    let left = power();
+    if (left === null) return null;
+    while (peek()?.t === "op" && "*/%".includes(peek().v)) {
+      const op = eat().v;
+      const right = power();
+      if (right === null) return null;
+      left = op === "*" ? left * right : op === "/" ? left / right : left % right;
     }
-    return v;
+    return left;
   }
 
   function expr(): number | null {
-    let v = term();
-    if (v === null) return null;
-    while (peek()?.t === "op" && (peek()!.v === "+" || peek()!.v === "-")) {
-      const op = eat()!.v;
-      const rhs = term();
-      if (rhs === null) return null;
-      v = op === "+" ? v + rhs : v - rhs;
+    let left = term();
+    if (left === null) return null;
+    while (peek()?.t === "op" && "+-".includes(peek().v)) {
+      const op = eat().v;
+      const right = term();
+      if (right === null) return null;
+      left = op === "+" ? left + right : left - right;
     }
-    return v;
+    return left;
   }
 
-  const result = expr();
-  if (result === null || pos !== tokens.length || !Number.isFinite(result)) return null;
-  return result;
+  const value = expr();
+  if (pos !== tokens.length || value === null || !Number.isFinite(value)) return null;
+  return value;
 }
 
-const fmtNum = (n: number): string => {
-  if (!Number.isFinite(n)) return n > 0 ? "∞" : "-∞";
-  if (Number.isInteger(n) && Math.abs(n) < 1e15) return n.toLocaleString("pt-BR");
-  const abs = Math.abs(n);
-  if (abs !== 0 && (abs < 1e-4 || abs >= 1e12)) {
-    return n.toExponential(4).replace("e", " × 10^").replace("+", "");
-  }
-  const digits = abs >= 1000 ? 2 : abs >= 1 ? 4 : 6;
-  const rounded = parseFloat(n.toFixed(digits));
-  return rounded.toLocaleString("pt-BR", { maximumFractionDigits: digits });
-};
+/** dd/mm/yyyy, yyyy-mm-dd, "25 December 2026" — never arithmetic. */
+const LOOKS_LIKE_DATE =
+  /\b\d{1,4}\s*[/.-]\s*\d{1,2}\s*[/.-]\s*\d{1,4}\b|\b\d{4}-\d{2}-\d{2}\b|\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/i;
 
-/** Strip the question wrapper and keep the raw expression. */
 function extractExpression(text: string): string | null {
-  const t = text
-    .replace(/[?？!]/g, " ")
-    .replace(/\b(quanto|quanto é|quanto vale|qual o valor de|calcule|calcula|resolva|compute|resultado de|me diga|e|é)\b/gi, " ")
+  // a date is not a division: 12/25/2026 must never become 0.00023692
+  if (LOOKS_LIKE_DATE.test(text)) return null;
+
+  let s = text
+    .toLowerCase()
+    .replace(/[×·]/g, "*")
+    .replace(/÷/g, "/")
+    .replace(/[−–]/g, "-")
+    .replace(/,/g, "")
+    .replace(/\b(what is|what's|how much is|calculate|compute|solve|evaluate|tell me|result of|equals?)\b/g, " ")
+    .replace(/\b(plus|minus|times|divided by|over)\b/g, (m) =>
+      m === "plus" ? "+" : m === "minus" ? "-" : m === "times" ? "*" : "/")
+    .replace(/\bpercent of\b/g, "% of")
+    .replace(/\b(the answer to|please|kindly|for me)\b/g, " ")
+    .replace(/\bsquare root of\s*(\d+(?:\.\d+)?)/g, "($1)^0.5")
+    .replace(/\bsqrt\s*\(/g, "(")
     .trim();
-  const m = t.match(/[-+*/^%().,\d\s×÷−a-zA-Z]{3,}/);
+
+  // "15% of 240" → 15/100*240
+  s = s.replace(/(\d+(?:\.\d+)?)\s*%\s*of\s*(\d+(?:\.\d+)?)/g, "($1/100*$2)");
+
+  if (!/[0-9]/.test(s)) return null;
+  if (!/[+\-*/^%]/.test(s)) return null;
+
+  const m = s.match(/[-+*/^%().\d\s]{3,}/);
   if (!m) return null;
-  const candidate = m[0].trim();
-  if (!/\d/.test(candidate)) return null;
-  if (!/[-+*/^%]|sqrt|log|sin|cos|tan|pow/.test(candidate)) return null;
-  return candidate;
+  const expr = m[0].trim();
+  // needs at least one operator between numbers to be arithmetic
+  if (!/[0-9]\s*[+\-*/^%]\s*[0-9().]/.test(expr) && !/[()]/.test(expr)) return null;
+  return expr;
 }
 
 export function tryMath(text: string): EngineResult | null {
@@ -186,24 +166,18 @@ export function tryMath(text: string): EngineResult | null {
   if (value === null) return null;
 
   const pretty = expr.replace(/\s+/g, " ").trim();
-  const reasoning = [
-    "1. Interpretei a entrada como uma expressão aritmética.",
-    `2. Normalizei para a forma canônica: \`${pretty}\`.`,
-    "3. Resolvi respeitando precedência (potência → multiplicação/divisão → soma/subtração) e parênteses.",
-    "4. Verifiquei o resultado com o avaliador determinístico do núcleo (sem execução de código arbitrário).",
-  ].join("\n");
 
   return {
     skill: "math",
     terminal: true,
     confidence: 0.99,
-    reasoning,
+    reasoning: `Parsed "${pretty}" and evaluated it with the deterministic core.`,
     answer:
       `**${pretty} = ${fmtNum(value)}**\n\n` +
-      (Number.isFinite(value) && !Number.isInteger(value)
-        ? `Aproximando: ${parseFloat(value.toFixed(4)).toLocaleString("pt-BR", { maximumFractionDigits: 4 })}.`
-        : `Resultado exato.`) +
-      "\n\n> Calculado pelo núcleo de raciocínio local da Keew IA — determinístico, sem chamada externa.",
+      (Number.isInteger(value)
+        ? "Exact result."
+        : `Rounded: ${parseFloat(value.toFixed(4)).toLocaleString("en-US", { maximumFractionDigits: 4 })}.`) +
+      "\n\n> Computed locally by Keew's reasoning core — deterministic, no external call.",
   };
 }
 
@@ -212,42 +186,61 @@ export function tryMath(text: string): EngineResult | null {
 type Unit = { aliases: string[]; dim: string; toBase: number; label: string };
 
 const UNITS: Unit[] = [
-  { aliases: ["km", "quilometro", "quilometros", "kilometro"], dim: "len", toBase: 1000, label: "km" },
-  { aliases: ["m", "metro", "metros"], dim: "len", toBase: 1, label: "m" },
-  { aliases: ["cm", "centimetro", "centimetros"], dim: "len", toBase: 0.01, label: "cm" },
-  { aliases: ["mm", "milimetro", "milimetros"], dim: "len", toBase: 0.001, label: "mm" },
-  { aliases: ["mi", "milha", "milhas", "mile", "miles"], dim: "len", toBase: 1609.344, label: "mi" },
-  { aliases: ["ft", "pe", "pes", "feet"], dim: "len", toBase: 0.3048, label: "ft" },
-  { aliases: ["in", "polegada", "polegadas", "inch"], dim: "len", toBase: 0.0254, label: "in" },
-  { aliases: ["kg", "quilo", "quilos", "kilograma"], dim: "mass", toBase: 1, label: "kg" },
-  { aliases: ["g", "grama", "gramas"], dim: "mass", toBase: 0.001, label: "g" },
-  { aliases: ["t", "tonelada", "toneladas"], dim: "mass", toBase: 1000, label: "t" },
-  { aliases: ["lb", "libra", "libras", "pound", "pounds"], dim: "mass", toBase: 0.45359237, label: "lb" },
-  { aliases: ["oz", "onca", "oncas"], dim: "mass", toBase: 0.028349523125, label: "oz" },
-  { aliases: ["l", "litro", "litros"], dim: "vol", toBase: 1, label: "L" },
-  { aliases: ["ml", "mililitro", "mililitros"], dim: "vol", toBase: 0.001, label: "mL" },
-  { aliases: ["gal", "galao", "galoes", "gallon"], dim: "vol", toBase: 3.785411784, label: "gal" },
-  { aliases: ["kb"], dim: "data", toBase: 1000, label: "KB" },
-  { aliases: ["mb"], dim: "data", toBase: 1e6, label: "MB" },
-  { aliases: ["gb"], dim: "data", toBase: 1e9, label: "GB" },
-  { aliases: ["tb"], dim: "data", toBase: 1e12, label: "TB" },
-  { aliases: ["s", "segundo", "segundos"], dim: "time", toBase: 1, label: "s" },
-  { aliases: ["min", "minuto", "minutos"], dim: "time", toBase: 60, label: "min" },
-  { aliases: ["h", "hora", "horas"], dim: "time", toBase: 3600, label: "h" },
-  { aliases: ["dia", "dias"], dim: "time", toBase: 86400, label: "d" },
+  { aliases: ["km", "kilometer", "kilometers", "kilometre", "kilometres", "quilometro", "quilometros"], dim: "length", toBase: 1000, label: "km" },
+  { aliases: ["m", "meter", "meters", "metro", "metros"], dim: "length", toBase: 1, label: "m" },
+  { aliases: ["cm", "centimeter", "centimeters", "centimetro", "centimetros"], dim: "length", toBase: 0.01, label: "cm" },
+  { aliases: ["mm", "millimeter", "millimeters", "milimetro", "milimetros"], dim: "length", toBase: 0.001, label: "mm" },
+  { aliases: ["mi", "mile", "miles", "milha", "milhas"], dim: "length", toBase: 1609.344, label: "mi" },
+  { aliases: ["ft", "foot", "feet", "pe", "pes"], dim: "length", toBase: 0.3048, label: "ft" },
+  { aliases: ["in", "inch", "inches", "polegada", "polegadas"], dim: "length", toBase: 0.0254, label: "in" },
+  { aliases: ["yd", "yard", "yards", "jarda", "jardas"], dim: "length", toBase: 0.9144, label: "yd" },
+  { aliases: ["nmi", "nautical mile", "nautical miles"], dim: "length", toBase: 1852, label: "nmi" },
+  { aliases: ["kg", "kilogram", "kilograms", "quilo", "quilos", "quilograma"], dim: "mass", toBase: 1, label: "kg" },
+  { aliases: ["g", "gram", "grams", "grama", "gramas"], dim: "mass", toBase: 0.001, label: "g" },
+  { aliases: ["mg", "milligram", "milligrams"], dim: "mass", toBase: 0.000001, label: "mg" },
+  { aliases: ["t", "ton", "tonne", "tonelada", "toneladas"], dim: "mass", toBase: 1000, label: "t" },
+  { aliases: ["lb", "lbs", "pound", "pounds", "libra", "libras"], dim: "mass", toBase: 0.45359237, label: "lb" },
+  { aliases: ["oz", "ounce", "ounces", "onca", "oncas"], dim: "mass", toBase: 0.028349523125, label: "oz" },
+  { aliases: ["st", "stone", "stones"], dim: "mass", toBase: 6.35029318, label: "st" },
+  { aliases: ["l", "liter", "liters", "litre", "litres", "litro", "litros"], dim: "volume", toBase: 1, label: "L" },
+  { aliases: ["ml", "milliliter", "milliliters", "mililitro", "mililitros"], dim: "volume", toBase: 0.001, label: "mL" },
+  { aliases: ["gal", "gallon", "gallons", "galao", "galoes"], dim: "volume", toBase: 3.785411784, label: "gal" },
+  { aliases: ["floz", "fluid ounce", "fluid ounces"], dim: "volume", toBase: 0.0295735295625, label: "fl oz" },
+  { aliases: ["cup", "cups", "xícara", "xicaras"], dim: "volume", toBase: 0.2365882365, label: "cup" },
+  { aliases: ["kb", "kilobyte", "kilobytes"], dim: "data", toBase: 1000, label: "KB" },
+  { aliases: ["mb", "megabyte", "megabytes"], dim: "data", toBase: 1e6, label: "MB" },
+  { aliases: ["gb", "gigabyte", "gigabytes"], dim: "data", toBase: 1e9, label: "GB" },
+  { aliases: ["tb", "terabyte", "terabytes"], dim: "data", toBase: 1e12, label: "TB" },
+  { aliases: ["s", "sec", "second", "seconds", "segundo", "segundos"], dim: "time", toBase: 1, label: "s" },
+  { aliases: ["min", "minute", "minutes", "minuto", "minutos"], dim: "time", toBase: 60, label: "min" },
+  { aliases: ["h", "hr", "hour", "hours", "hora", "horas"], dim: "time", toBase: 3600, label: "h" },
+  { aliases: ["d", "day", "days", "dia", "dias"], dim: "time", toBase: 86400, label: "d" },
+  { aliases: ["wk", "week", "weeks", "semana", "semanas"], dim: "time", toBase: 604800, label: "wk" },
+  { aliases: ["kmh", "kph", "kilometers per hour"], dim: "speed", toBase: 1, label: "km/h" },
+  { aliases: ["mph", "miles per hour"], dim: "speed", toBase: 1.609344, label: "mph" },
+  { aliases: ["ms", "m/s", "meters per second"], dim: "speed", toBase: 3.6, label: "m/s" },
+  { aliases: ["ha", "hectare", "hectares"], dim: "area", toBase: 10000, label: "ha" },
+  { aliases: ["ac", "acre", "acres"], dim: "area", toBase: 4046.8564224, label: "ac" },
+  { aliases: ["km2", "sqkm", "square kilometers"], dim: "area", toBase: 1e6, label: "km²" },
+  { aliases: ["m2", "sqm", "square meters"], dim: "area", toBase: 1, label: "m²" },
+  { aliases: ["ft2", "sqft", "square feet"], dim: "area", toBase: 0.09290304, label: "ft²" },
 ];
 
 const norm = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\.$/, "").trim();
 
 function findUnit(word: string): Unit | undefined {
-  const w = norm(word);
+  const w = norm(word).replace(/\s+/g, " ");
   return UNITS.find((u) => u.aliases.includes(w));
 }
 
+const CONV_WORDS = "to|in|into|as|para|em|->|→|=>|=|is";
+
 export function tryConversion(text: string): EngineResult | null {
-  // 42 km para milhas · 180 lbs em kg · 30 °C em °F
-  const temp = text.match(/(-?\d+(?:[.,]\d+)?)\s*°?\s*(c|f|celsius|fahrenheit)\b[^a-z]*(?:para|em|to|->|→)?\s*(?:°?\s*)?(c|f|celsius|fahrenheit)\b/i);
+  // temperature first, because °C/°F are not linear from zero
+  const temp = text.match(
+    /(-?\d+(?:[.,]\d+)?)\s*°?\s*(c|f|celsius|fahrenheit|centigrade)\b[^a-z]*(?:to|in|into|as|para|em|->|→|=)?\s*(?:°?\s*)?(c|f|celsius|fahrenheit|centigrade)\b/i,
+  );
   if (temp) {
     const v = parseFloat(temp[1].replace(",", "."));
     const from = temp[2].toLowerCase()[0];
@@ -258,72 +251,44 @@ export function tryConversion(text: string): EngineResult | null {
       skill: "units",
       terminal: true,
       confidence: 0.99,
-      reasoning: `°C = (°F − 32) × 5/9 · °F = °C × 9/5 + 32`,
-      answer: `**${fmtNum(v)} °${from.toUpperCase()} = ${fmtNum(out)} °${to.toUpperCase()}**\n\n> Conversão executada localmente pelo núcleo Keew.`,
+      reasoning: "Applied the exact temperature formula (not a linear factor).",
+      answer: `**${fmtNum(v)} °${from.toUpperCase()} = ${fmtNum(out)} °${to.toUpperCase()}**\n\n> Converted locally by Keew's core.`,
     };
   }
 
-  const m = text.match(/(-?\d+(?:[.,]\d+)?)\s*([a-zA-Zçãáéíóúµ.]+)\s*(?:para|em|to|->|→|=>)\s*([a-zA-Zçãáéíóúµ.]+)/);
+  const m = text.match(
+    new RegExp(`(-?\\d+(?:[.,]\\d+)?)\\s*([a-zA-Zµ°][a-zA-Zµ°\\s/]{0,18}?)\\s*(?:${CONV_WORDS})\\s+([a-zA-Zµ°][a-zA-Zµ°\\s/]{0,18})`, "i"),
+  );
   if (!m) return null;
+
   const value = parseFloat(m[1].replace(",", "."));
   const from = findUnit(m[2]);
-  const to = findUnit(m[3]);
+  const to = findUnit(m[3].replace(/\s+$/, ""));
   if (!from || !to || from.dim !== to.dim) return null;
+
   const out = (value * from.toBase) / to.toBase;
+
   return {
     skill: "units",
     terminal: true,
     confidence: 0.98,
-    reasoning: `Converti para a unidade base do grupo "${from.dim}" e depois para a unidade de destino (fator ${fmtNum(from.toBase / to.toBase)}).`,
-    answer: `**${fmtNum(value)} ${from.label} = ${fmtNum(out)} ${to.label}**\n\n> Conversão executada localmente pelo núcleo Keew.`,
+    reasoning: `Converted to the ${from.dim} base unit and then to the target (factor ${fmtNum(from.toBase / to.toBase)}).`,
+    answer: `**${fmtNum(value)} ${from.label} = ${fmtNum(out)} ${to.label}**\n\n> Converted locally by Keew's core.`,
   };
 }
 
 /* ════════════════════════════════════════════════════════════════ TIME ══ */
 
-const WEEKDAYS = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
+const TIMEZONE = "America/Sao_Paulo";
 
-export function tryDateTime(text: string, now = new Date()): EngineResult | null {
-  const t = norm(text);
-  const wantsDate = /(que dia|data de hoje|hoje e|dia da semana|que horas|hora agora|timestamp|calendario)/.test(t);
-  if (wantsDate) {
-    const dtf = new Intl.DateTimeFormat("pt-BR", {
-      dateStyle: "full", timeStyle: "short", timeZone: "America/Sao_Paulo",
-    });
-    return {
-      skill: "datetime",
-      terminal: true,
-      confidence: 0.99,
-      reasoning: "Consultei o relógio do sistema e formatei com Intl (America/Sao_Paulo).",
-      answer:
-        `**${dtf.format(now)}** (horário de Brasília)\n\n` +
-        `- UTC: ${now.toISOString()}\n` +
-        `- Timestamp Unix: \`${Math.floor(now.getTime() / 1000)}\`\n` +
-        `- Semana ISO: ${isoWeek(now)}`,
-    };
-  }
-
-  // diferença entre datas: "de 2024-01-01 até 2025-03-15"
-  const dates = [...text.matchAll(/(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})/g)].map((m) => {
-    const [, d, mo, y] = m;
-    const year = y.length === 2 ? 2000 + parseInt(y, 10) : parseInt(y, 10);
-    return new Date(Date.UTC(year, parseInt(mo, 10) - 1, parseInt(d, 10)));
-  });
-  if (dates.length >= 2 && /(diferenca|entre|ate|desde|dias)/.test(t)) {
-    const [a, b] = dates;
-    const days = Math.round(Math.abs(b.getTime() - a.getTime()) / 86400000);
-    return {
-      skill: "datetime",
-      terminal: true,
-      confidence: 0.97,
-      reasoning: "Subtraí os timestamps e converti milissegundos em dias.",
-      answer:
-        `**${days.toLocaleString("pt-BR")} dias** entre ${a.toLocaleDateString("pt-BR", { timeZone: "UTC" })} e ${b.toLocaleDateString("pt-BR", { timeZone: "UTC" })}.\n\n` +
-        `- Semanas: ${(days / 7).toFixed(2)}\n- Meses (média): ${(days / 30.4375).toFixed(2)}\n- Anos: ${(days / 365.25).toFixed(3)}`,
-    };
-  }
-  return null;
-}
+/**
+ * Time phrases, English and Portuguese. Written without most accents on
+ * purpose: the text is normalized to ASCII before matching.
+ */
+const WANTS_TIME =
+  /\b(what time|current time|time now|time is it|today|todays date|what day|what date|day of the week|timestamp|calendar|date and time)\b/;
+const WANTS_TIME_PT =
+  /\b(que dia|data de hoje|dia da semana|que horas|hora agora|calendario)\b/;
 
 function isoWeek(d: Date): string {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -334,81 +299,259 @@ function isoWeek(d: Date): string {
   return `${date.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
 }
 
+/** dates that looked like dates but are not real (31/02/2026) */
+const rejected: string[] = [];
+
+/**
+ * Reads dates written the ways people actually write them.
+ *
+ * The interface is English, so `12/25/2026` is month/day/year. But `25/12/2026`
+ * is unambiguous the other way, and `2026-12-25` is ISO. Guessing wrong here
+ * produces a confidently wrong answer, so the order is decided per value.
+ */
+function parseDates(text: string): Date[] {
+  const out: Date[] = [];
+  rejected.length = 0;
+
+  // ISO first: 2026-12-25 — only one reading
+  for (const m of text.matchAll(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/g)) {
+    out.push(new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])));
+  }
+  if (out.length) return out;
+
+  for (const m of text.matchAll(/\b(\d{1,2})\s*[/.-]\s*(\d{1,2})\s*[/.-]\s*(\d{2,4})\b/g)) {
+    const a = parseInt(m[1], 10);
+    const b = parseInt(m[2], 10);
+    const year = m[3].length === 2 ? 2000 + parseInt(m[3], 10) : parseInt(m[3], 10);
+
+    let month: number;
+    let day: number;
+
+    if (a > 12 && b <= 12) {
+      day = a; month = b;            // 25/12 — day first, no ambiguity
+    } else if (b > 12 && a <= 12) {
+      month = a; day = b;            // 12/25 — month first
+    } else if (a > 12 && b > 12) {
+      continue;                      // neither can be a month: not a date
+    } else {
+      month = a; day = b;            // both ≤ 12: English order
+    }
+
+    if (month < 1 || month > 12 || day < 1 || day > 31) {
+      rejected.push(`${m[1]}/${m[2]}/${m[3]}`);
+      continue;
+    }
+    const d = new Date(Date.UTC(year, month - 1, day));
+    // reject values that rolled over, like February 31 — say so, don't guess
+    if (d.getUTCMonth() !== month - 1 || d.getUTCDate() !== day) {
+      rejected.push(`${m[1]}/${m[2]}/${m[3]}`);
+      continue;
+    }
+    out.push(d);
+  }
+
+  return out;
+}
+
+export function tryDateTime(text: string, now = new Date()): EngineResult | null {
+  const t = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[!?.,;:]/g, " ").replace(/\s+/g, " ").trim();
+
+  if (WANTS_TIME.test(t) || WANTS_TIME_PT.test(t)) {
+    const dtf = new Intl.DateTimeFormat("en-US", {
+      dateStyle: "full",
+      timeStyle: "short",
+      timeZone: TIMEZONE,
+    });
+    return {
+      skill: "datetime",
+      terminal: true,
+      confidence: 0.99,
+      reasoning: "Read the system clock and formatted it with Intl in São Paulo time.",
+      answer:
+        `**${dtf.format(now)}** (São Paulo time)\n\n` +
+        `- UTC: ${now.toISOString()}\n` +
+        `- Unix timestamp: \`${Math.floor(now.getTime() / 1000)}\`\n` +
+        `- ISO week: ${isoWeek(now)}`,
+    };
+  }
+
+  const dates = parseDates(text);
+
+  if (dates.length >= 2 && /\b(difference|between|until|since|days|left)\b|\b(diferenca|entre|ate|desde|dias)\b/.test(t)) {
+    const [a, b] = dates;
+    const days = Math.round(Math.abs(b.getTime() - a.getTime()) / 86400000);
+    return {
+      skill: "datetime",
+      terminal: true,
+      confidence: 0.97,
+      reasoning: "Subtracted the timestamps and converted milliseconds to days.",
+      answer:
+        `**${days.toLocaleString("en-US")} days** between ${a.toLocaleDateString("en-US", { timeZone: "UTC" })} and ${b.toLocaleDateString("en-US", { timeZone: "UTC" })}.\n\n` +
+        `- Weeks: ${(days / 7).toFixed(2)}\n- Months (average): ${(days / 30.4375).toFixed(2)}\n- Years: ${(days / 365.25).toFixed(3)}`,
+    };
+  }
+
+  // a date that does not exist: say it, never snap to a nearby day
+  if (!dates.length && rejected.length) {
+    return {
+      skill: "datetime",
+      terminal: true,
+      confidence: 0.9,
+      reasoning: "The input matched the date shape but is not a real calendar date.",
+      answer: `**${rejected[0]} is not a real date.** Check the day and month and ask again.`,
+    };
+  }
+
+  // days until / since a date, counted from today
+  if (dates.length === 1 && /\b(how many days|days until|days left|days since|days to go|countdown)\b|\b(quantos dias|dias ate|dias desde|falta)\b/.test(t)) {
+    const target = dates[0];
+    const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    const days = Math.round((target.getTime() - today.getTime()) / 86400000);
+    const when = target.toLocaleDateString("en-US", { dateStyle: "long", timeZone: "UTC" });
+    return {
+      skill: "datetime",
+      terminal: true,
+      confidence: 0.97,
+      reasoning: "Counted whole days from today to the target date, in UTC.",
+      answer:
+        days === 0
+          ? `**${when} is today.**`
+          : days > 0
+            ? `**${days.toLocaleString("en-US")} days** until ${when}.\n\n` +
+              `- Weeks: ${(days / 7).toFixed(1)}\n- Months (average): ${(days / 30.4375).toFixed(1)}`
+            : `**${Math.abs(days).toLocaleString("en-US")} days** have passed since ${when}.`,
+    };
+  }
+
+  // single date → weekday
+  if (dates.length === 1 && /\b(what day|weekday|which day|day of the week)\b/.test(t)) {
+    const d = dates[0];
+    return {
+      skill: "datetime",
+      terminal: true,
+      confidence: 0.95,
+      reasoning: "Resolved the calendar date with UTC arithmetic.",
+      answer: `**${d.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" })}, ${d.toLocaleDateString("en-US", { dateStyle: "long", timeZone: "UTC" })}**`,
+    };
+  }
+
+  return null;
+}
+
 /* ════════════════════════════════════════════════════════════════ TEXT ══ */
 
 export function tryTextOps(text: string): EngineResult | null {
-  const t = norm(text);
+  const t = text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
-  const wantsDecode = /(decodif|decode|descriptograf|unbase64)/.test(t);
-  const b64dec = text.match(/(?:decodif\w*|decode|descriptograf\w*)[^:\-]*[:\-]?\s*`?([A-Za-z0-9+/=]{4,})`?/i);
+  /* base64 decode */
+  const wantsDecode = /\b(decode|decrypt|unbase64|descodifique|decodifique|decodificar|descriptograf)/.test(t);
+  const b64dec = text.match(/(?:decode|decrypt|decodif\w*|descriptograf\w*)[^:\-]*[:\-]?\s*`?([A-Za-z0-9+/=]{4,})`?/i);
   if (wantsDecode && b64dec) {
     try {
       const decoded = Buffer.from(b64dec[1], "base64").toString("utf8");
       if (decoded && /[\x20-\x7E\u00C0-\u017F]/.test(decoded)) {
         return {
           skill: "text",
-          terminal: true, confidence: 0.95,
-          reasoning: "Decodifiquei a string em base64 com Buffer (UTF-8).",
-          answer: `**Resultado:**\n\`\`\`\n${decoded}\n\`\`\``,
+          terminal: true,
+          confidence: 0.95,
+          reasoning: "Decoded the base64 string as UTF-8.",
+          answer: `**Result:**\n\`\`\`\n${decoded}\n\`\`\``,
         };
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* not valid base64 */
+    }
   }
-  if (!wantsDecode && /(base64|codif|encode)/.test(t)) {
+
+  /* base64 encode */
+  if (!wantsDecode && /\b(base64|encode|codifique|codificar)\b/.test(t)) {
     const afterColon = text.includes(":") ? text.slice(text.lastIndexOf(":") + 1) : "";
-    const payload = (afterColon || text.replace(/^.*?(?:base64|codif\w*|encode)\s*(?:em|para|to)?\s*[:\-]?\s*/i, "")).trim();
-    if (payload.length > 2) {
+    const payload = (
+      afterColon || text.replace(/^.*?\b(?:base64|encode|codifique|codificar)\b\s*(?:in|to|em|para)?\s*[:\-]?\s*/i, "")
+    ).trim();
+    if (payload.length > 1) {
       return {
-        skill: "text", terminal: true, confidence: 0.9,
-        reasoning: "Codifiquei o texto em base64 (UTF-8).",
+        skill: "text",
+        terminal: true,
+        confidence: 0.9,
+        reasoning: "Encoded the text as base64 (UTF-8).",
         answer: `\`${Buffer.from(payload).toString("base64")}\``,
       };
     }
   }
 
-  if (/(slug)/.test(t)) {
-    const payload = text.replace(/^.*?slug\s*(?:de|da|do)?\s*[:\-]?\s*/i, "").trim();
+  /* slug */
+  if (/\bslug\b/.test(t)) {
+    const payload = text.replace(/^.*?\bslug\b\s*(?:of|for|from|de|da|do)?\s*[:\-]?\s*/i, "").replace(/^["'`]|["'`]$/g, "").trim();
     if (payload) {
       const slug = norm(payload).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      return { skill: "text", terminal: true, confidence: 0.95, reasoning: "Normalizei, removi acentos e substituí separadores.", answer: `\`${slug}\`` };
+      return {
+        skill: "text",
+        terminal: true,
+        confidence: 0.95,
+        reasoning: "Lowercased, stripped accents and replaced separators.",
+        answer: `\`${slug}\``,
+      };
     }
   }
 
-  if (/(quantas palavras|contar palavras|word count|quantos caracteres|contar caracteres)/.test(t)) {
-    const body = text.split(/[:：]/).slice(1).join(":").trim() || text.replace(/.*?(palavras|caracteres)\s*[:\-]?\s*/i, "").trim();
+  /* word count */
+  if (/\b(word count|count words|how many words|character count|how many characters|contar palavras|quantas palavras|contar caracteres)\b/.test(t)) {
+    const body =
+      text.split(/[:：]/).slice(1).join(":").trim() ||
+      text.replace(/.*?\b(words?|characters?|palavras?|caracteres?)\b\s*[:\-]?\s*/i, "").trim();
     const words = body.split(/\s+/).filter(Boolean).length;
     return {
-      skill: "text", terminal: true, confidence: 0.99,
-      reasoning: "Segmentação por espaços + contagem de code points.",
-      answer: `- Palavras: **${words.toLocaleString("pt-BR")}**\n- Caracteres: **${[...body].length.toLocaleString("pt-BR")}**\n- Linhas: **${body.split("\n").length.toLocaleString("pt-BR")}**\n- Tempo de leitura (~200 wpm): **${Math.max(1, Math.round(words / 200))} min**`,
+      skill: "text",
+      terminal: true,
+      confidence: 0.99,
+      reasoning: "Split on whitespace and counted code points.",
+      answer:
+        `- Words: **${words.toLocaleString("en-US")}**\n` +
+        `- Characters: **${[...body].length.toLocaleString("en-US")}**\n` +
+        `- Lines: **${body.split("\n").length.toLocaleString("en-US")}**\n` +
+        `- Reading time (~200 wpm): **${Math.max(1, Math.round(words / 200))} min**`,
     };
   }
 
-  if (/(valide|validar|formate|formatar|pretty)\s*(o\s*)?json|json\s*(valido|formatado)/i.test(norm(text))) {
+  /* JSON validate / format */
+  if (/\b(validate|format|pretty)\s*(the\s*)?json|json\s*(valid|formatted)\b|\bvalide\b.*json/i.test(text)) {
     const body = text.slice(text.indexOf("{"));
     try {
       const parsed = JSON.parse(body.slice(0, body.lastIndexOf("}") + 1));
       return {
-        skill: "text", terminal: true, confidence: 0.95,
-        reasoning: "Parse com JSON.parse e reimpressão com indentação 2.",
-        answer: "JSON válido ✅\n\n```json\n" + JSON.stringify(parsed, null, 2) + "\n```",
+        skill: "text",
+        terminal: true,
+        confidence: 0.95,
+        reasoning: "Parsed with JSON.parse and re-printed with 2-space indentation.",
+        answer: "Valid JSON ✅\n\n```json\n" + JSON.stringify(parsed, null, 2) + "\n```",
       };
     } catch (e) {
       return {
-        skill: "text", terminal: true, confidence: 0.95,
-        reasoning: "JSON.parse lançou erro; reportei a posição.",
-        answer: `JSON inválido ❌\n\n\`${(e as Error).message}\``,
+        skill: "text",
+        terminal: true,
+        confidence: 0.95,
+        reasoning: "JSON.parse threw; reported the position.",
+        answer: `Invalid JSON ❌\n\n\`${(e as Error).message}\``,
       };
     }
   }
 
-  if (/(regex|expressao regular)/.test(t)) {
+  /* regex */
+  if (/\b(regex|regular expression|expressao regular)\b/.test(t)) {
     return {
-      skill: "text", terminal: true, confidence: 0.8,
-      reasoning: "Preparando um laboratório de regex para testar no cliente.",
+      skill: "text",
+      terminal: true,
+      confidence: 0.8,
+      reasoning: "Offering a regex reference instead of guessing the pattern.",
       answer:
-        "Posso montar a expressão com você — informe **padrão desejado** e **2 exemplos** (um que deve casar e outro que não).\n\n" +
-        "Enquanto isso, referência rápida:\n\n| Token | Significado |\n| --- | --- |\n| `^` `$` | início / fim |\n| `\\d` `\\w` `\\s` | dígito, palavra, espaço |\n| `*` `+` `?` | 0+, 1+, opcional |\n| `{n,m}` | repetição entre n e m |\n| `(?:…)` | grupo sem captura |\n| `(?=…)` | lookahead |",
+        "I can build the expression with you — tell me the **pattern you want to match** and **two examples** (one that should match, one that shouldn't).\n\n" +
+        "Quick reference meanwhile:\n\n| Token | Meaning |\n| --- | --- |\n| `^` `$` | start / end |\n| `\\d` `\\w` `\\s` | digit, word, space |\n| `*` `+` `?` | 0+, 1+, optional |\n| `{n,m}` | repeat between n and m |\n| `(?:…)` | non-capturing group |\n| `(?=…)` | lookahead |",
     };
   }
 
@@ -417,9 +560,29 @@ export function tryTextOps(text: string): EngineResult | null {
 
 /* ══════════════════════════════════════════════════════ SUMMARIZATION ══ */
 
+const STOP = new Set(
+  (
+    "a an and are as at be but by for from has have he her his i if in into is it its me my no not of on or our she so " +
+    "that the their them then there these they this to was we were what when where which who will with you your " +
+    "a o e de da do das dos em no na nos nas um uma uns umas para por com como que se ao aos ou mas eu voce me te " +
+    "seu sua meu minha mais menos muito pode fazer qual quais onde quando porque hoje agora entao sobre entre ja ser estar ter tem foi sao"
+  ).split(/\s+/),
+);
+
+export function tokenize(s: string): string[] {
+  return norm(s)
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !STOP.has(w))
+    .map((w) => w.replace(/(ing|ed|es|s)$/, ""));
+}
+
 export function summarize(raw: string): EngineResult | null {
   const text = raw
-    .replace(/^\s*(?:resuma|resumir|resumo|faça um resumo(?: de| do| da)?|summarize)\s*(?:este|esse|o|a|isto|isso)?\s*(?:texto|documento|conte[uú]do)?\s*[:\-]?\s*/i, "")
+    .replace(
+      /^\s*(?:summari[sz]e|summary|tl;?dr|resuma|resumir|resumo|faca um resumo)\s*(?:this|the|these|este|esse|o|a|isto|isso)?\s*(?:text|document|content|texto|documento|conteudo)?\s*[:\-]?\s*/i,
+      "",
+    )
     .trim();
   if (text.split(/\s+/).length < 90) return null;
 
@@ -435,49 +598,45 @@ export function summarize(raw: string): EngineResult | null {
     for (const t of new Set(toks)) df.set(t, (df.get(t) || 0) + 1);
     return toks;
   });
+
   const scored = sentences.map((s, i) => {
     let score = 0;
     const tf = new Map<string, number>();
     for (const t of bags[i]) tf.set(t, (tf.get(t) || 0) + 1);
-    for (const [t, c] of tf) score += (c / bags[i].length) * Math.log(1 + sentences.length / (df.get(t) || 1));
-    if (i === 0) score *= 1.25;                       // lead bias
-    if (/\b(portanto|conclus|resumo|resultado|logo)\b/i.test(s)) score *= 1.15;
-    score /= Math.sqrt(s.split(" ").length);           // length penalty
+    for (const [t, c] of tf) score += (c / Math.max(1, bags[i].length)) * Math.log(1 + sentences.length / (df.get(t) || 1));
+    if (i === 0) score *= 1.25; // lead bias
+    if (/\b(therefore|conclusion|summary|result|thus)\b|\b(portanto|conclus|resumo|resultado|logo)\b/i.test(s)) score *= 1.15;
+    score /= Math.sqrt(s.split(" ").length); // length penalty
     return { s, i, score };
   });
 
   const take = Math.max(3, Math.min(6, Math.round(sentences.length * 0.28)));
   const picked = [...scored].sort((a, b) => b.score - a.score).slice(0, take).sort((a, b) => a.i - b.i);
   const keywords = [...df.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([w]) => w);
-
   const words = text.split(/\s+/).length;
+  const kept = picked.reduce((a, p) => a + p.s.split(" ").length, 0);
+
   return {
     skill: "summarize",
     terminal: true,
     confidence: 0.9,
     reasoning:
-      "Apliquei sumarização extrativa: tokenização, TF-IDF por sentença, penalização por comprimento, " +
-      `bias de abertura e seleção das ${take} sentenças mais informativas em ordem original.`,
+      "Extractive summarization: tokenization, per-sentence TF-IDF, length penalty, lead bias, " +
+      `then the ${take} most informative sentences in original order.`,
     answer:
-      `## Resumo\n\n${picked.map((p) => `- ${p.s.trim()}`).join("\n")}\n\n` +
-      `**Palavras-chave:** ${keywords.map((k) => `\`${k}\``).join(" · ")}\n\n` +
-      `_Redução: ${words} → ${picked.reduce((a, p) => a + p.s.split(" ").length, 0)} palavras ` +
-      `(${Math.round((1 - picked.reduce((a, p) => a + p.s.split(" ").length, 0) / words) * 100)}%). Executado no núcleo local._`,
+      `## Summary\n\n${picked.map((p) => `- ${p.s.trim()}`).join("\n")}\n\n` +
+      `**Keywords:** ${keywords.map((k) => `\`${k}\``).join(" · ")}\n\n` +
+      `_Reduction: ${words} → ${kept} words (${Math.round((1 - kept / words) * 100)}%). Ran in the local core._`,
   };
 }
 
 /* ══════════════════════════════════════════════════════════ KNOWLEDGE ══ */
 
-export function tryKnowledge(
-  query: string,
-  docs: KnowledgeDoc[],
-): EngineResult | null {
+export function tryKnowledge(query: string, docs: KnowledgeDoc[]): EngineResult | null {
   if (!docs.length) return null;
   const q = new Set(tokenize(query));
   if (q.size < 2) return null;
 
-  // score against the title for topical weighting, and require either a title
-  // hit or at least two body hits — one shared word is coincidence, not intent.
   const ranked = docs
     .map((d) => {
       const titleTokens = new Set(tokenize(d.title));
@@ -497,10 +656,7 @@ export function tryKnowledge(
 
   if (!ranked.length) return null;
   const best = ranked[0];
-  const paragraphs = best.d.content
-    .split(/\n\n+/)
-    .map((p) => p.trim())
-    .filter(Boolean);
+  const paragraphs = best.d.content.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
   const relevant = paragraphs
     .map((p) => {
       const toks = new Set(tokenize(p));
@@ -516,49 +672,58 @@ export function tryKnowledge(
     skill: "knowledge",
     terminal: true,
     confidence: 0.74 + best.score * 0.2,
-    reasoning: `Recuperei ${ranked.length} documento(s) por similaridade lexical (cobertura de termos: ${(best.score * 100).toFixed(0)}%) e reordenei os parágrafos por relevância.`,
+    reasoning: `Retrieved ${ranked.length} document(s) by lexical similarity (term coverage ${(best.score * 100).toFixed(0)}%) and reordered paragraphs by relevance.`,
     answer:
       `${(relevant.length ? relevant : [best.d.content.slice(0, 700)]).join("\n\n")}\n\n` +
-      `---\n**Fontes (${ranked.length}):** ` +
+      `---\n**Sources (${ranked.length}):** ` +
       ranked.map((r) => `\`${r.d.title}\``).join(" · "),
   };
 }
 
-/* ══════════════════════════════════════════════════════════ PLANNING ══ */
+/* ═════════════════════════════════════════════════════════════ PLANNING ══ */
 
-const PLAN_VERBS = /(planeje|plano|como faco|como fazer|como criar|como construir|passo a passo|roadmap|estrategia|implemente|implementar|monte|montar|desenvolva|construa)/i;
+const PLAN_VERBS =
+  /\b(plan|planning|roadmap|how do i|how to|step by step|strategy|implement|build|create a plan|planeje|plano|como faco|como fazer|passo a passo|estrategia|implemente|monte|desenvolva|construa)\b/i;
 
 export function tryPlan(text: string): EngineResult | null {
   if (!PLAN_VERBS.test(text) || text.length > 1200) return null;
-  const goal = text.replace(/^(planeje|monte|estrategia para|como (faco|fazer|faco para|criar|construir))\s*/i, "").trim();
+  const goal = text
+    .replace(/^(plan|how do i|how to|strategy for|planeje|monte|estrategia para|como faco|como fazer|criar|construir)\s*/i, "")
+    .trim();
   if (goal.length < 8) return null;
 
   const steps = [
-    `**Definir o resultado** — escreva em uma frase o que fica pronto ao final: "${goal.slice(0, 120)}".`,
-    "**Mapear restrições** — prazo, orçamento, stack existente, quem aprova e o que não pode mudar.",
-    "**Quebrar em entregáveis** — cada item precisa ser verificável por alguém fora do projeto.",
-    "**Priorizar por risco** — ataque primeiro o item que, se der errado, invalida os outros.",
-    "**Construir a fatia mínima** — a menor versão que roda de ponta a ponta, mesmo feia.",
-    "**Instrumentar** — log, métrica e um alerta antes de ampliar o alcance.",
-    "**Revisar e ampliar** — só aumenta escopo depois que a fatia mínima se provou estável.",
+    `**Define the outcome** — one sentence on what is done at the end: "${goal.slice(0, 120)}".`,
+    "**Map the constraints** — deadline, budget, existing stack, who signs off, what cannot change.",
+    "**Break it into deliverables** — each one must be verifiable by someone outside the project.",
+    "**Order by risk** — attack first the item that would invalidate the others if it failed.",
+    "**Build the smallest slice** — the thinnest version that runs end to end, even if ugly.",
+    "**Instrument it** — a log, a metric and one alert before widening the audience.",
+    "**Review, then expand** — only add scope once the smallest slice has proven stable.",
   ];
+
   return {
     skill: "plan",
     terminal: false,
     confidence: 0.7,
-    reasoning: "Estruturei o pedido em sete etapas (definição → restrições → entregáveis → risco → fatia mínima → instrumentação → ampliação), padrão de execução do workspace.",
+    reasoning: `Structured the request into seven stages (outcome → constraints → deliverables → risk → smallest slice → instrumentation → expansion).`,
     answer:
-      `### Plano de execução\n\n${steps.map((s, i) => `${i + 1}. ${s}`).join("\n")}\n\n` +
-      `**Riscos típicos:** escopo crescendo sem marcar o que sai; ausência de critério de "pronto"; dependência de uma única pessoa.\n\n` +
-      `**Próximo passo concreto:** me diga a stack e o prazo e eu detalho os entregáveis do item 3 item por item.`,
+      `### Execution plan\n\n${steps.map((s, i) => `${i + 1}. ${s}`).join("\n")}\n\n` +
+      `**Typical risks:** scope growing without anything being cut; no definition of "done"; a single point of failure.\n\n` +
+      `**Concrete next step:** tell me the stack and the deadline and I will detail the deliverables in step 3, one by one.`,
   };
 }
 
-/* ══════════════════════════════════════════════════════════ SOCIAL ══ */
+/* ═══════════════════════════════════════════════════════════════ SOCIAL ══ */
 
-/** Small talk stays warm, short and honest about what the core can do. */
 const norm2 = (s: string) =>
-  s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[!?.,;:]/g, " ").replace(/\s+/g, " ").trim();
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[!?.,;:]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
 /** True when every word of one phrase appears in the other (order-insensitive). */
 function covers(a: string, b: string): boolean {
@@ -571,115 +736,133 @@ function covers(a: string, b: string): boolean {
 
 export function trySocial(text: string): EngineResult | null {
   const t = norm(text).replace(/[!?.,;]+/g, " ").replace(/\s+/g, " ").trim();
-  // a greeting is short and made only of greeting fragments: "oi, tudo bem?"
-  const GREET = /^(oi+|ola+|opa|eai|e ai|bom dia|boa tarde|boa noite|hey|hi|hello|salve|fala ai|tudo bem|tudo bom|tudo certo|como vai|como voce esta|beleza|blz|suave|na paz|ai|tudo tranquilo|tranquilo|tudo bem com voce|tudo bom com voce|como voce ta|como vc ta)$/;
-  // "oi, tudo bem?" → two greeting fragments; "bom dia" → one. Both are greetings.
+
+  const GREET =
+    /^(hi+|hey+|hello+|yo|sup|howdy|good morning|good afternoon|good evening|morning|evening|hi there|hello there|how are you|how's it going|hows it going|what's up|whats up|oi+|ola+|opa|eai|e ai|bom dia|boa tarde|boa noite|salve|tudo bem|tudo bom|tudo certo|como vai|beleza|blz|suave|tranquilo)$/;
+
   const parts = text
-    // separators, then greetings glued without punctuation ("oi tudo certo")
-    .split(/\s*[,;.!?]\s*|\s+e\s+|\s+(?=(?:tudo (?:bem|certo|bom)|como vai)\b)/)
+    .split(/\s*[,;.!?]\s*|\s+and\s+|\s+(?=(?:how are you|how's it going|what's up)\b)/)
     .map((f) => norm(f).replace(/[!?.,;]+/g, " ").replace(/\s+/g, " ").trim())
     .filter(Boolean);
+
   const isGreeting =
-    t.length <= 32 &&
+    t.length <= 40 &&
     (GREET.test(t) ||
       (parts.length > 1 && parts.every((f) => GREET.test(f))) ||
       parts.some((f) => GREET.test(f) && f.split(" ").length >= 2));
+
   if (isGreeting) {
+    const hour = new Date().getHours();
+    const mood = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
     return {
       skill: "social",
       terminal: true,
       confidence: 0.95,
-      reasoning: "Saudação reconhecida — resposta curta do núcleo local.",
+      reasoning: "Greeting recognized — short reply from the local core.",
       answer:
-        "Oi. Keew IA aqui — núcleo local ativo.\n\n" +
-        "Resolvo na hora **cálculos**, **conversões de unidade**, **datas e prazos**, **resumos**, " +
-        "**JSON/base64/slug** e **busca na base de conhecimento** — e para conversa aberta eu penso com o " +
-        "Keew Reason.\n\n" +
-        "O que você precisa?",
+        `${mood}. Keew IA here — local core active.\n\n` +
+        `I handle **calculations**, **unit conversions**, **dates and deadlines**, **summaries**, ` +
+        `**JSON/base64/slug** and **search over the knowledge base** right away. Open-ended conversation ` +
+        `needs a language engine connected.\n\n` +
+        `What do you need?`,
     };
   }
-  if (/^(obrigad|valeu|thanks|thank you|agradec)/.test(t)) {
-    return { skill: "social", terminal: true, confidence: 0.9, reasoning: "Agradecimento.", answer: "Por nada. Quando quiser, chama." };
-  }
-  if (/^(quem (e|es) voce|seu nome|o que voce e|o que voce faz|qual seu papel|apresente se)/.test(t)) {
+
+  if (/^(thanks|thank you|thx|ty|appreciate|obrigad|valeu|agradec)/.test(t)) {
     return {
       skill: "social",
       terminal: true,
-      confidence: 0.95,
-      reasoning: "Identidade da Keew no corpus nativo.",
-      answer:
-        "Sou a **Keew IA** — a inteligência artificial própria da Veexdevs.\n\n" +
-        "| | |\n| --- | --- |\n" +
-        "| Núcleo | Keew Core — raciocínio determinístico (math, datas, unidades, resumo, conhecimento) |\n" +
-        "| Razão | Keew Reason — raciocínio profundo para conversa aberta, código e análise |\n" +
-        "| Plataformas | Web, PWA, APK Android, IPA iOS, EXE/DMG/AppImage |\n" +
-        "| Agentes | Core, Engenheiro, Analista, Redator, Pesquisador, Tutor + os seus |\n" +
-        "| Automação | 24/7, sem precisar de você |\n\n" +
-        "Tudo isso num workspace com 14 temas. O que vamos resolver?",
+      confidence: 0.9,
+      reasoning: "Acknowledgement.",
+      answer: "Anytime. Call me when you need something.",
     };
   }
+
   if (
-    /(o que (voce )?pode fazer|suas (capacidades|habilidades)|comandos disponiveis)/.test(t) ||
-    (covers(t, "ajuda") && t.split(" ").length <= 3) ||
-    (covers(t, "help") && t.split(" ").length <= 3)
+    /(what can you do|your (capabilities|skills)|available commands|help me understand you)/.test(t) ||
+    (covers(t, "help") && t.split(" ").length <= 3) ||
+    (covers(t, "ajuda") && t.split(" ").length <= 3)
   ) {
     return {
       skill: "social",
       terminal: true,
       confidence: 0.9,
-      reasoning: "Mapeei as habilidades do núcleo determinístico e as que o Keew Reason completa.",
+      reasoning: "Mapped what the deterministic core resolves and what needs the language engine.",
       answer:
-        "Trabalho em dois níveis — e o primeiro não precisa de internet.\n\n" +
-        "**Agora, só com o núcleo local**\n\n" +
-        "| Peça assim | Eu faço |\n| --- | --- |\n" +
-        "| `(1847 * 23) / 7 + sqrt(256)` | aritmética exata, respeitando precedência |\n" +
-        "| `15% de 240` | porcentagem |\n" +
-        "| `180 lb em kg` · `30 °C em °F` | unidades e temperatura |\n" +
-        "| `que dia é hoje` · `dias entre 01/01/2026 e 31/03/2026` | datas, prazos, semana ISO |\n" +
-        "| cole um texto e escreva `resuma` | resumo extrativo com palavras-chave |\n" +
-        "| `slug de Café com Leite` · `codifique em base64: keew` · `valide este json` | transformação de texto |\n" +
-        "| `quem é a Keew IA` · dúvidas sobre seus documentos | base de conhecimento |\n\n" +
-        "**Sempre, com o Keew Reason**: conversa aberta, código de produção, redação, análise de dados " +
-        "e raciocínio longo passo a passo.\n\n" +
-        "Atalhos: `⌘K` comandos · `⌘J` nova conversa · `⌘\\` alternar menu.",
+        "Two levels — and the first one needs no internet at all.\n\n" +
+        "**Right now, with the local core only**\n\n" +
+        "| Ask like this | What I do |\n| --- | --- |\n" +
+        "| `(1847 * 23) / 7 + 256^0.5` | exact arithmetic with precedence |\n" +
+        "| `15% of 240` | percentages |\n" +
+        "| `180 lb to kg` · `30 °C to °F` | units and temperature |\n" +
+        "| `what day is it` · `days between 01/01/2026 and 03/31/2026` | dates, deadlines, ISO week |\n" +
+        "| paste a text and say `summarize` | extractive summary with keywords |\n" +
+        "| `slug of Café com Leite` · `encode in base64: keew` · `validate this json` | text transforms |\n" +
+        "| `who is Keew IA` · questions about your documents | knowledge base |\n\n" +
+        "**Everything else** needs a language engine connected to the app.",
     };
   }
+
+  if (/^(who are you|what are you|your name|what do you do|what can you do|introduce yourself|quem (e|es) voce|seu nome|o que voce e|o que voce faz|qual seu papel|apresente se)/.test(t)) {
+    return {
+      skill: "social",
+      terminal: true,
+      confidence: 0.95,
+      reasoning: "Keew's identity lives in the native corpus.",
+      answer:
+        "I'm **Keew IA** — an artificial intelligence built and owned by Veexdevs.\n\n" +
+        "| | |\n| --- | --- |\n" +
+        "| Core | Keew Core — deterministic reasoning: math, dates, units, summaries, knowledge |\n" +
+        "| Account | Chats, messages and your profile, saved to your own database |\n" +
+        "| Interface | Web, installable to the home screen |\n\n" +
+        "I'm honest about my limits: without a language engine connected I do the deterministic work " +
+        "and tell you when a question is beyond it, instead of making an answer up.",
+    };
+  }
+
   return null;
 }
 
-/** Derives a list from a sentence: "liste 5 formas de X". */
+/** Derives a list from a sentence: "list 5 ways to X". */
 export function tryList(text: string): EngineResult | null {
-  const m = text.match(/\b(?:liste|listar|cite|citar|enumere|enumera|de|mostre)\b\s*(?:me\s*)?(\d{1,2})?\s*(?:\w+\s+){0,3}(?:de|para|sobre|que)\s+(.{4,120})/i);
+  const m = text.match(/\b(?:list|give me|show me|cite|name|enumerate|liste|listar|cite|citar|enumere)\b\s*(?:me\s*)?(\d{1,2})?\s*(?:\w+\s+){0,3}(?:to|for|of|about|on|de|para|sobre)\s+(.{4,120})/i);
   if (!m) return null;
   const count = Math.min(parseInt(m[1] || "5", 10) || 5, 10);
   const topic = m[2].replace(/[?.!]+$/, "").trim();
   if (topic.length < 4) return null;
 
   const angles = [
-    "fundamento — o princípio que sustenta o tema",
-    "prática — como aplicar no dia a dia",
-    "erro comum — o que costuma dar errado",
-    "métrica — como saber se está funcionando",
-    "variação — uma alternativa menos óbvia",
-    "custo — o preço (tempo, dinheiro, atenção)",
-    "risco — o pior cenário realista",
-    "sequência — a ordem que reduz retrabalho",
-    "ferramenta — o que reduz o esforço manual",
-    "manutenção — o que precisa durar depois do lançamento",
+    "foundation — the principle that holds the topic up",
+    "practice — how it works day to day",
+    "common mistakes — what usually goes wrong",
+    "measurement — how you know it is working",
+    "variation — a less obvious alternative",
+    "cost — the price in time, money and attention",
+    "risk — the worst realistic scenario",
+    "sequence — the order that avoids rework",
+    "tooling — what removes the manual effort",
+    "maintenance — what has to last after launch",
   ];
+
   return {
     skill: "list",
     terminal: false,
     confidence: 0.55,
-    reasoning: `Estruturei "${topic}" em ${count} ângulos (fundamento, prática, erro, métrica, variação…) para não repetir a mesma ideia.`,
+    reasoning: `Framed "${topic}" through ${count} angles so the answer does not repeat the same idea.`,
     answer:
-      `### ${count} caminhos para "${topic}"\n\n` +
-      angles.slice(0, count).map((a, i) => `${i + 1}. **${a.split(" — ")[0].replace(/^./, (c) => c.toUpperCase())}** — ${a.split(" — ")[1]}.`).join("\n") +
-      "\n\nQuer que eu aprofunde um deles com exemplos concretos?",
+      `### ${count} angles on "${topic}"\n\n` +
+      angles
+        .slice(0, count)
+        .map((a, i) => {
+          const [head, tail] = a.split(" — ");
+          return `${i + 1}. **${head.charAt(0).toUpperCase() + head.slice(1)}** — ${tail}.`;
+        })
+        .join("\n") +
+      "\n\nWant me to go deeper on one of them with concrete examples?",
   };
 }
 
-/* ══════════════════════════════════════════════════════════ FALLBACK ══ */
+/* ═════════════════════════════════════════════════════════════ FALLBACK ══ */
 
 export function fallback(query: string): EngineResult {
   const q = query.trim();
@@ -688,23 +871,21 @@ export function fallback(query: string): EngineResult {
     skill: "fallback",
     terminal: true,
     confidence: 1,
-    reasoning: "Fora do alcance do núcleo determinístico; nenhum motor de linguagem está conectado.",
+    reasoning: "Beyond the deterministic core, and no language engine is connected.",
     answer:
-      `Não consigo responder isso.\n\n` +
-      `**"${topic}"** é uma pergunta de linguagem aberta, e o núcleo da Keew que está rodando aqui é ` +
-      `determinístico: ele resolve conta, data, conversão de unidade, transformação de texto e busca nos ` +
-      `seus documentos — não redige nem interpreta texto livre.\n\n` +
-      `Para a Keew responder qualquer assunto, falta conectar o motor de linguagem dela em ` +
-      `Configurações → Motor, colando uma chave. Enquanto isso não acontece, prefiro te dizer isso ` +
-      `do que inventar uma resposta.\n\n` +
-      `**O que eu resolvo agora:**\n\n` +
-      `| Peça | Exemplo |\n` +
-      `| --- | --- |\n` +
-      `| conta e porcentagem | \`calcule 15% de 240\` |\n` +
-      `| conversão de unidade | \`180 lb em kg\` |\n` +
-      `| data e prazo | \`quantos dias entre hoje e 25/12\` |\n` +
-      `| texto | \`slug de Café com Leite\` · \`resuma: <texto>\` |\n` +
-      `| seus documentos | suba um arquivo em Conhecimento e pergunte sobre ele |`,
+      `I can't answer that.\n\n` +
+      `**"${topic}"** is an open-ended language question, and the Keew running here is deterministic: it ` +
+      `does arithmetic, dates, unit conversion, text transforms and search over your documents — it does ` +
+      `not write or interpret free text.\n\n` +
+      `Answering anything would need a language engine connected to this app. Until then I'd rather tell ` +
+      `you this than invent an answer.\n\n` +
+      `**What I can do right now:**\n\n` +
+      `| Ask | Example |\n| --- | --- |\n` +
+      `| math and percentages | \`calculate 15% of 240\` |\n` +
+      `| unit conversion | \`180 lb to kg\` |\n` +
+      `| dates and deadlines | \`how many days until 12/25/2026\` |\n` +
+      `| text | \`slug of Café com Leite\` · \`summarize: <text>\` |\n` +
+      `| your documents | ask about anything in Keew's knowledge base |`,
   };
 }
 
