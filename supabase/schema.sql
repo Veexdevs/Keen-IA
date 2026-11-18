@@ -79,6 +79,7 @@ create table if not exists public.messages (
   role       text not null check (role in ('user', 'assistant')),
   content    text not null,
   sources    jsonb not null default '[]'::jsonb,
+  attachments jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now()
 );
 

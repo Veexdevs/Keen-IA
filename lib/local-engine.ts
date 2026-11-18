@@ -578,13 +578,23 @@ export function tokenize(s: string): string[] {
 }
 
 export function summarize(raw: string): EngineResult | null {
+  // an explicit "summarize this" means the pasted body is the subject, so the
+  // length floor drops — a short document is still worth summarizing
+  const asked =
+    /^\s*(?:summari[sz]e|summary|tl;?dr|resuma|resumir|resumo|faca um resumo)\b/i.test(raw) ||
+    /\b(summarize|summarise|give me a summary|make a summary|resuma|resumir)\b/i.test(raw.slice(0, 120));
+
   const text = raw
     .replace(
       /^\s*(?:summari[sz]e|summary|tl;?dr|resuma|resumir|resumo|faca um resumo)\s*(?:this|the|these|este|esse|o|a|isto|isso)?\s*(?:text|document|content|texto|documento|conteudo)?\s*[:\-]?\s*/i,
       "",
     )
+    // file headers added by the composer, like "--- notes.txt ---" or
+    // "-- notes.txt --", which can end up glued to the first sentence
+    .replace(/-{2,}\s*[^\n-]{1,80}?\s*-{2,}/g, " ")
     .trim();
-  if (text.split(/\s+/).length < 90) return null;
+  const words = text.split(/\s+/).filter(Boolean).length;
+  if (words < (asked ? 35 : 90)) return null;
 
   const sentences = text
     .replace(/\s+/g, " ")
@@ -612,8 +622,11 @@ export function summarize(raw: string): EngineResult | null {
 
   const take = Math.max(3, Math.min(6, Math.round(sentences.length * 0.28)));
   const picked = [...scored].sort((a, b) => b.score - a.score).slice(0, take).sort((a, b) => a.i - b.i);
-  const keywords = [...df.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([w]) => w);
-  const words = text.split(/\s+/).length;
+  const keywords = [...df.entries()]
+    .filter(([w]) => /^[a-z][a-z-]{2,}$/.test(w))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([w]) => w);
   const kept = picked.reduce((a, p) => a + p.s.split(" ").length, 0);
 
   return {
@@ -897,10 +910,16 @@ export function reason(query: string, docs: KnowledgeDoc[] = [], now = new Date(
     const r = fn(query, now as never);
     if (r && r.confidence >= 0.8) return r;
   }
-  const knowledge = tryKnowledge(query, docs);
-  if (knowledge) return knowledge;
+
+  // When the user pastes a document and asks for a summary, that document is
+  // the subject. Searching the built-in corpus first would answer with an
+  // unrelated Keew page that happens to share a word — which is what used to
+  // happen with pasted text mentioning Postgres or migration.
   const summary = summarize(query);
   if (summary) return summary;
+
+  const knowledge = tryKnowledge(query, docs);
+  if (knowledge) return knowledge;
   for (const fn of chain) {
     const r = fn(query, now as never);
     if (r) return r;

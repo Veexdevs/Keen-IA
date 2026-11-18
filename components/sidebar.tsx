@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-import { IconClose, IconEdit, IconLogout, IconPlus, IconTrash, IconUser } from "./icons";
+import { IconClose, IconEdit, IconLogout, IconPlus, IconSearch, IconTrash, IconUser } from "./icons";
 import { Wordmark } from "./logo";
 import type { Chat } from "@/lib/store";
 
@@ -50,7 +50,7 @@ function ChatRow({
       {active && (
         <motion.span
           layoutId="chat-active-bar"
-          className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-accent"
+          className="absolute left-0 top-1/2 h-4 w-[2px] -translate-y-1/2 rounded-r-full bg-accent"
           transition={{ type: "spring", stiffness: 500, damping: 34 }}
         />
       )}
@@ -70,8 +70,8 @@ function ChatRow({
       ) : (
         <button
           onClick={onSelect}
-          className={`flex w-full items-center gap-2 rounded-lg py-2 pl-3 pr-1 text-left text-[13px] transition-colors ${
-            active ? "bg-white/[0.06] text-white" : "text-muted hover:bg-white/[0.035] hover:text-fg"
+          className={`flex w-full items-center gap-2 rounded-lg py-[7px] pl-2.5 pr-1 text-left text-[12.5px] transition-colors ${
+            active ? "bg-white/[0.07] text-white" : "text-muted hover:bg-white/[0.04] hover:text-fg"
           }`}
         >
           <span className="truncate">{chat.title}</span>
@@ -135,14 +135,19 @@ export function Sidebar({
   onSignOut: () => void;
   user: { name: string; email: string; avatar: string } | null;
 }) {
-  /* agrupa por dia, como uma lista de conversas de verdade */
+  const [query, setQuery] = useState("");
+  const visible = query.trim()
+    ? chats.filter((c) => c.title.toLowerCase().includes(query.trim().toLowerCase()))
+    : chats;
+
+  /* group by day, like a real conversation list */
   const groups = (() => {
     const today: Chat[] = [];
     const week: Chat[] = [];
     const older: Chat[] = [];
     const day = 86_400_000;
     const now = Date.now();
-    for (const c of chats) {
+    for (const c of visible) {
       const age = now - new Date(c.updated_at).getTime();
       if (age < day) today.push(c);
       else if (age < 7 * day) week.push(c);
@@ -178,15 +183,28 @@ export function Sidebar({
             onNew();
             onClose();
           }}
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-white/[0.06] py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-white/[0.1]"
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium text-fg transition-colors hover:bg-white/[0.06]"
         >
-          <IconPlus size={15} />
+          <IconPlus size={16} className="text-muted" />
           New chat
         </motion.button>
       </div>
 
+      {/* search over the history */}
+      <div className="px-3 pb-1 pt-2">
+        <div className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[12.5px] text-subtle transition-colors focus-within:bg-white/[0.05] hover:bg-white/[0.04]">
+          <IconSearch size={13} />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search chats"
+            className="w-full bg-transparent text-fg outline-none placeholder:text-subtle"
+          />
+        </div>
+      </div>
+
       {/* histórico */}
-      <nav className="scroll-thin mt-3 flex-1 overflow-y-auto px-3 pb-3">
+      <nav className="scroll-thin mt-2 flex-1 overflow-y-auto px-3 pb-3">
         {groups.length === 0 ? (
           <motion.p
             initial={{ opacity: 0 }}
@@ -194,7 +212,7 @@ export function Sidebar({
             transition={{ delay: 0.2 }}
             className="px-3 pt-6 text-[12.5px] leading-relaxed text-subtle"
           >
-            Your chats will show up here.
+            {query ? "Nothing matches that." : "Your chats will show up here."}
           </motion.p>
         ) : (
           <AnimatePresence initial={false}>
@@ -207,7 +225,7 @@ export function Sidebar({
                 exit={{ opacity: 0, height: 0 }}
                 className="mb-3"
               >
-                <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-subtle/80">
+                <p className="px-2.5 pb-1 pt-1 text-[10.5px] font-medium uppercase tracking-[0.08em] text-subtle/70">
                   {g.label}
                 </p>
                 <div className="space-y-0.5">
@@ -233,8 +251,8 @@ export function Sidebar({
         )}
       </nav>
 
-      {/* rodapé */}
-      <div className="shrink-0 border-t border-border p-3">
+      {/* footer */}
+      <div className="shrink-0 border-t border-white/[0.06] p-2.5">
         {user ? (
           <div className="space-y-0.5">
             <button
@@ -285,7 +303,7 @@ export function Sidebar({
   return (
     <>
       {/* desktop: fixa */}
-      <aside className="hidden w-[272px] shrink-0 border-r border-border bg-dark md:block">{content}</aside>
+      <aside className="hidden w-[264px] shrink-0 border-r border-white/[0.06] bg-[#0d0d0d] md:block">{content}</aside>
 
       {/* mobile: gaveta */}
       <AnimatePresence>
@@ -300,11 +318,11 @@ export function Sidebar({
               className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm md:hidden"
             />
             <motion.aside
-              initial={{ x: -292 }}
+              initial={{ x: -284 }}
               animate={{ x: 0 }}
-              exit={{ x: -292 }}
+              exit={{ x: -284 }}
               transition={{ type: "spring", stiffness: 420, damping: 38 }}
-              className="fixed left-0 top-0 z-50 h-full w-[272px] border-r border-border bg-dark md:hidden"
+              className="fixed left-0 top-0 z-50 h-full w-[264px] border-r border-white/[0.06] bg-[#0d0d0d] md:hidden"
             >
               {content}
             </motion.aside>
