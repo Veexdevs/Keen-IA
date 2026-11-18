@@ -3,6 +3,7 @@
 import { memo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
+import { AttachmentGallery } from "./attachments";
 import { Markdown } from "./markdown";
 import { Logo } from "./logo";
 import {
@@ -14,9 +15,10 @@ import {
   IconSpeak,
   IconUser,
 } from "./icons";
+import type { Attachment } from "@/lib/attach";
 import type { Msg } from "@/lib/store";
 
-/* ── botão de ação ─────────────────────────────────────────────────────── */
+/* ── action button ─────────────────────────────────────────────────────── */
 
 function Action({
   label,
@@ -32,12 +34,12 @@ function Action({
   return (
     <motion.button
       whileHover={{ y: -1 }}
-      whileTap={{ scale: 0.94 }}
+      whileTap={{ scale: 0.92 }}
       onClick={onClick}
       title={label}
       aria-label={label}
-      className={`grid h-7 w-7 place-items-center rounded-md transition-colors ${
-        active ? "text-accent-light" : "text-subtle hover:bg-white/[0.07] hover:text-fg"
+      className={`grid h-6 w-6 place-items-center rounded-md transition-colors ${
+        active ? "text-accent-light" : "text-subtle hover:bg-white/[0.06] hover:text-fg"
       }`}
     >
       {children}
@@ -45,24 +47,24 @@ function Action({
   );
 }
 
-/* ── indicador de digitação ────────────────────────────────────────────── */
+/* ── typing dots ───────────────────────────────────────────────────────── */
 
 export function Typing() {
   return (
-    <span className="inline-flex items-center gap-1 py-0.5">
+    <span className="inline-flex items-center gap-[3px] py-1">
       {[0, 1, 2].map((i) => (
         <motion.span
           key={i}
-          className="h-1.5 w-1.5 rounded-full bg-accent-light"
-          animate={{ y: [0, -4, 0], opacity: [0.45, 1, 0.45] }}
-          transition={{ duration: 1, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" }}
+          className="h-[5px] w-[5px] rounded-full bg-accent-light"
+          animate={{ y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
+          transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.16, ease: "easeInOut" }}
         />
       ))}
     </span>
   );
 }
 
-/* ── uma mensagem ──────────────────────────────────────────────────────── */
+/* ── one message ───────────────────────────────────────────────────────── */
 
 export const Message = memo(function Message({
   msg,
@@ -70,6 +72,7 @@ export const Message = memo(function Message({
   onRegenerate,
   onEdit,
   onShare,
+  onOpenAttachment,
   isLast,
 }: {
   msg: Msg;
@@ -77,11 +80,13 @@ export const Message = memo(function Message({
   onRegenerate?: () => void;
   onEdit?: (text: string) => void;
   onShare?: () => void;
+  onOpenAttachment?: (a: Attachment) => void;
   isLast?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const isUser = msg.role === "user";
+  const files = msg.attachments ?? [];
 
   const copy = async () => {
     try {
@@ -89,7 +94,7 @@ export const Message = memo(function Message({
       setCopied(true);
       setTimeout(() => setCopied(false), 1600);
     } catch {
-      /* sem permissão para a área de transferência */
+      /* clipboard blocked */
     }
   };
 
@@ -113,42 +118,57 @@ export const Message = memo(function Message({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 14 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 380, damping: 32 }}
-      className={`group/msg relative flex gap-3 px-4 py-3 sm:px-6 ${
-        isUser ? "" : "border-l-2 border-accent/45"
+      transition={{ type: "spring", stiffness: 420, damping: 34 }}
+      className={`group/msg relative flex w-full gap-3 px-4 sm:px-0 ${
+        isUser ? "flex-row-reverse" : ""
       }`}
     >
-      {/* avatar */}
+      {/* avatar — the assistant keeps its mark, the user keeps a face */}
       <div className="mt-0.5 shrink-0">
         {isUser ? (
           avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatar} alt="" className="h-7 w-7 rounded-full object-cover" />
+            <img src={avatar} alt="" className="h-6 w-6 rounded-full object-cover ring-1 ring-white/10" />
           ) : (
-            <span className="grid h-7 w-7 place-items-center rounded-full bg-white/[0.07] text-muted">
-              <IconUser size={14} />
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-white/[0.08] text-muted">
+              <IconUser size={13} />
             </span>
           )
         ) : (
-          <span className="grid h-7 w-7 place-items-center rounded-full bg-accent/12">
-            <Logo size={15} />
+          <span className="grid h-6 w-6 place-items-center rounded-full bg-accent/12">
+            <Logo size={14} />
           </span>
         )}
       </div>
 
-      {/* conteúdo */}
-      <div className="min-w-0 flex-1">
-        <div className="mb-1 flex items-center gap-2">
-          <span className="text-[12.5px] font-semibold text-white">{isUser ? "You" : "Keew IA"}</span>
-        </div>
+      {/* body */}
+      <div className={`flex min-w-0 flex-1 flex-col ${isUser ? "items-end" : "items-start"}`}>
+        <span className="mb-1 text-[11.5px] font-semibold tracking-wide text-subtle">
+          {isUser ? "You" : "Keew IA"}
+        </span>
 
-        <div className="text-[14.5px] leading-relaxed text-[#d6d6d9]">
+        {/* attachments first: what you sent leads the message */}
+        {files.length > 0 && (
+          <div className={`w-full ${msg.content ? "mb-2" : ""} ${isUser ? "flex justify-end" : ""}`}>
+            <AttachmentGallery
+              items={files}
+              align={isUser ? "right" : "left"}
+              onOpen={(a) => onOpenAttachment?.(a)}
+            />
+          </div>
+        )}
+
+        <div
+          className={`w-full text-[14.5px] leading-[1.7] ${
+            isUser ? "text-[#e8e8ea] text-right" : "text-[#d2d2d6]"
+          }`}
+        >
           {msg.pending && !msg.content ? (
             <Typing />
           ) : isUser ? (
-            <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+            <p className="inline-block whitespace-pre-wrap break-words text-left">{msg.content}</p>
           ) : (
             <>
               <Markdown content={msg.content} />
@@ -161,33 +181,33 @@ export const Message = memo(function Message({
           )}
         </div>
 
-        {/* erro */}
+        {/* error */}
         <AnimatePresence>
           {msg.error && (
             <motion.p
-              initial={{ opacity: 0, y: -4 }}
+              initial={{ opacity: 0, y: -3 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="mt-2 rounded-lg bg-red-500/10 px-3 py-2 text-[12.5px] text-red-300"
+              className="mt-2 rounded-lg bg-red-500/10 px-2.5 py-1.5 text-[12px] text-red-300"
             >
               {msg.error}
             </motion.p>
           )}
         </AnimatePresence>
 
-        {/* fontes */}
+        {/* sources */}
         {!!msg.sources?.length && (
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
+          <div className={`mt-2 flex flex-wrap gap-1.5 ${isUser ? "justify-end" : ""}`}>
             {msg.sources.slice(0, 4).map((s, i) => (
               <motion.a
                 key={i}
                 href={s.url || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                initial={{ opacity: 0, y: 4 }}
+                initial={{ opacity: 0, y: 3 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="max-w-[220px] truncate rounded-md border border-border-strong bg-panel px-2 py-1 text-[11.5px] text-muted transition-colors hover:border-accent/40 hover:text-fg"
+                transition={{ delay: i * 0.04 }}
+                className="max-w-[200px] truncate rounded-md border border-border-strong bg-panel px-1.5 py-0.5 text-[11px] text-muted transition-colors hover:border-accent/40 hover:text-fg"
               >
                 {s.title}
               </motion.a>
@@ -195,11 +215,13 @@ export const Message = memo(function Message({
           </div>
         )}
 
-        {/* ações */}
-        {!msg.pending && (
+        {/* actions, revealed on hover like Arena and Claude */}
+        {!msg.pending && (msg.content || files.length > 0) && (
           <div
-            className={`mt-1.5 flex items-center gap-0.5 transition-opacity duration-200 ${
-              isUser ? "opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100" : "opacity-60 group-hover/msg:opacity-100"
+            className={`mt-1.5 flex items-center gap-0.5 transition-opacity duration-150 ${
+              isUser
+                ? "flex-row-reverse opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100"
+                : "opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100"
             }`}
           >
             <Action label={copied ? "Copied" : "Copy"} onClick={copy} active={copied}>
@@ -211,7 +233,7 @@ export const Message = memo(function Message({
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.6, opacity: 0 }}
                   >
-                    <IconCheck size={14} />
+                    <IconCheck size={13} />
                   </motion.span>
                 ) : (
                   <motion.span
@@ -220,7 +242,7 @@ export const Message = memo(function Message({
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.6, opacity: 0 }}
                   >
-                    <IconCopy size={14} />
+                    <IconCopy size={13} />
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -229,11 +251,11 @@ export const Message = memo(function Message({
             {!isUser && (
               <>
                 <Action label={speaking ? "Stop reading" : "Read aloud"} onClick={speak} active={speaking}>
-                  <IconSpeak size={14} />
+                  <IconSpeak size={13} />
                 </Action>
                 {isLast && onRegenerate && (
                   <Action label="Regenerate" onClick={onRegenerate}>
-                    <IconRefresh size={14} />
+                    <IconRefresh size={13} />
                   </Action>
                 )}
               </>
@@ -241,13 +263,13 @@ export const Message = memo(function Message({
 
             {isUser && onEdit && (
               <Action label="Edit" onClick={() => onEdit(msg.content)}>
-                <IconEdit size={14} />
+                <IconEdit size={13} />
               </Action>
             )}
 
             {onShare && (
               <Action label="Share" onClick={onShare}>
-                <IconShare size={14} />
+                <IconShare size={13} />
               </Action>
             )}
           </div>

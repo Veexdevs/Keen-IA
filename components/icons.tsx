@@ -149,3 +149,35 @@ export const IconChevron = ({ size = 16, className }: P) => (
     <path d="m8 10 4 4 4-4" />
   </svg>
 );
+
+export const IconArrowUp = ({ size = 17, className }: P) => (
+  <svg {...base(size, className)} strokeWidth={2}>
+    <path d="M12 19V5M6 11l6-6 6 6" />
+  </svg>
+);
+
+export const IconPlay = ({ size = 12, className }: P) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+    <path d="M8.5 5.6a1 1 0 0 1 1.52-.85l8.2 5.4a1.2 1.2 0 0 1 0 2.03l-8.2 5.4a1 1 0 0 1-1.52-.86Z" />
+  </svg>
+);
+
+export const IconFile = ({ size = 16, className }: P) => (
+  <svg {...base(size, className)}>
+    <path d="M13.5 3.5H7A2.5 2.5 0 0 0 4.5 6v12A2.5 2.5 0 0 0 7 20.5h10a2.5 2.5 0 0 0 2.5-2.5V9.5Z" />
+    <path d="M13.5 3.5v6h6" />
+  </svg>
+);
+
+export const IconChat = ({ size = 15, className }: P) => (
+  <svg {...base(size, className)}>
+    <path d="M20.5 11.5a7.6 7.6 0 0 1-8.2 7.6 8.7 8.7 0 0 1-2.8-.5L4.5 20.5l1.4-4.2a7.4 7.4 0 0 1-1-3.9A7.6 7.6 0 0 1 12 4.5a7.6 7.6 0 0 1 8.5 7Z" />
+  </svg>
+);
+
+export const IconSearch = ({ size = 15, className }: P) => (
+  <svg {...base(size, className)}>
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="m16 16 4 4" />
+  </svg>
+);

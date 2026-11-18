@@ -24,6 +24,7 @@ export type MessageRow = {
   role: "user" | "assistant";
   content: string;
   sources: unknown;
+  attachments: unknown;
   created_at: string;
 };
 
@@ -46,7 +47,7 @@ export type Database = {
       };
       messages: {
         Row: MessageRow;
-        Insert: Insert<MessageRow, "id" | "sources" | "created_at">;
+        Insert: Insert<MessageRow, "id" | "sources" | "attachments" | "created_at">;
         Update: Partial<MessageRow>;
         Relationships: [];
       };

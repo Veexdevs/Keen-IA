@@ -10,6 +10,7 @@
 import { create } from "zustand";
 import type { User } from "@supabase/supabase-js";
 
+import { persistable, type Attachment } from "./attach";
 import { isSupabaseConfigured, supabaseBrowser } from "./supabase/client";
 
 export type Role = "user" | "assistant";
@@ -21,6 +22,7 @@ export type Msg = {
   pending?: boolean;
   error?: string;
   sources?: { title: string; url?: string }[];
+  attachments?: Attachment[];
 };
 
 export type Chat = {
@@ -59,7 +61,7 @@ type State = {
   renameChat: (id: string, title: string) => Promise<void>;
   clearChat: () => Promise<void>;
 
-  send: (text: string) => Promise<void>;
+  send: (text: string, files?: Attachment[]) => Promise<void>;
   stop: () => void;
 };
 
@@ -200,7 +202,7 @@ export const useApp = create<State>()((set, get) => ({
 
     void sb
       .from("messages")
-      .select("id,role,content,sources,created_at")
+      .select("id,role,content,sources,attachments,created_at")
       .eq("chat_id", id)
       .order("created_at", { ascending: true })
       .then(({ data }) => {
@@ -215,6 +217,7 @@ export const useApp = create<State>()((set, get) => ({
                     role: m.role as Role,
                     content: m.content,
                     sources: (m.sources ?? []) as Msg["sources"],
+                    attachments: (m.attachments ?? []) as Attachment[],
                   })),
                 }
               : c,
@@ -260,12 +263,12 @@ export const useApp = create<State>()((set, get) => ({
 
   /* ── enviar ───────────────────────────────────────────────────────────── */
 
-  send: async (text) => {
+  send: async (text, files = []) => {
     const clean = text.trim();
     const { activeId, streaming } = get();
-    if (!clean || streaming) return;
+    if ((!clean && !files.length) || streaming) return;
 
-    // sem conversa aberta, cria uma na hora
+    // with no conversation open, create one on the spot
     if (!activeId) await get().newChat();
     const chatId = get().activeId;
     if (!chatId) return;
@@ -274,7 +277,21 @@ export const useApp = create<State>()((set, get) => ({
     const chat = chats.find((c) => c.id === chatId);
     if (!chat) return;
 
-    const userMsg: Msg = { id: uid(), role: "user", content: clean };
+    // what the engine reads: the text, then the files' contents
+    const readable = files.filter((f) => f.text);
+    const grounded = readable.length
+      ? `${clean}\n\n${readable
+          .map((f) => `--- ${f.name} ---\n${f.text!.slice(0, 8000)}`)
+          .join("\n\n")}`.trim()
+      : clean;
+
+    const title = clean || files[0]?.name || "New chat";
+    const userMsg: Msg = {
+      id: uid(),
+      role: "user",
+      content: clean,
+      attachments: files.length ? files.map(persistable) : undefined,
+    };
     const botId = uid();
     const history = [...chat.messages, userMsg];
     const isFirst = chat.messages.length === 0;
@@ -284,7 +301,7 @@ export const useApp = create<State>()((set, get) => ({
         c.id === chatId
           ? {
               ...c,
-              title: isFirst ? titleFrom(clean) : c.title,
+              title: isFirst ? titleFrom(title) : c.title,
               messages: [...history, { id: botId, role: "assistant" as Role, content: "", pending: true }],
             }
           : c,
@@ -293,11 +310,17 @@ export const useApp = create<State>()((set, get) => ({
       return { chats: next, streaming: true };
     });
 
-    // grava a pergunta e o título
+    // write the question, its files and the title
     const sb = supabaseBrowser();
     if (sb && user) {
-      if (isFirst) await sb.from("chats").update({ title: titleFrom(clean) }).eq("id", chatId);
-      await sb.from("messages").insert({ chat_id: chatId, user_id: user.id, role: "user", content: clean });
+      if (isFirst) await sb.from("chats").update({ title: titleFrom(title) }).eq("id", chatId);
+      await sb.from("messages").insert({
+        chat_id: chatId,
+        user_id: user.id,
+        role: "user",
+        content: clean,
+        attachments: files.length ? files.map(persistable) : [],
+      });
     }
 
     const patch = (fn: (m: Msg) => Msg) =>
@@ -307,6 +330,12 @@ export const useApp = create<State>()((set, get) => ({
         ),
       }));
 
+    // pictures and videos are read from what is already on screen
+    const visual = files
+      .filter((f) => f.kind === "image" || f.kind === "video")
+      .map((f) => `[Attached ${f.kind}: ${f.name}]`)
+      .join("\n");
+
     controller = new AbortController();
 
     try {
@@ -315,7 +344,10 @@ export const useApp = create<State>()((set, get) => ({
         headers: { "content-type": "application/json" },
         signal: controller.signal,
         body: JSON.stringify({
-          messages: history.map((m) => ({ role: m.role, content: m.content })),
+          messages: history.map((m) => ({
+            role: m.role,
+            content: m.id === userMsg.id ? [grounded, visual].filter(Boolean).join("\n\n") : m.content,
+          })),
         }),
       });
 
@@ -361,12 +393,16 @@ export const useApp = create<State>()((set, get) => ({
       const final = out || "I couldn't complete this answer.";
       patch((m) => ({ ...m, pending: false, content: final }));
 
-      // grava a resposta
       const sb2 = supabaseBrowser();
       if (sb2 && user) {
-        await sb2
-          .from("messages")
-          .insert({ chat_id: chatId, user_id: user.id, role: "assistant", content: final, sources: sources ?? [] });
+        await sb2.from("messages").insert({
+          chat_id: chatId,
+          user_id: user.id,
+          role: "assistant",
+          content: final,
+          sources: sources ?? [],
+          attachments: [],
+        });
       }
     } catch (err) {
       const aborted = (err as Error).name === "AbortError";
