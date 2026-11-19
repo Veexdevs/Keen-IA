@@ -108,8 +108,15 @@ jobs:
 
       - name: Projeto Android
         run: |
-          npx cap add android || true
+          mkdir -p www && printf '<!doctype html><meta http-equiv="refresh" content="0;url=https://keew-ia.vercel.app">' > www/index.html
+          npx cap add android
           npx cap sync android
+
+      - name: Ícone do app
+        working-directory: android
+        run: |
+          # the Android project ships a placeholder icon; put Keew's mark in
+          cp ../public/icons/app-icon-1024.png ../resources/icon.png 2>/dev/null || true
 
       - name: Gerar .apk
         working-directory: android
@@ -144,7 +151,8 @@ jobs:
 
       - name: Projeto iOS
         run: |
-          npx cap add ios || true
+          mkdir -p www && printf '<!doctype html><meta http-equiv="refresh" content="0;url=https://keew-ia.vercel.app">' > www/index.html
+          npx cap add ios
           npx cap sync ios
 
       - name: Compilar (sem assinatura)
