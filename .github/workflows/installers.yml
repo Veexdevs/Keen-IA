@@ -201,6 +201,7 @@ jobs:
         with:
           tag_name: installers
           name: Keew IA — instaladores
+          make_latest: "false"
           body: |
             Baixe o arquivo do seu sistema:
 

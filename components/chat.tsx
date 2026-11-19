@@ -47,6 +47,7 @@ export function Chat() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [viewing, setViewing] = useState<Attachment | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const stream = useRef<HTMLDivElement>(null);
 
@@ -55,6 +56,13 @@ export function Chat() {
     hydrateLocale();
     void init();
   }, [hydratePrefs, hydrateLocale, init]);
+
+  /* a failed sign-in comes back in the URL; show it, then clean the address */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("auth") !== "error") return;
+    setAuthError(params.get("reason") || "unknown");
+  }, []);
 
   const chat = useMemo(() => chats.find((c) => c.id === activeId) ?? null, [chats, activeId]);
   const messages = chat?.messages ?? [];
@@ -270,6 +278,38 @@ export function Chat() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* /auth/callback sends people back with ?auth=error&reason=… — without
+          this the round-trip failed silently and the screen just looked
+          logged out with no explanation */}
+      <AnimatePresence>
+        {authError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="fixed left-1/2 top-4 z-[60] w-[min(92vw,460px)] -translate-x-1/2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-[12.5px] leading-relaxed text-red-200 shadow-xl backdrop-blur-md"
+            role="alert"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <span>{t("login.errCallback", { reason: authError })}</span>
+              <button
+                onClick={() => {
+                  setAuthError(null);
+                  const url = new URL(window.location.href);
+                  url.searchParams.delete("auth");
+                  url.searchParams.delete("reason");
+                  window.history.replaceState({}, "", url);
+                }}
+                className="shrink-0 rounded-md px-1.5 text-red-300/70 hover:text-red-100"
+                aria-label={t("common.close")}
+              >
+                ×
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <Viewer item={viewing} onClose={() => setViewing(null)} />
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />

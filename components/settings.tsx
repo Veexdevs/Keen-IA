@@ -939,38 +939,16 @@ function AboutTab() {
         </ul>
       </div>
 
-      {/* installers — the honest version: the browser can install it now,
-          the native files come from the release the CI builds */}
-      <div className="rounded-xl border border-border bg-panel p-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-subtle">
-          {tt("about.install")}
-        </p>
-        <p className="mt-1.5">{tt("about.installHint")}</p>
-
-        <div className="mt-3 grid grid-cols-2 gap-1.5">
-          {[
-            { label: "Android", ext: ".apk" },
-            { label: "iOS", ext: ".ipa" },
-            { label: "Windows", ext: ".exe" },
-            { label: "Linux", ext: "AppImage" },
-          ].map((t) => (
-            <a
-              key={t.label}
-              href="https://github.com/Veexdevs/Keew-IA/releases/tag/installers"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center justify-between gap-2 rounded-lg border border-border bg-raised/60 px-2.5 py-2 text-[12px] text-fg transition-colors hover:border-border-strong hover:bg-hover"
-            >
-              <span className="truncate font-medium">{t.label}</span>
-              <span className="shrink-0 text-[10.5px] text-subtle">{t.ext}</span>
-            </a>
-          ))}
-        </div>
-
-        <p className="mt-2.5 text-[11px] leading-relaxed text-subtle">
-          {tt("about.installNote")}
-        </p>
-      </div>
+      {/* the installers live on their own site now — one line, no panel */}
+      <a
+        href="https://keew-get.vercel.app"
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center justify-between gap-2 rounded-xl border border-border bg-panel px-4 py-3 text-[12.5px] text-fg transition-colors hover:border-border-strong hover:bg-hover"
+      >
+        <span className="font-medium">{tt("about.getApps")}</span>
+        <IconDownload size={14} className="shrink-0 text-subtle" />
+      </a>
 
       <p className="text-[11px] text-subtle">
         {tt("about.version")}
