@@ -16,6 +16,7 @@ create table if not exists public.profiles (
   email       text,
   display_name text,
   avatar_url  text,
+  prefs       jsonb not null default '{}'::jsonb,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );

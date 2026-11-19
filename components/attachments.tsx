@@ -201,7 +201,7 @@ export function AttachmentGallery({
             align === "right" ? "ml-auto" : ""
           }`}
         >
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/[0.06] text-muted">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-hover text-muted">
             <IconFile size={15} />
           </span>
           <span className="min-w-0 flex-1">

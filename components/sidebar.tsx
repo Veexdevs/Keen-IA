@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-import { IconClose, IconEdit, IconLogout, IconPlus, IconSearch, IconTrash, IconUser } from "./icons";
+import { IconClose, IconEdit, IconLogout, IconPlus, IconSearch, IconSliders, IconTrash, IconUser } from "./icons";
 import { Wordmark } from "./logo";
+import { usePrefs } from "@/lib/settings";
 import type { Chat } from "@/lib/store";
 
 /* ── uma conversa na lista ─────────────────────────────────────────────── */
@@ -71,7 +72,7 @@ function ChatRow({
         <button
           onClick={onSelect}
           className={`flex w-full items-center gap-2 rounded-lg py-[7px] pl-2.5 pr-1 text-left text-[12.5px] transition-colors ${
-            active ? "bg-white/[0.07] text-white" : "text-muted hover:bg-white/[0.04] hover:text-fg"
+            active ? "bg-hover-strong text-fg" : "text-muted hover:bg-hover hover:text-fg"
           }`}
         >
           <span className="truncate">{chat.title}</span>
@@ -85,7 +86,7 @@ function ChatRow({
               e.stopPropagation();
               setEditing(true);
             }}
-            className="grid h-6 w-6 place-items-center rounded text-subtle transition-colors hover:bg-white/10 hover:text-fg"
+            className="grid h-6 w-6 place-items-center rounded text-subtle transition-colors hover:bg-hover-strong hover:text-fg"
             aria-label="Rename chat"
           >
             <IconEdit size={13} />
@@ -119,6 +120,7 @@ export function Sidebar({
   onDelete,
   onLogin,
   onProfile,
+  onSettings,
   onSignOut,
   user,
 }: {
@@ -132,10 +134,13 @@ export function Sidebar({
   onDelete: (id: string) => void;
   onLogin: () => void;
   onProfile: () => void;
+  onSettings: () => void;
   onSignOut: () => void;
   user: { name: string; email: string; avatar: string } | null;
 }) {
   const [query, setQuery] = useState("");
+  const prefs = usePrefs((s) => s.prefs);
+  const setPref = usePrefs((s) => s.set);
   const visible = query.trim()
     ? chats.filter((c) => c.title.toLowerCase().includes(query.trim().toLowerCase()))
     : chats;
@@ -167,7 +172,7 @@ export function Sidebar({
         <Wordmark size={22} />
         <button
           onClick={onClose}
-          className="grid h-8 w-8 place-items-center rounded-lg text-subtle transition-colors hover:bg-white/5 hover:text-fg md:hidden"
+          className="grid h-8 w-8 place-items-center rounded-lg text-subtle transition-colors hover:bg-hover hover:text-fg md:hidden"
           aria-label="Close menu"
         >
           <IconClose size={17} />
@@ -183,7 +188,7 @@ export function Sidebar({
             onNew();
             onClose();
           }}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium text-fg transition-colors hover:bg-white/[0.06]"
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium text-fg transition-colors hover:bg-hover"
         >
           <IconPlus size={16} className="text-muted" />
           New chat
@@ -192,7 +197,7 @@ export function Sidebar({
 
       {/* search over the history */}
       <div className="px-3 pb-1 pt-2">
-        <div className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[12.5px] text-subtle transition-colors focus-within:bg-white/[0.05] hover:bg-white/[0.04]">
+        <div className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[12.5px] text-subtle transition-colors focus-within:bg-hover hover:bg-hover">
           <IconSearch size={13} />
           <input
             value={query}
@@ -252,7 +257,44 @@ export function Sidebar({
       </nav>
 
       {/* footer */}
-      <div className="shrink-0 border-t border-white/[0.06] p-2.5">
+      <div className="shrink-0 border-t border-border p-2.5">
+        {/* settings + quick theme */}
+        <div className="mb-1 flex items-center gap-1">
+          <button
+            onClick={() => {
+              onSettings();
+              onClose();
+            }}
+            className="flex flex-1 items-center gap-2.5 rounded-lg px-2 py-1.5 text-[12.5px] text-muted transition-colors hover:bg-hover hover:text-fg"
+          >
+            <IconSliders size={14} />
+            Settings
+          </button>
+
+          <div className="flex items-center gap-0.5 rounded-lg bg-hover p-0.5">
+            {([
+              { id: "light", label: "Light", swatch: "#fbfaf7" },
+              { id: "dark", label: "Dark", swatch: "#0a0a0a" },
+              { id: "gray", label: "Gray", swatch: "#1a1a1c" },
+            ] as const).map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setPref("theme", t.id)}
+                title={`${t.label} theme`}
+                aria-label={`${t.label} theme`}
+                className={`grid h-5 w-5 place-items-center rounded-md transition-transform hover:scale-110 ${
+                  prefs.theme === t.id ? "ring-1 ring-accent" : ""
+                }`}
+              >
+                <span
+                  className="h-3 w-3 rounded-full border border-border-strong"
+                  style={{ background: t.swatch }}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+
         {user ? (
           <div className="space-y-0.5">
             <button
@@ -260,7 +302,7 @@ export function Sidebar({
                 onProfile();
                 onClose();
               }}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-white/[0.05]"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-hover"
             >
               {user.avatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -277,7 +319,7 @@ export function Sidebar({
             </button>
             <button
               onClick={onSignOut}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-[12.5px] text-subtle transition-colors hover:bg-white/[0.04] hover:text-fg"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-[12.5px] text-subtle transition-colors hover:bg-hover hover:text-fg"
             >
               <IconLogout size={14} />
               Sign out
@@ -303,7 +345,7 @@ export function Sidebar({
   return (
     <>
       {/* desktop: fixa */}
-      <aside className="hidden w-[264px] shrink-0 border-r border-white/[0.06] bg-[#0d0d0d] md:block">{content}</aside>
+      <aside className="hidden w-[264px] shrink-0 border-r border-border bg-[var(--sidebar)] md:block">{content}</aside>
 
       {/* mobile: gaveta */}
       <AnimatePresence>
@@ -322,7 +364,7 @@ export function Sidebar({
               animate={{ x: 0 }}
               exit={{ x: -284 }}
               transition={{ type: "spring", stiffness: 420, damping: 38 }}
-              className="fixed left-0 top-0 z-50 h-full w-[264px] border-r border-white/[0.06] bg-[#0d0d0d] md:hidden"
+              className="fixed left-0 top-0 z-50 h-full w-[264px] border-r border-border bg-[var(--sidebar)] md:hidden"
             >
               {content}
             </motion.aside>

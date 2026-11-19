@@ -5,13 +5,15 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import { Composer } from "./composer";
 import { Viewer } from "./attachments";
-import { IconMenu, IconTrash } from "./icons";
+import { IconMenu, IconSliders, IconTrash } from "./icons";
 import { Wordmark } from "./logo";
 import { Message } from "./message";
 import { LoginModal, ProfileModal } from "./modals";
+import { SettingsSheet } from "./settings";
 import { Sidebar } from "./sidebar";
 import { Welcome } from "./welcome";
 import type { Attachment } from "@/lib/attach";
+import { usePrefs } from "@/lib/settings";
 import { useApp } from "@/lib/store";
 
 export function Chat() {
@@ -34,26 +36,30 @@ export function Chat() {
     saveProfile,
   } = useApp();
 
+  const hydratePrefs = usePrefs((s) => s.hydrate);
+
   const [drawer, setDrawer] = useState(false);
   const [login, setLogin] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [viewing, setViewing] = useState<Attachment | null>(null);
   const [draft, setDraft] = useState("");
   const stream = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    hydratePrefs();
     void init();
-  }, [init]);
+  }, [hydratePrefs, init]);
 
   const chat = useMemo(() => chats.find((c) => c.id === activeId) ?? null, [chats, activeId]);
   const messages = chat?.messages ?? [];
   const showWelcome = messages.length === 0;
 
-  /* follow the answer while it streams, but never fight the reader */
+  /* follow the answer while it streams, without fighting someone scrolling up */
   useEffect(() => {
     const el = stream.current;
     if (!el) return;
-    const near = el.scrollHeight - el.scrollTop - el.clientHeight < 240;
+    const near = el.scrollHeight - el.scrollTop - el.clientHeight < 260;
     if (!near) return;
     el.scrollTo({ top: el.scrollHeight, behavior: streaming ? "auto" : "smooth" });
   }, [messages, streaming]);
@@ -93,6 +99,7 @@ export function Chat() {
         onDelete={deleteChat}
         onLogin={() => setLogin(true)}
         onProfile={() => setProfileOpen(true)}
+        onSettings={() => setSettingsOpen(true)}
         onSignOut={() => void signOut()}
         user={
           user
@@ -106,12 +113,12 @@ export function Chat() {
       />
 
       <div className="relative flex min-w-0 flex-1 flex-col">
-        {/* header — almost invisible, like a reading surface */}
-        <header className="flex h-14 shrink-0 items-center justify-between gap-3 px-3 sm:px-5">
+        {/* header */}
+        <header className="flex h-13 shrink-0 items-center justify-between gap-3 px-3 py-2 sm:px-5">
           <div className="flex min-w-0 items-center gap-2">
             <button
               onClick={() => setDrawer(true)}
-              className="grid h-8 w-8 place-items-center rounded-lg text-muted transition-colors hover:bg-white/[0.06] hover:text-fg md:hidden"
+              className="grid h-8 w-8 place-items-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-fg md:hidden"
               aria-label="Open menu"
             >
               <IconMenu size={18} />
@@ -143,25 +150,37 @@ export function Chat() {
             </AnimatePresence>
           </div>
 
-          <AnimatePresence>
-            {!showWelcome && (
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => void clearChat()}
-                className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-subtle transition-colors hover:bg-white/[0.05] hover:text-fg"
-              >
-                <IconTrash size={13} />
-                <span className="hidden sm:inline">Clear</span>
-              </motion.button>
-            )}
-          </AnimatePresence>
+          <div className="flex shrink-0 items-center gap-0.5">
+            <AnimatePresence>
+              {!showWelcome && (
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => void clearChat()}
+                  className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-subtle transition-colors hover:bg-hover hover:text-fg"
+                >
+                  <IconTrash size={13} />
+                  <span className="hidden sm:inline">Clear</span>
+                </motion.button>
+              )}
+            </AnimatePresence>
+
+            <motion.button
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.94 }}
+              onClick={() => setSettingsOpen(true)}
+              className="grid h-8 w-8 place-items-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-fg"
+              aria-label="Settings"
+              title="Settings"
+            >
+              <IconSliders size={16} />
+            </motion.button>
+          </div>
         </header>
 
-        {/* the stream */}
+        {/* the stream — ends where the composer begins */}
         <div ref={stream} className="scroll-thin flex-1 overflow-y-auto overscroll-contain">
           <AnimatePresence mode="wait" initial={false}>
             {showWelcome ? (
@@ -180,7 +199,7 @@ export function Chat() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.18 }}
-                className="mx-auto w-full max-w-[760px] space-y-6 px-4 pb-4 pt-2 sm:px-0"
+                className="mx-auto w-full max-w-[760px] space-y-5 px-4 pb-2 pt-1 sm:px-0"
               >
                 {messages.map((m, i) => (
                   <Message
@@ -212,12 +231,15 @@ export function Chat() {
           </AnimatePresence>
         </div>
 
-        <Composer
-          onSend={submit}
-          streaming={streaming}
-          onStop={stop}
-          placeholder={showWelcome ? "How can I help today?" : "Reply to Keew"}
-        />
+        {/* composer sits right under the last message */}
+        <div className="shrink-0 px-0">
+          <Composer
+            onSend={submit}
+            streaming={streaming}
+            onStop={stop}
+            placeholder={showWelcome ? "How can I help today?" : "Reply to Keew"}
+          />
+        </div>
 
         {/* editing an earlier message */}
         <AnimatePresence>
@@ -226,7 +248,7 @@ export function Chat() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 8 }}
-              className="absolute bottom-24 left-1/2 w-full max-w-[760px] -translate-x-1/2 px-4 sm:px-0"
+              className="absolute bottom-20 left-1/2 w-full max-w-[760px] -translate-x-1/2 px-4 sm:px-0"
             >
               <div className="flex items-center gap-2 rounded-xl border border-accent/35 bg-panel px-3 py-2 shadow-xl">
                 <span className="min-w-0 flex-1 truncate text-[12px] text-muted">
@@ -245,6 +267,7 @@ export function Chat() {
       </div>
 
       <Viewer item={viewing} onClose={() => setViewing(null)} />
+      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       <LoginModal open={login} onClose={() => setLogin(false)} />
       <ProfileModal

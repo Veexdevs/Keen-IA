@@ -39,7 +39,7 @@ function Action({
       title={label}
       aria-label={label}
       className={`grid h-6 w-6 place-items-center rounded-md transition-colors ${
-        active ? "text-accent-light" : "text-subtle hover:bg-white/[0.06] hover:text-fg"
+        active ? "text-accent-light" : "text-subtle hover:bg-hover hover:text-fg"
       }`}
     >
       {children}
@@ -132,7 +132,7 @@ export const Message = memo(function Message({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={avatar} alt="" className="h-6 w-6 rounded-full object-cover ring-1 ring-white/10" />
           ) : (
-            <span className="grid h-6 w-6 place-items-center rounded-full bg-white/[0.08] text-muted">
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-hover text-muted">
               <IconUser size={13} />
             </span>
           )
@@ -145,8 +145,14 @@ export const Message = memo(function Message({
 
       {/* body */}
       <div className={`flex min-w-0 flex-1 flex-col ${isUser ? "items-end" : "items-start"}`}>
-        <span className="mb-1 text-[11.5px] font-semibold tracking-wide text-subtle">
+        <span className="mb-1 flex items-center gap-1.5 text-[11.5px] font-semibold tracking-wide text-subtle">
           {isUser ? "You" : "Keew IA"}
+          {!isUser && msg.live && (
+            <span className="flex items-center gap-1 rounded-full bg-emerald-500/12 px-1.5 py-px text-[9.5px] font-semibold uppercase tracking-wider text-emerald-400">
+              <span className="h-1 w-1 rounded-full bg-emerald-400" />
+              live · {msg.live}
+            </span>
+          )}
         </span>
 
         {/* attachments first: what you sent leads the message */}
@@ -162,7 +168,7 @@ export const Message = memo(function Message({
 
         <div
           className={`w-full text-[14.5px] leading-[1.7] ${
-            isUser ? "text-[#e8e8ea] text-right" : "text-[#d2d2d6]"
+            isUser ? "text-[var(--user-text)] text-right" : "text-[var(--body-text)]"
           }`}
         >
           {msg.pending && !msg.content ? (

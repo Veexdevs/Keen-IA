@@ -52,7 +52,15 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={GeistMono.variable} style={{ colorScheme: "dark" }}>
-      <body className="min-h-screen bg-bg text-fg antialiased">{children}</body>
+      <body className="min-h-screen bg-bg text-fg antialiased">
+        {/* applies the saved theme before the first paint, so nothing flashes */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var p=JSON.parse(localStorage.getItem("keew-ia-prefs-v1")||"{}");var r=document.documentElement;r.dataset.theme=p.theme||"dark";r.dataset.density=p.density||"comfortable";r.dataset.motion=p.motion||"full";if(p.textScale)r.style.fontSize=(16*p.textScale)+"px";}catch(e){}})();`,
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }

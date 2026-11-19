@@ -147,7 +147,7 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
       const { data, error } = await sb.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/` },
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
       });
       setBusy(false);
       if (error) {
@@ -175,14 +175,37 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
       setMsg({ kind: "error", text: "Accounts are not set up on this deployment." });
       return;
     }
+    if (busy) return;
+
     setBusy(true);
-    const { error } = await sb.auth.signInWithOAuth({
+    setMsg(null);
+
+    const redirectTo = `${window.location.origin}/auth/callback`;
+
+    const { data, error } = await sb.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/` },
+      options: {
+        redirectTo,
+        queryParams: { access_type: "offline", prompt: "consent" },
+      },
     });
+
+    // on success the browser leaves for Google, so we only get here on failure
     if (error) {
       setBusy(false);
-      setMsg({ kind: "error", text: "Google sign-in isn't available right now." });
+      const m = error.message.toLowerCase();
+      const text = m.includes("not enabled") || m.includes("provider")
+        ? "Google sign-in is not enabled for this project yet. In Supabase → Authentication → Providers, turn on Google and paste the client ID and secret."
+        : m.includes("redirect") || m.includes("url")
+          ? `This address is not in Supabase's allowed redirect list. Add ${redirectTo} in Authentication → URL configuration.`
+          : "Google sign-in could not start. Try again, or use email and password.";
+      setMsg({ kind: "error", text });
+      return;
+    }
+
+    if (!data?.url) {
+      setBusy(false);
+      setMsg({ kind: "error", text: "Google sign-in did not return a URL. Check the provider setup in Supabase." });
     }
   };
 
@@ -286,6 +309,10 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
           <IconGoogle />
           Continue with Google
         </motion.button>
+
+        <p className="mt-2.5 text-center text-[10.5px] leading-relaxed text-subtle">
+          Google sign-in opens Google in this tab and returns you here.
+        </p>
 
         <p className="mt-5 text-center text-[13px] text-muted">
           {mode === "signin" ? "New here? " : "Already have an account? "}

@@ -5,6 +5,7 @@ export type ProfileRow = {
   email: string | null;
   display_name: string | null;
   avatar_url: string | null;
+  prefs: unknown;
   created_at: string;
   updated_at: string;
 };
@@ -35,7 +36,7 @@ export type Database = {
     Tables: {
       profiles: {
         Row: ProfileRow;
-        Insert: Insert<ProfileRow, "created_at" | "updated_at" | "email" | "display_name" | "avatar_url">;
+        Insert: Insert<ProfileRow, "created_at" | "updated_at" | "email" | "display_name" | "avatar_url" | "prefs">;
         Update: Partial<ProfileRow>;
         Relationships: [];
       };

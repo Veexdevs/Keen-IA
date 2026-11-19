@@ -791,6 +791,16 @@ export function trySocial(text: string): EngineResult | null {
     };
   }
 
+  // "what is the exchange rate" or "weather in Tokyo" is a connector question,
+  // not a request to know what Keew is — never answer those with the identity blurb
+  if (
+    /\b(weather|temperature|forecast|exchange rate|currency|convert .* (usd|eur|brl|gbp)|who is |what is the .* rate)\b/i.test(
+      text,
+    )
+  ) {
+    return null;
+  }
+
   if (
     /(what can you do|your (capabilities|skills)|available commands|help me understand you)/.test(t) ||
     (covers(t, "help") && t.split(" ").length <= 3) ||
@@ -812,6 +822,9 @@ export function trySocial(text: string): EngineResult | null {
         "| paste a text and say `summarize` | extractive summary with keywords |\n" +
         "| `slug of Café com Leite` · `encode in base64: keew` · `validate this json` | text transforms |\n" +
         "| `who is Keew IA` · questions about your documents | knowledge base |\n\n" +
+        "**Connectors** are separate: open Settings → Connectors to switch on Weather, " +
+        "Exchange rates, Wikipedia, Hacker News, and your GitHub, Vercel or Supabase account. " +
+        "Once on, they answer live inside this chat.\n\n" +
         "**Everything else** needs a language engine connected to the app.",
     };
   }
