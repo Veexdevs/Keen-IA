@@ -11,6 +11,7 @@ import { create } from "zustand";
 import type { User } from "@supabase/supabase-js";
 
 import { persistable, type Attachment } from "./attach";
+import { answerWithConnector, loadConnectorStates, ownerFromEmail, readField, type ConnectorState } from "./connectors";
 import { isSupabaseConfigured, supabaseBrowser } from "./supabase/client";
 
 export type Role = "user" | "assistant";
@@ -23,6 +24,8 @@ export type Msg = {
   error?: string;
   sources?: { title: string; url?: string }[];
   attachments?: Attachment[];
+  /** answered with live data from a connector */
+  live?: string;
 };
 
 export type Chat = {
@@ -60,6 +63,8 @@ type State = {
   deleteChat: (id: string) => Promise<void>;
   renameChat: (id: string, title: string) => Promise<void>;
   clearChat: () => Promise<void>;
+  clearChats: () => Promise<void>;
+  loadConnectorKey: (id: "github" | "vercel", field: string) => Promise<string | null>;
 
   send: (text: string, files?: Attachment[]) => Promise<void>;
   stop: () => void;
@@ -261,6 +266,22 @@ export const useApp = create<State>()((set, get) => ({
     });
   },
 
+  loadConnectorKey: async (id, field) => {
+    const owner = ownerFromEmail(get().user?.email);
+    return readField(id, field, owner);
+  },
+
+  clearChats: async () => {
+    const sb = supabaseBrowser();
+    if (sb && get().user) {
+      await sb.from("chats").delete().eq("user_id", get().user!.id);
+    }
+    set((s) => {
+      if (s.dbEnabled === false) saveGuest([]);
+      return { chats: [], activeId: null };
+    });
+  },
+
   /* ── enviar ───────────────────────────────────────────────────────────── */
 
   send: async (text, files = []) => {
@@ -339,6 +360,39 @@ export const useApp = create<State>()((set, get) => ({
     controller = new AbortController();
 
     try {
+      // ── 0 · a connector may answer this with live data ──────────────────
+      const states: Record<string, ConnectorState> = loadConnectorStates();
+      if (Object.values(states).some((c) => c.on)) {
+        try {
+          const live = await answerWithConnector(grounded, states);
+          if (live) {
+            // reveal it progressively, so it reads like an answer and not a paste
+            const text = live.answer;
+            for (let i = 0; i < text.length; i += 28) {
+              const slice = text.slice(0, i + 28);
+              patch((m) => ({ ...m, content: slice, live: live.source }));
+              await new Promise((r) => setTimeout(r, 6));
+            }
+            patch((m) => ({ ...m, pending: false, content: text, live: live.source }));
+
+            const sbLive = supabaseBrowser();
+            if (sbLive && user) {
+              await sbLive.from("messages").insert({
+                chat_id: chatId,
+                user_id: user.id,
+                role: "assistant",
+                content: text,
+                sources: live.source ? [{ title: live.source, kind: "connector" }] : [],
+                attachments: [],
+              });
+            }
+            return;
+          }
+        } catch {
+          // a broken connector must never block the normal path
+        }
+      }
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
