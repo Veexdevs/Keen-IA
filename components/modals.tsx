@@ -113,6 +113,25 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
     return () => clearTimeout(t);
   }, [open, mode]);
 
+  /* Which error code each failure maps to, in the person's language. */
+  const say = (code: string) => {
+    const map: Record<string, Parameters<typeof t>[0]> = {
+      "wrong-credentials": "login.errWrong",
+      invalid: "login.errWrong",
+      "invalid-email": "login.errEmail",
+      "weak-password": "login.errPw",
+      "long-password": "login.errPw",
+      exists: "login.errExists",
+      unconfirmed: "login.errUnconfirmed",
+      "rate-limited": "login.errRate",
+      unavailable: "login.errUnavailable",
+      "no-session": "login.errSignIn",
+      "no-database": "login.errNoDb",
+      "no-admin-key": "login.errNoDb",
+    };
+    setMsg({ kind: "error", text: t(map[code] ?? "login.errSignIn") });
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const sb = supabaseBrowser();
@@ -132,43 +151,77 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
     setBusy(true);
     setMsg(null);
 
-    if (mode === "signin") {
-      const { error } = await sb.auth.signInWithPassword({ email, password });
-      setBusy(false);
-      if (error) {
-        setMsg({
-          kind: "error",
-          text: error.message.includes("Invalid login")
-            ? t("login.errWrong")
-            : t("login.errSignIn"),
+    try {
+      if (mode === "signup") {
+        /*
+         * The account is created by our own route, which uses the admin API
+         * instead of GoTrue's mailer. GoTrue sends a confirmation e-mail on
+         * every signup, and on the free plan that mailer allows two an hour
+         * for the whole project — the third person to sign up was getting an
+         * error and no account. Confirmation is off here anyway, so that mail
+         * was pure waste.
+         */
+        const res = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, name: email.split("@")[0] }),
         });
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+
+        if (!res.ok) {
+          setBusy(false);
+          say(body.error ?? "unknown");
+          return;
+        }
+
+        /* created and confirmed — sign straight in, no detour through e-mail */
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        setBusy(false);
+        if (error) {
+          setMsg({ kind: "error", text: t("login.errSignIn") });
+          setMode("signin");
+          return;
+        }
+        onClose();
+        window.location.reload();
         return;
       }
-      onClose();
-      window.location.reload();
-    } else {
-      const { data, error } = await sb.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+
+      /* sign in: our route, so a paused project and a wrong password do not
+         look the same */
+      const res = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const body = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        session?: { access_token: string; refresh_token: string };
+      };
+
+      if (!res.ok || !body.session) {
+        setBusy(false);
+        say(body.error ?? "unknown");
+        return;
+      }
+
+      /* hand the session to the browser client so @supabase/ssr writes the
+         same cookies the server reads */
+      const { error } = await sb.auth.setSession({
+        access_token: body.session.access_token,
+        refresh_token: body.session.refresh_token,
       });
       setBusy(false);
       if (error) {
-        setMsg({
-          kind: "error",
-          text: error.message.includes("already registered")
-            ? t("login.errExists")
-            : t("login.errSignUp"),
-        });
+        setMsg({ kind: "error", text: t("login.errSignIn") });
         return;
       }
-      if (data.session) {
-        onClose();
-        window.location.reload();
-      } else {
-        setMsg({ kind: "ok", text: t("login.okConfirm") });
-        setMode("signin");
-      }
+
+      onClose();
+      window.location.reload();
+    } catch {
+      setBusy(false);
+      setMsg({ kind: "error", text: t("login.errUnavailable") });
     }
   };
 

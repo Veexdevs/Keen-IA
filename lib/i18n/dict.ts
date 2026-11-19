@@ -160,6 +160,11 @@ export const en = {
   "about.install": "Install Keew",
   "about.installHint": "Keew opens as an app on Android and iPhone straight from the browser — no store needed. The native files below come from the build pipeline.",
   "about.installNote": "The native installers are built by GitHub Actions. Without a paid signing certificate, Windows shows a SmartScreen warning and macOS needs ”Open anyway” once.",
+  "login.errUnconfirmed": "This account still needs an e-mail confirmation. Ask an admin to confirm it, or create the account again.",
+  "login.errRate": "Too many attempts. Wait a minute and try again.",
+  "login.errUnavailable": "Could not reach the server. Check the connection and try again.",
+  "login.errCallback": "Sign-in did not finish ({reason}). Try again.",
+  "about.getApps": "Get the apps",
 } as const;
 
 export type Key = keyof typeof en;
@@ -316,6 +321,11 @@ export const ptBR: Dict = {
   "about.install": "Instalar a Keew",
   "about.installHint": "A Keew abre como app no Android e no iPhone direto do navegador — sem loja. Os arquivos nativos abaixo vêm da esteira de build.",
   "about.installNote": "Os instaladores nativos são gerados pelo GitHub Actions. Sem certificado de assinatura pago, o Windows mostra o aviso do SmartScreen e o macOS pede ”Abrir mesmo assim” uma vez.",
+  "login.errUnconfirmed": "Esta conta ainda precisa de confirmação por e-mail. Peça a um administrador para confirmar, ou crie a conta de novo.",
+  "login.errRate": "Muitas tentativas. Espere um minuto e tente de novo.",
+  "login.errUnavailable": "Não foi possível falar com o servidor. Verifique a conexão e tente de novo.",
+  "login.errCallback": "O login não foi concluído ({reason}). Tente de novo.",
+  "about.getApps": "Baixar os aplicativos",
 };
 
 export const es: Dict = {
@@ -469,6 +479,11 @@ export const es: Dict = {
   "about.install": "Instalar Keew",
   "about.installHint": "Keew se abre como app en Android y iPhone directo desde el navegador, sin tienda. Los archivos nativos de abajo vienen de la compilación.",
   "about.installNote": "Los instaladores nativos los genera GitHub Actions. Sin un certificado de firma de pago, Windows muestra el aviso de SmartScreen y macOS pide «Abrir igualmente» una vez.",
+  "login.errUnconfirmed": "Esta cuenta aún necesita confirmación por correo. Pide a un administrador que la confirme o crea la cuenta de nuevo.",
+  "login.errRate": "Demasiados intentos. Espera un minuto y vuelve a intentarlo.",
+  "login.errUnavailable": "No se pudo contactar con el servidor. Revisa la conexión e inténtalo de nuevo.",
+  "login.errCallback": "El inicio de sesión no se completó ({reason}). Inténtalo de nuevo.",
+  "about.getApps": "Descargar las apps",
 };
 
 export const fr: Dict = {
@@ -622,6 +637,11 @@ export const fr: Dict = {
   "about.install": "Installer Keew",
   "about.installHint": "Keew s'ouvre comme une application sur Android et iPhone directement depuis le navigateur, sans store. Les fichiers natifs ci-dessous viennent de la compilation.",
   "about.installNote": "Les installateurs natifs sont produits par GitHub Actions. Sans certificat de signature payant, Windows affiche l'avertissement SmartScreen et macOS demande « Ouvrir quand même » une fois.",
+  "login.errUnconfirmed": "Ce compte attend encore une confirmation par e-mail. Demandez à un administrateur de le confirmer, ou recréez le compte.",
+  "login.errRate": "Trop de tentatives. Attendez une minute et réessayez.",
+  "login.errUnavailable": "Impossible de joindre le serveur. Vérifiez la connexion et réessayez.",
+  "login.errCallback": "La connexion ne s'est pas terminée ({reason}). Réessayez.",
+  "about.getApps": "Télécharger les applications",
 };
 
 export const de: Dict = {
@@ -775,6 +795,11 @@ export const de: Dict = {
   "about.install": "Keew installieren",
   "about.installHint": "Keew öffnet sich auf Android und iPhone direkt im Browser als App — ohne Store. Die nativen Dateien unten kommen aus der Build-Pipeline.",
   "about.installNote": "Die nativen Installer baut GitHub Actions. Ohne bezahltes Signaturzertifikat zeigt Windows den SmartScreen-Hinweis und macOS verlangt einmal „Trotzdem öffnen“.",
+  "login.errUnconfirmed": "Dieses Konto braucht noch eine E-Mail-Bestätigung. Ein Administrator kann sie bestätigen – oder lege das Konto neu an.",
+  "login.errRate": "Zu viele Versuche. Warte eine Minute und versuche es erneut.",
+  "login.errUnavailable": "Der Server war nicht erreichbar. Prüfe die Verbindung und versuche es erneut.",
+  "login.errCallback": "Die Anmeldung wurde nicht abgeschlossen ({reason}). Versuche es erneut.",
+  "about.getApps": "Apps herunterladen",
 };
 
 export const it: Dict = {
@@ -928,6 +953,11 @@ export const it: Dict = {
   "about.install": "Installa Keew",
   "about.installHint": "Keew si apre come app su Android e iPhone direttamente dal browser, senza store. I file nativi qui sotto arrivano dalla build.",
   "about.installNote": "Gli installer nativi li produce GitHub Actions. Senza un certificato di firma a pagamento, Windows mostra l'avviso di SmartScreen e macOS chiede «Apri comunque» una volta.",
+  "login.errUnconfirmed": "Questo account richiede ancora la conferma via email. Chiedi a un amministratore di confermarlo, oppure ricrea l'account.",
+  "login.errRate": "Troppi tentativi. Attendi un minuto e riprova.",
+  "login.errUnavailable": "Impossibile raggiungere il server. Controlla la connessione e riprova.",
+  "login.errCallback": "L'accesso non è stato completato ({reason}). Riprova.",
+  "about.getApps": "Scarica le app",
 };
 
 export const nl: Dict = {
@@ -1081,6 +1111,11 @@ export const nl: Dict = {
   "about.install": "Keew installeren",
   "about.installHint": "Keew opent op Android en iPhone direct als app in de browser — geen store nodig. De native bestanden hieronder komen uit de build.",
   "about.installNote": "De native installers worden door GitHub Actions gebouwd. Zonder betaald ondertekeningscertificaat toont Windows de SmartScreen-waarschuwing en vraagt macOS één keer om „Toch openen“.",
+  "login.errUnconfirmed": "Dit account wacht nog op e-mailbevestiging. Vraag een beheerder om het te bevestigen, of maak het account opnieuw aan.",
+  "login.errRate": "Te veel pogingen. Wacht een minuut en probeer het opnieuw.",
+  "login.errUnavailable": "De server is niet bereikbaar. Controleer de verbinding en probeer het opnieuw.",
+  "login.errCallback": "Inloggen is niet afgerond ({reason}). Probeer het opnieuw.",
+  "about.getApps": "Apps downloaden",
 };
 
 export const pl: Dict = {
@@ -1234,6 +1269,11 @@ export const pl: Dict = {
   "about.install": "Zainstaluj Keew",
   "about.installHint": "Keew otwiera się jako aplikacja na Androidzie i iPhonie prosto z przeglądarki — bez sklepu. Pliki natywne poniżej pochodzą z budowania.",
   "about.installNote": "Natywne instalatory buduje GitHub Actions. Bez płatnego certyfikatu podpisywania Windows pokaże ostrzeżenie SmartScreen, a macOS raz zapyta o „Otwórz mimo to”.",
+  "login.errUnconfirmed": "To konto nadal wymaga potwierdzenia e-mailem. Poproś administratora o potwierdzenie albo utwórz konto ponownie.",
+  "login.errRate": "Zbyt wiele prób. Poczekaj minutę i spróbuj ponownie.",
+  "login.errUnavailable": "Nie można połączyć się z serwerem. Sprawdź połączenie i spróbuj ponownie.",
+  "login.errCallback": "Logowanie nie zostało ukończone ({reason}). Spróbuj ponownie.",
+  "about.getApps": "Pobierz aplikacje",
 };
 
 export const tr: Dict = {
@@ -1387,6 +1427,11 @@ export const tr: Dict = {
   "about.install": "Keew'i kur",
   "about.installHint": "Keew Android ve iPhone'da mağazaya gerek kalmadan tarayıcıdan uygulama olarak açılır. Aşağıdaki yerel dosyalar derleme hattından gelir.",
   "about.installNote": "Yerel kurulum dosyalarını GitHub Actions üretir. Ücretli imza sertifikası olmadığı için Windows SmartScreen uyarısı gösterir, macOS bir kez ”Yine de aç” diye sorar.",
+  "login.errUnconfirmed": "Bu hesap hâlâ e-posta onayı bekliyor. Bir yöneticiden onaylamasını isteyin ya da hesabı yeniden oluşturun.",
+  "login.errRate": "Çok fazla deneme. Bir dakika bekleyip tekrar deneyin.",
+  "login.errUnavailable": "Sunucuya ulaşılamadı. Bağlantıyı kontrol edip tekrar deneyin.",
+  "login.errCallback": "Giriş tamamlanmadı ({reason}). Tekrar deneyin.",
+  "about.getApps": "Uygulamaları indir",
 };
 
 export const ru: Dict = {
@@ -1540,6 +1585,11 @@ export const ru: Dict = {
   "about.install": "Установить Keew",
   "about.installHint": "Keew открывается как приложение на Android и iPhone прямо из браузера — без магазина. Нативные файлы ниже собраны в конвейере сборки.",
   "about.installNote": "Нативные установщики собирает GitHub Actions. Без платного сертификата подписи Windows показывает предупреждение SmartScreen, а macOS один раз спросит «Всё равно открыть».",
+  "login.errUnconfirmed": "Этой учётной записи всё ещё нужно подтверждение по почте. Попросите администратора подтвердить её или создайте учётную запись заново.",
+  "login.errRate": "Слишком много попыток. Подождите минуту и попробуйте снова.",
+  "login.errUnavailable": "Не удалось связаться с сервером. Проверьте соединение и повторите.",
+  "login.errCallback": "Вход не завершился ({reason}). Попробуйте снова.",
+  "about.getApps": "Скачать приложения",
 };
 
 export const uk: Dict = {
@@ -1693,6 +1743,11 @@ export const uk: Dict = {
   "about.install": "Встановити Keew",
   "about.installHint": "Keew відкривається як застосунок на Android і iPhone просто з браузера — без магазину. Нативні файли нижче збирає конвеєр збирання.",
   "about.installNote": "Нативні інсталятори збирає GitHub Actions. Без платного сертифіката підпису Windows показує попередження SmartScreen, а macOS один раз запитає «Все одно відкрити».",
+  "login.errUnconfirmed": "Цьому обліковому запису все ще потрібне підтвердження поштою. Попросіть адміністратора підтвердити його або створіть запис заново.",
+  "login.errRate": "Забагато спроб. Зачекайте хвилину й спробуйте знову.",
+  "login.errUnavailable": "Не вдалося зв'язатися із сервером. Перевірте з'єднання й повторіть.",
+  "login.errCallback": "Вхід не завершився ({reason}). Спробуйте знову.",
+  "about.getApps": "Завантажити застосунки",
 };
 
 export const ar: Dict = {
@@ -1846,6 +1901,11 @@ export const ar: Dict = {
   "about.install": "تثبيت Keew",
   "about.installHint": "تفتح Keew كتطبيق على أندرويد وآيفون مباشرة من المتصفح، بلا متجر. الملفات الأصلية أدناه تأتي من خط البناء.",
   "about.installNote": "يبني GitHub Actions المثبّتات الأصلية. بدون شهادة توقيع مدفوعة يُظهر Windows تحذير SmartScreen ويسأل macOS مرة واحدة «افتح على أي حال».",
+  "login.errUnconfirmed": "هذا الحساب ما زال يحتاج تأكيدًا بالبريد. اطلب من مسؤول تأكيده أو أنشئ الحساب من جديد.",
+  "login.errRate": "محاولات كثيرة. انتظر دقيقة ثم حاول مرة أخرى.",
+  "login.errUnavailable": "تعذّر الوصول إلى الخادم. تحقق من الاتصال وحاول مرة أخرى.",
+  "login.errCallback": "لم يكتمل تسجيل الدخول ({reason}). حاول مرة أخرى.",
+  "about.getApps": "تنزيل التطبيقات",
 };
 
 export const hi: Dict = {
@@ -1999,6 +2059,11 @@ export const hi: Dict = {
   "about.install": "Keew इंस्टॉल करें",
   "about.installHint": "Keew Android और iPhone पर सीधे ब्राउज़र से ऐप की तरह खुलती है — स्टोर की ज़रूरत नहीं। नीचे की नेटिव फ़ाइलें बिल्ड पाइपलाइन से आती हैं।",
   "about.installNote": "नेटिव इंस्टॉलर GitHub Actions बनाता है। पेड साइनिंग सर्टिफ़िकेट के बिना Windows SmartScreen चेतावनी दिखाता है और macOS एक बार ”फिर भी खोलें” पूछता है।",
+  "login.errUnconfirmed": "इस खाते को अभी भी ईमेल पुष्टि चाहिए। किसी एडमिन से पुष्टि कराएँ या खाता फिर बनाएँ।",
+  "login.errRate": "बहुत ज़्यादा प्रयास। एक मिनट रुककर फिर कोशिश करें।",
+  "login.errUnavailable": "सर्वर तक नहीं पहुँच सके। कनेक्शन जाँचें और फिर कोशिश करें।",
+  "login.errCallback": "साइन इन पूरा नहीं हुआ ({reason})। फिर कोशिश करें।",
+  "about.getApps": "ऐप डाउनलोड करें",
 };
 
 export const id: Dict = {
@@ -2152,6 +2217,11 @@ export const id: Dict = {
   "about.install": "Pasang Keew",
   "about.installHint": "Keew terbuka sebagai aplikasi di Android dan iPhone langsung dari peramban — tanpa toko. Berkas native di bawah dibuat oleh alur build.",
   "about.installNote": "Pemasang native dibuat oleh GitHub Actions. Tanpa sertifikat penandatanganan berbayar, Windows menampilkan peringatan SmartScreen dan macOS meminta ”Tetap buka” sekali.",
+  "login.errUnconfirmed": "Akun ini masih butuh konfirmasi email. Minta admin mengonfirmasinya atau buat akun lagi.",
+  "login.errRate": "Terlalu banyak percobaan. Tunggu semenit lalu coba lagi.",
+  "login.errUnavailable": "Tidak bisa menghubungi server. Periksa koneksi lalu coba lagi.",
+  "login.errCallback": "Masuk belum selesai ({reason}). Coba lagi.",
+  "about.getApps": "Unduh aplikasinya",
 };
 
 export const ja: Dict = {
@@ -2305,6 +2375,11 @@ export const ja: Dict = {
   "about.install": "Keew をインストール",
   "about.installHint": "Keew は Android と iPhone でストア不要、ブラウザからそのままアプリとして開けます。下のネイティブファイルはビルド処理で作られます。",
   "about.installNote": "ネイティブのインストーラーは GitHub Actions が作成します。有料の署名証明書がないため、Windows は SmartScreen の警告を出し、macOS は一度だけ「そのまま開く」を求めます。",
+  "login.errUnconfirmed": "このアカウントはまだメール確認が必要です。管理者に確認を依頼するか、アカウントを作り直してください。",
+  "login.errRate": "試行回数が多すぎます。1 分待ってやり直してください。",
+  "login.errUnavailable": "サーバーに接続できませんでした。通信を確認してやり直してください。",
+  "login.errCallback": "サインインが完了しませんでした（{reason}）。もう一度お試しください。",
+  "about.getApps": "アプリをダウンロード",
 };
 
 export const ko: Dict = {
@@ -2458,6 +2533,11 @@ export const ko: Dict = {
   "about.install": "Keew 설치",
   "about.installHint": "Keew는 Android와 iPhone에서 스토어 없이 브라우저에서 바로 앱으로 열립니다. 아래 네이티브 파일은 빌드 파이프라인에서 만들어집니다.",
   "about.installNote": "네이티브 설치 파일은 GitHub Actions가 만듭니다. 유료 서명 인증서가 없어 Windows는 SmartScreen 경고를 표시하고 macOS는 한 번 ”그래도 열기”를 묻습니다.",
+  "login.errUnconfirmed": "이 계정은 아직 이메일 확인이 필요합니다. 관리자에게 확인을 요청하거나 계정을 다시 만드세요.",
+  "login.errRate": "시도가 너무 많습니다. 1분 뒤 다시 시도하세요.",
+  "login.errUnavailable": "서버에 연결할 수 없습니다. 연결을 확인하고 다시 시도하세요.",
+  "login.errCallback": "로그인이 완료되지 않았습니다({reason}). 다시 시도하세요.",
+  "about.getApps": "앱 다운로드",
 };
 
 export const zh: Dict = {
@@ -2611,6 +2691,11 @@ export const zh: Dict = {
   "about.install": "安装 Keew",
   "about.installHint": "Keew 在 Android 和 iPhone 上可直接从浏览器作为应用打开，无需商店。下面的原生文件来自构建流水线。",
   "about.installNote": "原生安装包由 GitHub Actions 构建。没有付费签名证书，Windows 会显示 SmartScreen 警告，macOS 会询问一次“仍要打开”。",
+  "login.errUnconfirmed": "此账户仍需邮箱确认。请让管理员确认，或重新创建账户。",
+  "login.errRate": "尝试次数过多。请等待一分钟再试。",
+  "login.errUnavailable": "无法连接服务器。请检查网络后重试。",
+  "login.errCallback": "登录未完成（{reason}）。请重试。",
+  "about.getApps": "下载应用",
 };
 
 export const vi: Dict = {
@@ -2764,6 +2849,11 @@ export const vi: Dict = {
   "about.install": "Cài Keew",
   "about.installHint": "Keew mở như ứng dụng trên Android và iPhone ngay trong trình duyệt — không cần cửa hàng. Các tệp gốc bên dưới do quy trình build tạo ra.",
   "about.installNote": "Bộ cài gốc do GitHub Actions tạo. Không có chứng chỉ ký trả phí, Windows hiện cảnh báo SmartScreen và macOS hỏi ”Vẫn mở” một lần.",
+  "login.errUnconfirmed": "Tài khoản này vẫn cần xác nhận email. Nhờ quản trị viên xác nhận hoặc tạo lại tài khoản.",
+  "login.errRate": "Quá nhiều lần thử. Đợi một phút rồi thử lại.",
+  "login.errUnavailable": "Không kết nối được máy chủ. Kiểm tra kết nối rồi thử lại.",
+  "login.errCallback": "Đăng nhập chưa hoàn tất ({reason}). Thử lại nhé.",
+  "about.getApps": "Tải ứng dụng",
 };
 
 export const th: Dict = {
@@ -2917,6 +3007,11 @@ export const th: Dict = {
   "about.install": "ติดตั้ง Keew",
   "about.installHint": "Keew เปิดเป็นแอปบน Android และ iPhone ได้จากเบราว์เซอร์โดยไม่ต้องมีสโตร์ ไฟล์เนทีฟด้านล่างมาจากไปป์ไลน์บิลด์",
   "about.installNote": "ตัวติดตั้งเนทีฟสร้างโดย GitHub Actions หากไม่มีใบรับรองลงนามแบบเสียเงิน Windows จะขึ้นคำเตือน SmartScreen และ macOS จะถาม ”เปิดต่อไป” หนึ่งครั้ง",
+  "login.errUnconfirmed": "บัญชีนี้ยังต้องยืนยันทางอีเมล ให้ผู้ดูแลยืนยันหรือสร้างบัญชีใหม่",
+  "login.errRate": "พยายามหลายครั้งเกินไป รอสักครู่แล้วลองอีกครั้ง",
+  "login.errUnavailable": "ติดต่อเซิร์ฟเวอร์ไม่ได้ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง",
+  "login.errCallback": "เข้าสู่ระบบไม่สำเร็จ ({reason}) ลองอีกครั้ง",
+  "about.getApps": "ดาวน์โหลดแอป",
 };
 
 export const he: Dict = {
@@ -3070,6 +3165,11 @@ export const he: Dict = {
   "about.install": "התקנת Keew",
   "about.installHint": "Keew נפתחת כאפליקציה באנדרואיד וב-iPhone ישירות מהדפדפן, בלי חנות. הקבצים המקוריים למטה מגיעים מצינור הבנייה.",
   "about.installNote": "המתקינים המקוריים נבנים ב-GitHub Actions. בלי תעודת חתימה בתשלום, Windows מציג אזהרת SmartScreen ו-macOS שואל פעם אחת ”פתח בכל זאת”.",
+  "login.errUnconfirmed": "החשבון הזה עדיין צריך אימות במייל. בקש ממנהל לאשר אותו או צור את החשבון מחדש.",
+  "login.errRate": "יותר מדי ניסיונות. המתן דקה ונסה שוב.",
+  "login.errUnavailable": "לא הצלחנו להגיע לשרת. בדוק את החיבור ונסה שוב.",
+  "login.errCallback": "ההתחברות לא הושלמה ({reason}). נסה שוב.",
+  "about.getApps": "הורדת האפליקציות",
 };
 
 export const DICTS = { en, "pt-BR": ptBR, es, fr, de, it, nl, pl, tr, ru, uk, ar, hi, id, ja, ko, zh, vi, th, he } as const;

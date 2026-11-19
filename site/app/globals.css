@@ -1,0 +1,175 @@
+@import "tailwindcss";
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Keew IA — download site
+
+   Same brand, different job. The app is a dark room you work in; this page is
+   a shop window. It keeps the blue and the mark, but the surface is almost
+   black with a single column of light behind the title, so the four platform
+   cards read as objects sitting on a dark table.
+
+   Deliberately not sharing the app's token file: this page must stay readable
+   if the app's design changes, and it ships without the chat's CSS weight.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-line: var(--line);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-dim: var(--dim);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --font-sans: var(--font-stack);
+}
+
+:root {
+  --ink: #050506;
+  --surface: #0b0b0d;
+  --card: #121215;
+  --line: #222226;
+  --fg: #f5f5f7;
+  --muted: #a1a1aa;
+  --dim: #6b6b74;
+  --accent: #0048f8;
+  --accent-soft: #5c8cff;
+
+  --font-stack: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+
+  color-scheme: dark;
+}
+
+@layer base {
+  * { border-color: var(--line); }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--ink);
+    color: var(--fg);
+    font-family: var(--font-stack);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: rgb(0 72 248 / 0.35); color: #fff; }
+
+  a { -webkit-tap-highlight-color: transparent; }
+
+  /* a keyboard user must always be able to see where they are */
+  :focus-visible {
+    outline: 2px solid var(--accent-soft);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+}
+
+/* ── the light behind the title ─────────────────────────────────────────── */
+.glow {
+  position: absolute;
+  inset-inline: 0;
+  top: -280px;
+  height: 720px;
+  background:
+    radial-gradient(48% 52% at 50% 42%, rgb(0 72 248 / 0.30), transparent 72%),
+    radial-gradient(30% 34% at 72% 26%, rgb(92 140 255 / 0.14), transparent 70%);
+  filter: blur(28px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* a hairline grid, barely there — it keeps the dark from reading as empty */
+.grid-lines {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.028) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.028) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(70% 55% at 50% 30%, #000 20%, transparent 78%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── platform cards ─────────────────────────────────────────────────────── */
+.card {
+  position: relative;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0.012));
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  transition:
+    border-color 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+  border-color: #34343c;
+  transform: translateY(-3px);
+  background-color: rgb(255 255 255 / 0.02);
+}
+
+/* the top edge catches the light like a physical object */
+.card::after {
+  content: "";
+  position: absolute;
+  inset-inline: 14%;
+  top: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(92 140 255 / 0.55), transparent);
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.card:hover::after { opacity: 1; }
+
+.card[data-unavailable="true"]:hover { transform: none; }
+
+/* ── the primary button ─────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 12px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 0.7rem 1.1rem;
+  transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.btn:hover { background: #1c5dff; }
+.btn:active { transform: scale(0.985); }
+
+.btn-quiet {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg);
+}
+
+.btn-quiet:hover { background: rgb(255 255 255 / 0.045); border-color: #34343c; }
+
+/* ── motion ─────────────────────────────────────────────────────────────── */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.rise {
+  animation: rise 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
