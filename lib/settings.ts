@@ -65,6 +65,42 @@ export function applyPrefs(p: Prefs) {
   root.style.fontSize = `${16 * p.textScale}px`;
 }
 
+/** True when the person asked the system for less movement. */
+function quietMotion() {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Applies prefs, cross-fading the frame when only the theme changed.
+ *
+ * The swap happens inside a view transition so the old colours fade out while
+ * the new ones fade in — one clean dissolve instead of every surface sliding
+ * to its new value at its own speed. Where the browser has no view transition
+ * (or movement is turned off) the change is still applied, just instantly.
+ */
+export function applyPrefsAnimated(p: Prefs) {
+  if (typeof document === "undefined") return;
+
+  const themeChanged = document.documentElement.dataset.theme !== p.theme;
+  const animate =
+    themeChanged &&
+    p.motion !== "reduced" &&
+    !quietMotion() &&
+    typeof document.startViewTransition === "function";
+
+  if (!animate) {
+    applyPrefs(p);
+    return;
+  }
+
+  document.startViewTransition(() => applyPrefs(p));
+}
+
 type State = {
   prefs: Prefs;
   ready: boolean;
@@ -87,7 +123,7 @@ export const usePrefs = create<State>()((set, get) => ({
   set: (key, value) => {
     const prefs = { ...get().prefs, [key]: value };
     set({ prefs });
-    applyPrefs(prefs);
+    applyPrefsAnimated(prefs);
     persist(prefs);
 
     const sb = supabaseBrowser();

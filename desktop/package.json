@@ -1,0 +1,77 @@
+{
+  "name": "keew-ia-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Keew IA as a desktop app",
+  "author": "Veexdevs",
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack:dir": "electron-builder --dir",
+    "pack:win": "electron-builder --win nsis portable --publish never",
+    "pack:linux": "electron-builder --linux AppImage deb --publish never",
+    "pack:mac": "electron-builder --mac dmg zip --publish never"
+  },
+  "build": {
+    "appId": "ai.keew.desktop",
+    "productName": "Keew IA",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "build/**"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Keew IA"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Network;Chat",
+      "desktop": {
+        "entry": {
+          "Name": "Keew IA",
+          "Comment": "Your own intelligence."
+        }
+      }
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.png"
+    }
+  },
+  "devDependencies": {
+    "electron": "33.4.11",
+    "electron-builder": "26.18.0"
+  }
+}

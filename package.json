@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 3000",
     "typecheck": "tsc --noEmit",
-    "brand": "python3 tools/build_brand.py"
+    "brand": "python3 tools/build_brand.py",
+    "installers": "node tools/installers.mjs"
   },
   "dependencies": {
     "@fontsource-variable/plus-jakarta-sans": "^5.3.0",

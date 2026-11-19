@@ -14,6 +14,11 @@ deterministic reasoning core that works without calling anything external.
 - **Local core** — arithmetic, percentages, units and temperature, dates and deadlines,
   extractive summaries, text transforms (slug, base64, JSON, word count) and retrieval over
   the knowledge base. Deterministic, auditable, no network.
+- **20 languages** — English, Português, Español, Français, Deutsch, Italiano, Nederlands,
+  Polski, Türkçe, Русский, Українська, العربية, हिन्दी, Indonesia, 日本語, 한국어, 中文,
+  Tiếng Việt, ไทย, עברית. Detected on first open from the browser and the time zone, switchable
+  in Settings → Language, searchable, each with its round flag, right-to-left for Arabic and
+  Hebrew.
 - **Honest fallback** — for open-ended language questions the app says it has no language
   engine connected instead of inventing an answer.
 
@@ -52,6 +57,31 @@ Environment variables live in `.env.local` and are never committed:
 | `KEEW_MODEL_BASE_URL` | Optional language engine, OpenAI-compatible |
 | `KEEW_MODEL_NAME` | Model name the engine expects |
 
+## Installing it
+
+The web app is installable as it is: Android/Chrome → menu → *Install app*;
+iPhone/Safari → Share → *Add to Home Screen*. There is a service worker and a manifest, so it
+opens with no connection to the shell.
+
+Native files (`.apk`, `.ipa`, `.exe`, `.AppImage`/`.deb`) are **not** built by this repository
+on its own — a site cannot produce them, and no machine here has Xcode, the Android SDK or
+Windows. They are built by `.github/workflows/installers.yml`, which runs each target on the
+system it needs (Windows runner for `.exe`, macOS runner for `.ipa`, Linux runner for AppImage,
+Ubuntu + JDK + Android SDK for `.apk`) and attaches the results to a GitHub Release.
+
+```bash
+node tools/installers.mjs            # what each target needs, and what this machine can do
+node tools/installers.mjs --trigger  # start the build on GitHub Actions
+```
+
+The phone apps are Capacitor shells around the deployed site (`capacitor.config.ts`); the
+desktop apps are Electron windows around the same site (`desktop/`). Nothing is duplicated:
+an update to the site is an update to every app.
+
+**Signing.** The files are unsigned. Windows shows the SmartScreen warning, macOS asks for
+"Open anyway" once, and the `.ipa` needs sideloading (AltStore, Sideloadly) because Apple only
+installs signed apps. Signing needs a paid certificate; nothing here pretends otherwise.
+
 ## Scripts
 
 ```bash
@@ -59,7 +89,23 @@ npm run dev        # development server on 0.0.0.0:3000
 npm run build      # production build
 npm start          # production server
 npm run typecheck  # tsc --noEmit
+npm run installers # status of each installer target
 ```
+
+## Tests
+
+```bash
+node tools/installers.mjs
+```
+
+## Settings
+
+The panel has five sections, reachable by tapping, the arrows or a horizontal swipe:
+**Connectors · Appearance · Language · Account · About**. Language has a search box that
+ignores accents and accepts the language's own name, its English name, its region, its code or
+a Portuguese alias ("japão", "alemão", "rússia"). Appearance switches light / gray / dark with
+a cross-fade of the whole frame (View Transitions; instant where unsupported, off when motion
+is reduced).
 
 ## Structure
 

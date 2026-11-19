@@ -4,6 +4,7 @@ import "@fontsource-variable/plus-jakarta-sans";
 import "highlight.js/styles/github-dark-dimmed.css";
 import "katex/dist/katex.min.css";
 import "./globals.css";
+import { Pwa } from "@/components/pwa";
 
 const SITE = process.env.NEXT_PUBLIC_APP_URL || "https://keew-ia.vercel.app";
 
@@ -63,19 +64,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               r.dataset.density=p.density||"comfortable";
               r.dataset.motion=p.motion||"full";
               if(p.textScale)r.style.fontSize=(16*p.textScale)+"px";
-              var auto=localStorage.getItem("keew-ia-locale-auto")!=="0";
-              var saved=localStorage.getItem("keew-ia-locale");
+              /* The same sub-tag table the app uses in lib/i18n, kept here as a
+                 literal because this runs before any bundle loads: a browser
+                 set to Japanese must not paint English first and then swap. */
+              var T={en:"en",pt:"pt-BR",es:"es",fr:"fr",de:"de",it:"it",nl:"nl",pl:"pl",tr:"tr",ru:"ru",uk:"uk",ar:"ar",hi:"hi",id:"id",in:"id",ja:"ja",ko:"ko",zh:"zh",vi:"vi",th:"th",he:"he",iw:"he"};
               var pick=function(){
+                var auto=localStorage.getItem("keew-ia-locale-auto")!=="0";
+                var saved=localStorage.getItem("keew-ia-locale");
                 if(!auto&&saved)return saved;
-                var list=navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||"en"];
+                var list=(navigator.languages&&navigator.languages.length)?navigator.languages:[navigator.language||"en"];
                 for(var i=0;i<list.length;i++){
-                  var t=String(list[i]).toLowerCase();
-                  if(t.indexOf("pt")===0)return "pt-BR";
-                  if(t.indexOf("es")===0)return "es";
-                  if(t.indexOf("fr")===0)return "fr";
-                  if(t.indexOf("de")===0)return "de";
-                  if(t.indexOf("it")===0)return "it";
-                  if(t.indexOf("en")===0)return "en";
+                  var b=String(list[i]).toLowerCase().split(/[-_]/)[0];
+                  if(T[b])return T[b];
                 }
                 return "en";
               };
@@ -84,6 +84,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
         {children}
+        <Pwa />
       </body>
     </html>
   );
