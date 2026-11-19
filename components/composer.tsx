@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { PendingTile } from "./attachments";
 import { IconArrowUp, IconPaperclip, IconStop } from "./icons";
 import { readAttachment, type Attachment } from "@/lib/attach";
+import { useT } from "@/lib/i18n/use";
 import { usePrefs } from "@/lib/settings";
 
 /**
@@ -20,7 +21,7 @@ export function Composer({
   onSend,
   streaming,
   onStop,
-  placeholder = "How can I help today?",
+  placeholder,
 }: {
   onSend: (text: string, files: Attachment[]) => void;
   streaming: boolean;
@@ -34,6 +35,8 @@ export function Composer({
   const ref = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<HTMLInputElement>(null);
   const enterToSend = usePrefs((s) => s.prefs.enterToSend);
+  const t = useT();
+  const hint = placeholder ?? t("composer.placeholder");
 
   /* grows with the content, up to about five lines */
   useEffect(() => {
@@ -101,7 +104,7 @@ export function Composer({
                   />
                 ))}
                 {reading && (
-                  <div className="shimmer h-[58px] w-[58px] shrink-0 rounded-lg" aria-label="Reading file" />
+                  <div className="shimmer h-[58px] w-[58px] shrink-0 rounded-lg" aria-label={t("attach.readingFile")} />
                 )}
               </div>
             </motion.div>
@@ -114,8 +117,8 @@ export function Composer({
             whileTap={{ scale: 0.93 }}
             onClick={() => picker.current?.click()}
             className="mb-[2px] grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-fg"
-            aria-label="Attach files"
-            title="Attach image, video or file"
+            aria-label={t("composer.attach")}
+            title={t("composer.attachTitle")}
           >
             <IconPaperclip size={16} />
           </motion.button>
@@ -143,7 +146,7 @@ export function Composer({
                 fire();
               }
             }}
-            placeholder={placeholder}
+            placeholder={hint}
             className="scroll-thin max-h-[128px] flex-1 resize-none bg-transparent px-1 py-[7px] text-[14.5px] leading-[1.45] text-fg outline-none placeholder:text-subtle"
           />
 
@@ -158,7 +161,7 @@ export function Composer({
                 whileTap={{ scale: 0.95 }}
                 onClick={onStop}
                 className="mb-[2px] grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-hover-strong text-fg transition-colors hover:bg-raised"
-                aria-label="Stop generating"
+                aria-label={t("composer.stop")}
               >
                 <IconStop size={12} />
               </motion.button>
@@ -173,7 +176,7 @@ export function Composer({
                 onClick={fire}
                 disabled={!canSend}
                 className="mb-[2px] grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent text-white transition-all disabled:bg-hover disabled:text-subtle"
-                aria-label="Send"
+                aria-label={t("composer.send")}
               >
                 <IconArrowUp size={16} />
               </motion.button>
@@ -183,7 +186,7 @@ export function Composer({
       </motion.div>
 
       <p className="mt-2 text-center text-[10.5px] leading-relaxed text-subtle">
-        Keew can be wrong. Check anything important.
+        {t("composer.disclaimer")}
       </p>
     </div>
   );

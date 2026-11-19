@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 
 import { Logo } from "./logo";
+import { useT } from "@/lib/i18n/use";
 
 const rise = {
   hidden: { opacity: 0, y: 14 },
@@ -14,6 +15,7 @@ const rise = {
 };
 
 export function Welcome({ name }: { name?: string }) {
+  const t = useT();
   return (
     <div className="mx-auto flex w-full max-w-[760px] flex-col items-center px-5 pb-4 pt-[11vh] text-center sm:pt-[15vh]">
       <motion.div custom={0} variants={rise} initial="hidden" animate="show" className="relative mb-6">
@@ -41,7 +43,7 @@ export function Welcome({ name }: { name?: string }) {
       >
         {name ? (
           <>
-            Hello, <span className="text-accent-light">{name}</span>
+            {t("welcome.greeting", { name: "" })}<span className="text-accent-light">{name}</span>
           </>
         ) : (
           <>
@@ -57,7 +59,7 @@ export function Welcome({ name }: { name?: string }) {
         animate="show"
         className="mt-2 max-w-sm text-[13.5px] leading-relaxed text-muted"
       >
-        Ask a question, drop a file, or just start typing.
+        {t("welcome.subtitle")}
       </motion.p>
     </div>
   );

@@ -37,14 +37,18 @@ import {
   type ConnectorId,
   type ConnectorState,
 } from "@/lib/connectors";
+import { LOCALE_META, LOCALES, detectLocale, type Locale } from "@/lib/i18n";
+import { useLocale } from "@/lib/i18n/store";
+import { useT } from "@/lib/i18n/use";
 import { usePrefs, type Density, type Theme } from "@/lib/settings";
 import { useApp } from "@/lib/store";
 
-type Tab = "connectors" | "appearance" | "account" | "about";
+type Tab = "connectors" | "appearance" | "language" | "account" | "about";
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "connectors", label: "Connectors", icon: <PlugIcon /> },
   { id: "appearance", label: "Appearance", icon: <ThemeIcon /> },
+  { id: "language", label: "Language", icon: <GlobeIcon /> },
   { id: "account", label: "Account", icon: <IconUser size={15} /> },
   { id: "about", label: "About", icon: <HeartIcon /> },
 ];
@@ -54,6 +58,7 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [tab, setTab] = useState<Tab>("connectors");
   const [dir, setDir] = useState(0);
+  const tt = useT();
 
   const order = TABS.map((t) => t.id);
   const index = Math.max(0, order.indexOf(tab));
@@ -90,7 +95,7 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
           onClick={onClose}
           role="dialog"
           aria-modal="true"
-          aria-label="Settings"
+          aria-label={tt("settings.title")}
         >
           <motion.aside
             initial={{ x: 34, opacity: 0.6 }}
@@ -102,13 +107,13 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
           >
             {/* head */}
             <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
-              <h2 className="text-[15px] font-semibold text-fg">Settings</h2>
+              <h2 className="text-[15px] font-semibold text-fg">{tt("settings.title")}</h2>
               <motion.button
                 whileHover={{ rotate: 90, scale: 1.06 }}
                 whileTap={{ scale: 0.92 }}
                 onClick={onClose}
                 className="grid h-8 w-8 place-items-center rounded-lg text-subtle transition-colors hover:bg-hover hover:text-fg"
-                aria-label="Close settings"
+                aria-label={tt("common.close")}
               >
                 <IconClose size={17} />
               </motion.button>
@@ -120,7 +125,7 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
                 onClick={() => go(-1)}
                 disabled={index === 0}
                 className="grid h-6 w-6 place-items-center rounded-md text-subtle transition-colors hover:bg-hover hover:text-fg disabled:opacity-25"
-                aria-label="Previous section"
+                aria-label={tt("settings.prev")}
               >
                 <IconChevronLeft size={14} />
               </button>
@@ -131,7 +136,7 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
                 onClick={() => go(1)}
                 disabled={index === order.length - 1}
                 className="grid h-6 w-6 place-items-center rounded-md text-subtle transition-colors hover:bg-hover hover:text-fg disabled:opacity-25"
-                aria-label="Next section"
+                aria-label={tt("settings.next")}
               >
                 <IconChevronLeft size={14} className="rotate-180" />
               </button>
@@ -149,15 +154,15 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
               }}
               className="flex shrink-0 touch-pan-y gap-0.5 overflow-x-auto border-b border-border px-2 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              {TABS.map((t) => (
+              {TABS.map((item) => (
                 <button
-                  key={t.id}
-                  onClick={() => setTab(t.id)}
+                  key={item.id}
+                  onClick={() => setTab(item.id)}
                   className={`relative flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12.5px] font-medium transition-colors ${
-                    tab === t.id ? "text-fg" : "text-muted hover:text-fg"
+                    tab === item.id ? "text-fg" : "text-muted hover:text-fg"
                   }`}
                 >
-                  {tab === t.id && (
+                  {tab === item.id && (
                     <motion.span
                       layoutId="settings-tab"
                       className="absolute inset-0 rounded-lg bg-hover-strong"
@@ -165,8 +170,8 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
                     />
                   )}
                   <span className="relative flex shrink-0 items-center gap-1.5 whitespace-nowrap">
-                    {t.icon}
-                    {t.label}
+                    {item.icon}
+                    {tt(`settings.tab.${item.id}`)}
                   </span>
                 </button>
               ))}
@@ -194,6 +199,7 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
                 >
                   {tab === "connectors" && <ConnectorsTab />}
                   {tab === "appearance" && <AppearanceTab />}
+                  {tab === "language" && <LanguageTab />}
                   {tab === "account" && <AccountTab onDone={onClose} />}
                   {tab === "about" && <AboutTab />}
                 </motion.div>
@@ -219,6 +225,7 @@ const MARKS: Record<ConnectorId, React.ReactNode> = {
 };
 
 function ConnectorsTab() {
+  const tt = useT();
   const user = useApp((s) => s.user);
   const owner = user?.email || "guest";
 
@@ -267,18 +274,18 @@ function ConnectorsTab() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search connectors"
+          placeholder={tt("settings.searchConnectors")}
           className="w-full bg-transparent text-[12.5px] text-fg outline-none placeholder:text-subtle"
         />
         {query && (
-          <button onClick={() => setQuery("")} className="shrink-0 text-subtle hover:text-fg" aria-label="Clear search">
+          <button onClick={() => setQuery("")} className="shrink-0 text-subtle hover:text-fg" aria-label={tt("common.search")}>
             <IconClose size={13} />
           </button>
         )}
       </div>
 
       <p className="mb-2 px-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-subtle">
-        {online ? `${online} on` : "Off"}
+        {online ? tt("settings.onCount", { n: online }) : tt("settings.off")}
       </p>
 
       <div className="space-y-1.5">
@@ -319,7 +326,7 @@ function ConnectorsTab() {
                   onClick={() => (c.keyless ? void toggleKeyless(c) : setActive(c))}
                   role="switch"
                   aria-checked={on}
-                  aria-label={`${on ? "Disconnect" : "Connect"} ${c.name}`}
+                  aria-label={on ? tt("common.disconnect") : tt("common.connect")}
                   className={`relative h-[22px] w-[38px] shrink-0 rounded-full transition-colors ${
                     on ? "bg-accent" : "bg-border-strong"
                   }`}
@@ -339,11 +346,11 @@ function ConnectorsTab() {
       </div>
 
       {query && !list.length && (
-        <p className="py-6 text-center text-[12px] text-subtle">No connector matches that.</p>
+        <p className="py-6 text-center text-[12px] text-subtle">{tt("settings.noConnector")}</p>
       )}
 
       <p className="mt-5 px-1 text-[11px] leading-relaxed text-subtle">
-        Keys stay encrypted in this browser. Vercel needs a token you create there — tap its row.
+        {tt("settings.connectorsNote")}
       </p>
 
       {/* key sheet */}
@@ -369,6 +376,7 @@ function ConnectorSheet({
   onClose: () => void;
   onState: (id: ConnectorId, s: ConnectorState) => void;
 }) {
+  const tt = useT();
   const [values, setValues] = useState<Record<string, string>>({});
   const [reveal, setReveal] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
@@ -450,7 +458,7 @@ function ConnectorSheet({
               <button
                 onClick={onClose}
                 className="grid h-7 w-7 place-items-center rounded-lg text-subtle hover:bg-hover hover:text-fg"
-                aria-label="Close"
+                aria-label={tt("common.close")}
               >
                 <IconClose size={15} />
               </button>
@@ -485,7 +493,7 @@ function ConnectorSheet({
                     <button
                       onClick={() => setReveal((r) => ({ ...r, [f.key]: !r[f.key] }))}
                       className="absolute right-1 top-1 grid h-7 w-7 place-items-center rounded text-subtle hover:text-fg"
-                      aria-label={reveal[f.key] ? "Hide" : "Show"}
+                      aria-label={reveal[f.key] ? tt("login.hidePw") : tt("login.showPw")}
                     >
                       {reveal[f.key] ? <IconEyeOff size={13} /> : <IconEye size={13} />}
                     </button>
@@ -508,7 +516,7 @@ function ConnectorSheet({
                 onClick={() => void disconnect()}
                 className="rounded-lg px-2.5 py-2 text-[11.5px] text-muted transition-colors hover:bg-hover hover:text-fg"
               >
-                Disconnect
+                {tt("common.disconnect")}
               </button>
             </div>
 
@@ -536,18 +544,19 @@ function ConnectorSheet({
 /* ── appearance ────────────────────────────────────────────────────────── */
 
 function AppearanceTab() {
+  const tt = useT();
   const { prefs, set } = usePrefs();
 
   return (
     <div className="space-y-6">
       <div>
-        <p className="mb-2 text-[12px] font-semibold text-fg">Theme</p>
+        <p className="mb-2 text-[12px] font-semibold text-fg">{tt("appearance.theme")}</p>
         <div className="grid grid-cols-3 gap-2">
           {(
             [
-              { id: "dark", label: "Dark", bg: "#0a0a0a", panel: "#1b1b1a", fg: "#f0efed" },
-              { id: "light", label: "Light", bg: "#fbfaf7", panel: "#ffffff", fg: "#1e1d1a" },
-              { id: "gray", label: "Gray", bg: "#1a1a1c", panel: "#26262a", fg: "#ececef" },
+              { id: "dark", label: tt("appearance.dark"), bg: "#0a0a0a", panel: "#1b1b1a", fg: "#f0efed" },
+              { id: "light", label: tt("appearance.light"), bg: "#fbfaf7", panel: "#ffffff", fg: "#1e1d1a" },
+              { id: "gray", label: tt("appearance.gray"), bg: "#1a1a1c", panel: "#26262a", fg: "#ececef" },
             ] as { id: Theme; label: string; bg: string; panel: string; fg: string }[]
           ).map((t) => (
             <motion.button
@@ -576,7 +585,7 @@ function AppearanceTab() {
         </div>
       </div>
 
-      <Row label="Text size" hint="Applies to the whole interface.">
+      <Row label={tt("appearance.textSize")} hint={tt("appearance.textSizeHint")}>
         <div className="flex items-center gap-1">
           {[
             { v: 0.9, l: "A", size: "text-[12px]" },
@@ -598,38 +607,38 @@ function AppearanceTab() {
         </div>
       </Row>
 
-      <Row label="Density" hint="Compact fits more on a short screen.">
+      <Row label={tt("appearance.density")} hint={tt("appearance.densityHint")}>
         <Segmented
           value={prefs.density}
           onChange={(v) => set("density", v as Density)}
           options={[
-            { value: "comfortable", label: "Comfortable" },
-            { value: "compact", label: "Compact" },
+            { value: "comfortable", label: tt("appearance.comfortable") },
+            { value: "compact", label: tt("appearance.compact") },
           ]}
         />
       </Row>
 
-      <Row label="Motion" hint="Reduced turns off the animations.">
+      <Row label={tt("appearance.motion")} hint={tt("appearance.motionHint")}>
         <Segmented
           value={prefs.motion}
           onChange={(v) => set("motion", v as "full" | "reduced")}
           options={[
-            { value: "full", label: "Full" },
-            { value: "reduced", label: "Reduced" },
+            { value: "full", label: tt("appearance.full") },
+            { value: "reduced", label: tt("appearance.reduced") },
           ]}
         />
       </Row>
 
       <div className="space-y-1">
         <Toggle
-          label="Show message times"
-          hint="A small timestamp under each message."
+          label={tt("appearance.showTimes")}
+          hint={tt("appearance.showTimesHint")}
           value={prefs.showTimes}
           onChange={(v) => set("showTimes", v)}
         />
         <Toggle
-          label="Enter sends the message"
-          hint="Off means Enter adds a line and ⌘↵ sends."
+          label={tt("appearance.enterSends")}
+          hint={tt("appearance.enterSendsHint")}
           value={prefs.enterToSend}
           onChange={(v) => set("enterToSend", v)}
         />
@@ -638,9 +647,69 @@ function AppearanceTab() {
   );
 }
 
+/* ── language ──────────────────────────────────────────────────────────── */
+
+function LanguageTab() {
+  const tt = useT();
+  const { locale, auto, choose } = useLocale();
+
+  return (
+    <div className="space-y-4">
+      <p className="text-[12px] leading-relaxed text-muted">{tt("language.hint")}</p>
+
+      <div className="space-y-1.5">
+        {/* automatic */}
+        <button
+          onClick={() => choose("auto")}
+          className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${
+            auto ? "border-accent/40 bg-accent/[0.05]" : "border-border bg-panel/50 hover:bg-hover"
+          }`}
+        >
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-raised text-muted">
+            <GlobeIcon />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13px] font-medium text-fg">{tt("language.auto")}</span>
+            <span className="block truncate text-[11px] text-subtle">
+              {tt("language.autoDetected", { lang: LOCALE_META[detectLocale()].native })}
+            </span>
+          </span>
+          {auto && <IconCheck size={15} className="shrink-0 text-accent-light" />}
+        </button>
+
+        {LOCALES.map((l) => {
+          const meta = LOCALE_META[l];
+          const on = !auto && locale === l;
+          return (
+            <button
+              key={l}
+              onClick={() => choose(l as Locale)}
+              className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${
+                on ? "border-accent/40 bg-accent/[0.05]" : "border-border bg-panel/50 hover:bg-hover"
+              }`}
+            >
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-raised text-[11px] font-semibold uppercase text-muted">
+                {l.slice(0, 2)}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13px] font-medium text-fg">{meta.native}</span>
+                <span className="block truncate text-[11px] text-subtle">
+                  {meta.name} · {meta.region}
+                </span>
+              </span>
+              {on && <IconCheck size={15} className="shrink-0 text-accent-light" />}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ── account ───────────────────────────────────────────────────────────── */
 
 function AccountTab({ onDone }: { onDone: () => void }) {
+  const tt = useT();
   const { user, profile, chats, clearChats, signOut } = useApp();
   const dbEnabled = useApp((s) => s.dbEnabled);
   const [confirm, setConfirm] = useState(false);
@@ -684,14 +753,13 @@ function AccountTab({ onDone }: { onDone: () => void }) {
         </div>
       ) : (
         <div className="rounded-xl border border-border bg-panel p-3">
-          <p className="text-[12.5px] font-medium text-fg">You are not signed in</p>
+          <p className="text-[12.5px] font-medium text-fg">{tt("account.notSignedIn")}</p>
           <p className="mt-1 text-[11.5px] leading-relaxed text-muted">
-            Chats stay in this browser. Sign in from the bottom of the sidebar to save them to your
-            account and open them on any device.
+            {tt("account.notSignedInHint")}
           </p>
           {!dbEnabled && (
             <p className="mt-2 rounded-lg bg-amber-500/10 px-2.5 py-1.5 text-[11px] leading-relaxed text-amber-400">
-              This deployment has no database configured yet, so accounts are off.
+              {tt("account.noDb")}
             </p>
           )}
         </div>
@@ -699,14 +767,14 @@ function AccountTab({ onDone }: { onDone: () => void }) {
 
       <div className="space-y-1">
         <ActionRow
-          label="Export my chats"
-          hint="Downloads a JSON file with everything in this account."
+          label={tt("account.export")}
+          hint={tt("account.exportHint")}
           onClick={exportHistory}
           icon={<IconDownload size={14} />}
         />
         <ActionRow
-          label={confirm ? "Click again to delete everything" : "Delete all my chats"}
-          hint={confirm ? "This cannot be undone." : "Removes every conversation from this account."}
+          label={confirm ? tt("account.deleteConfirm") : tt("account.delete")}
+          hint={confirm ? tt("account.deleteConfirmHint") : tt("account.deleteHint")}
           danger
           onClick={() => {
             if (!confirm) return setConfirm(true);
@@ -718,8 +786,8 @@ function AccountTab({ onDone }: { onDone: () => void }) {
         />
         {user && (
           <ActionRow
-            label="Sign out"
-            hint="You can sign back in any time."
+            label={tt("chat.signOut")}
+            hint={tt("account.signOutHint")}
             onClick={() => {
               void signOut();
               onDone();
@@ -735,27 +803,24 @@ function AccountTab({ onDone }: { onDone: () => void }) {
 /* ── about ─────────────────────────────────────────────────────────────── */
 
 function AboutTab() {
+  const tt = useT();
   return (
     <div className="space-y-4 text-[12.5px] leading-relaxed text-muted">
       <div className="rounded-xl border border-border bg-panel p-4">
-        <p className="text-[13px] font-semibold text-fg">Keew IA</p>
-        <p className="mt-1.5">
-          An artificial intelligence built and owned by Veexdevs. The interface runs on Next.js; the
-          deterministic core does arithmetic, dates, units, summaries and text work without calling
-          anything external.
-        </p>
+        <p className="text-[13px] font-semibold text-fg">{tt("about.title")}</p>
+        <p className="mt-1.5">{tt("about.body")}</p>
       </div>
 
       <div className="space-y-2">
         <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-subtle">
-          What is honest to say
+          {tt("about.honest")}
         </p>
         <ul className="space-y-1.5">
           {[
-            "Chats and messages are saved to your account, in a database only your account can read.",
-            "Connectors with a key keep that key encrypted in this browser, never on the server.",
-            "Open-ended conversation needs a language engine connected — without one, Keew says so instead of guessing.",
-            "Images and videos are shown, not understood, until a vision engine is connected.",
+            tt("about.point1"),
+            tt("about.point2"),
+            tt("about.point3"),
+            tt("about.point4"),
           ].map((t) => (
             <li key={t} className="flex gap-2">
               <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent/70" />
@@ -766,7 +831,7 @@ function AboutTab() {
       </div>
 
       <p className="text-[11px] text-subtle">
-        Version 3 · interface in English · theme and preferences stored on this device.
+        {tt("about.version")}
       </p>
     </div>
   );
@@ -899,6 +964,16 @@ function PlugIcon() {
     <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d="M9 3v5M15 3v5M6.5 8h11v1.5a5.5 5.5 0 0 1-11 0Z" />
       <path d="M12 15v6" />
+    </svg>
+  );
+}
+
+function GlobeIcon() {
+  return (
+    <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3.2 9h17.6M3.2 15h17.6" />
+      <path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18Z" />
     </svg>
   );
 }

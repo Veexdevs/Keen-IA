@@ -56,7 +56,31 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* applies the saved theme before the first paint, so nothing flashes */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var p=JSON.parse(localStorage.getItem("keew-ia-prefs-v1")||"{}");var r=document.documentElement;r.dataset.theme=p.theme||"dark";r.dataset.density=p.density||"comfortable";r.dataset.motion=p.motion||"full";if(p.textScale)r.style.fontSize=(16*p.textScale)+"px";}catch(e){}})();`,
+            __html: `(function(){try{
+              var p=JSON.parse(localStorage.getItem("keew-ia-prefs-v1")||"{}");
+              var r=document.documentElement;
+              r.dataset.theme=p.theme||"dark";
+              r.dataset.density=p.density||"comfortable";
+              r.dataset.motion=p.motion||"full";
+              if(p.textScale)r.style.fontSize=(16*p.textScale)+"px";
+              var auto=localStorage.getItem("keew-ia-locale-auto")!=="0";
+              var saved=localStorage.getItem("keew-ia-locale");
+              var pick=function(){
+                if(!auto&&saved)return saved;
+                var list=navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||"en"];
+                for(var i=0;i<list.length;i++){
+                  var t=String(list[i]).toLowerCase();
+                  if(t.indexOf("pt")===0)return "pt-BR";
+                  if(t.indexOf("es")===0)return "es";
+                  if(t.indexOf("fr")===0)return "fr";
+                  if(t.indexOf("de")===0)return "de";
+                  if(t.indexOf("it")===0)return "it";
+                  if(t.indexOf("en")===0)return "en";
+                }
+                return "en";
+              };
+              r.lang=pick();
+            }catch(e){}})();`,
           }}
         />
         {children}
