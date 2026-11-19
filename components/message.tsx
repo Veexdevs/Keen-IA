@@ -16,6 +16,7 @@ import {
   IconUser,
 } from "./icons";
 import type { Attachment } from "@/lib/attach";
+import { useT } from "@/lib/i18n/use";
 import type { Msg } from "@/lib/store";
 
 /* ── action button ─────────────────────────────────────────────────────── */
@@ -84,6 +85,7 @@ export const Message = memo(function Message({
   isLast?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
+  const t = useT();
   const [speaking, setSpeaking] = useState(false);
   const isUser = msg.role === "user";
   const files = msg.attachments ?? [];
@@ -146,11 +148,11 @@ export const Message = memo(function Message({
       {/* body */}
       <div className={`flex min-w-0 flex-1 flex-col ${isUser ? "items-end" : "items-start"}`}>
         <span className="mb-1 flex items-center gap-1.5 text-[11.5px] font-semibold tracking-wide text-subtle">
-          {isUser ? "You" : "Keew IA"}
+          {isUser ? t("common.you") : "Keew IA"}
           {!isUser && msg.live && (
             <span className="flex items-center gap-1 rounded-full bg-emerald-500/12 px-1.5 py-px text-[9.5px] font-semibold uppercase tracking-wider text-emerald-400">
               <span className="h-1 w-1 rounded-full bg-emerald-400" />
-              live · {msg.live}
+              {t("msg.live")} · {msg.live}
             </span>
           )}
         </span>
@@ -230,7 +232,7 @@ export const Message = memo(function Message({
                 : "opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100"
             }`}
           >
-            <Action label={copied ? "Copied" : "Copy"} onClick={copy} active={copied}>
+            <Action label={copied ? t("msg.copied") : t("msg.copy")} onClick={copy} active={copied}>
               <AnimatePresence mode="wait" initial={false}>
                 {copied ? (
                   <motion.span
@@ -256,11 +258,11 @@ export const Message = memo(function Message({
 
             {!isUser && (
               <>
-                <Action label={speaking ? "Stop reading" : "Read aloud"} onClick={speak} active={speaking}>
+                <Action label={speaking ? t("msg.stopReading") : t("msg.read")} onClick={speak} active={speaking}>
                   <IconSpeak size={13} />
                 </Action>
                 {isLast && onRegenerate && (
-                  <Action label="Regenerate" onClick={onRegenerate}>
+                  <Action label={t("msg.regenerate")} onClick={onRegenerate}>
                     <IconRefresh size={13} />
                   </Action>
                 )}
@@ -268,13 +270,13 @@ export const Message = memo(function Message({
             )}
 
             {isUser && onEdit && (
-              <Action label="Edit" onClick={() => onEdit(msg.content)}>
+              <Action label={t("msg.edit")} onClick={() => onEdit(msg.content)}>
                 <IconEdit size={13} />
               </Action>
             )}
 
             {onShare && (
-              <Action label="Share" onClick={onShare}>
+              <Action label={t("msg.share")} onClick={onShare}>
                 <IconShare size={13} />
               </Action>
             )}

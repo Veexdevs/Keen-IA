@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import { IconClose, IconDownload, IconFile, IconPlay } from "./icons";
 import { formatSize, type Attachment } from "@/lib/attach";
+import { useT } from "@/lib/i18n/use";
 
 /* ── lightbox for images and videos ────────────────────────────────────── */
 
@@ -15,6 +16,7 @@ export function Viewer({
   item: Attachment | null;
   onClose: () => void;
 }) {
+  const t = useT();
   return (
     <AnimatePresence>
       {item && (
@@ -30,7 +32,7 @@ export function Viewer({
             animate={{ opacity: 1, rotate: 0 }}
             className="absolute right-5 top-5 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("common.close")}
           >
             <IconClose size={18} />
           </motion.button>
@@ -48,7 +50,7 @@ export function Viewer({
                 <video src={item.url} controls autoPlay className="max-h-[82vh] w-full bg-black" />
               ) : (
                 <div className="p-10 text-center text-[13px] text-muted">
-                  This video was sent in another session — only the preview frame is kept.
+                  {t("attach.videoGone")}
                 </div>
               )
             ) : item.url || item.thumb ? (
@@ -121,6 +123,7 @@ export function AttachmentGallery({
   align: "left" | "right";
   onOpen: (a: Attachment) => void;
 }) {
+  const t = useT();
   const media = items.filter((i) => i.kind === "image" || i.kind === "video");
   const others = items.filter((i) => i.kind !== "image" && i.kind !== "video");
 
@@ -208,7 +211,7 @@ export function AttachmentGallery({
             <span className="block truncate text-[12.5px] font-medium text-fg">{f.name}</span>
             <span className="block text-[10.5px] text-subtle">
               {formatSize(f.size)}
-              {f.previewOnly && !f.url ? " · name only" : ""}
+              {f.previewOnly && !f.url ? ` · ${t("attach.nameOnly")}` : ""}
             </span>
           </span>
           {f.url && <IconDownload size={13} className="shrink-0 text-subtle" />}

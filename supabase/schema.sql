@@ -17,6 +17,7 @@ create table if not exists public.profiles (
   display_name text,
   avatar_url  text,
   prefs       jsonb not null default '{}'::jsonb,
+  locale      text,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );

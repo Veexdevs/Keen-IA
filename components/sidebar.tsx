@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import { IconClose, IconEdit, IconLogout, IconPlus, IconSearch, IconSliders, IconTrash, IconUser } from "./icons";
 import { Wordmark } from "./logo";
+import { useT } from "@/lib/i18n/use";
 import { usePrefs } from "@/lib/settings";
 import type { Chat } from "@/lib/store";
 
@@ -25,6 +26,7 @@ function ChatRow({
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(chat.title);
+  const t = useT();
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -87,7 +89,7 @@ function ChatRow({
               setEditing(true);
             }}
             className="grid h-6 w-6 place-items-center rounded text-subtle transition-colors hover:bg-hover-strong hover:text-fg"
-            aria-label="Rename chat"
+            aria-label={t("msg.edit")}
           >
             <IconEdit size={13} />
           </button>
@@ -97,7 +99,7 @@ function ChatRow({
               onDelete();
             }}
             className="grid h-6 w-6 place-items-center rounded text-subtle transition-colors hover:bg-red-500/15 hover:text-red-300"
-            aria-label="Delete chat"
+            aria-label={t("common.remove")}
           >
             <IconTrash size={13} />
           </button>
@@ -140,6 +142,7 @@ export function Sidebar({
 }) {
   const [query, setQuery] = useState("");
   const prefs = usePrefs((s) => s.prefs);
+  const t = useT();
   const setPref = usePrefs((s) => s.set);
   const visible = query.trim()
     ? chats.filter((c) => c.title.toLowerCase().includes(query.trim().toLowerCase()))
@@ -159,9 +162,9 @@ export function Sidebar({
       else older.push(c);
     }
     return [
-      { label: "Today", items: today },
-      { label: "Previous 7 days", items: week },
-      { label: "Earlier", items: older },
+      { label: t("common.today"), items: today },
+      { label: t("common.week"), items: week },
+      { label: t("common.earlier"), items: older },
     ].filter((g) => g.items.length);
   })();
 
@@ -173,7 +176,7 @@ export function Sidebar({
         <button
           onClick={onClose}
           className="grid h-8 w-8 place-items-center rounded-lg text-subtle transition-colors hover:bg-hover hover:text-fg md:hidden"
-          aria-label="Close menu"
+          aria-label={t("common.close")}
         >
           <IconClose size={17} />
         </button>
@@ -191,7 +194,7 @@ export function Sidebar({
           className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium text-fg transition-colors hover:bg-hover"
         >
           <IconPlus size={16} className="text-muted" />
-          New chat
+          {t("chat.new")}
         </motion.button>
       </div>
 
@@ -202,7 +205,7 @@ export function Sidebar({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search chats"
+            placeholder={t("chat.searchChats")}
             className="w-full bg-transparent text-fg outline-none placeholder:text-subtle"
           />
         </div>
@@ -217,7 +220,7 @@ export function Sidebar({
             transition={{ delay: 0.2 }}
             className="px-3 pt-6 text-[12.5px] leading-relaxed text-subtle"
           >
-            {query ? "Nothing matches that." : "Your chats will show up here."}
+            {query ? t("chat.noMatch") : t("chat.emptyHistory")}
           </motion.p>
         ) : (
           <AnimatePresence initial={false}>
@@ -268,7 +271,7 @@ export function Sidebar({
             className="flex flex-1 items-center gap-2.5 rounded-lg px-2 py-1.5 text-[12.5px] text-muted transition-colors hover:bg-hover hover:text-fg"
           >
             <IconSliders size={14} />
-            Settings
+            {t("chat.settings")}
           </button>
 
           <div className="flex items-center gap-0.5 rounded-lg bg-hover p-0.5">
@@ -322,7 +325,7 @@ export function Sidebar({
               className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-[12.5px] text-subtle transition-colors hover:bg-hover hover:text-fg"
             >
               <IconLogout size={14} />
-              Sign out
+              {t("chat.signOut")}
             </button>
           </div>
         ) : (
@@ -335,7 +338,7 @@ export function Sidebar({
             }}
             className="w-full rounded-lg border border-border-strong py-2 text-[12.5px] font-semibold text-fg transition-colors hover:border-accent/50 hover:bg-accent/[0.07]"
           >
-            Sign in to save your chats
+            {t("chat.signInSave")}
           </motion.button>
         )}
       </div>

@@ -13,6 +13,8 @@ import { SettingsSheet } from "./settings";
 import { Sidebar } from "./sidebar";
 import { Welcome } from "./welcome";
 import type { Attachment } from "@/lib/attach";
+import { useLocale } from "@/lib/i18n/store";
+import { useT } from "@/lib/i18n/use";
 import { usePrefs } from "@/lib/settings";
 import { useApp } from "@/lib/store";
 
@@ -37,6 +39,8 @@ export function Chat() {
   } = useApp();
 
   const hydratePrefs = usePrefs((s) => s.hydrate);
+  const hydrateLocale = useLocale((s) => s.hydrate);
+  const t = useT();
 
   const [drawer, setDrawer] = useState(false);
   const [login, setLogin] = useState(false);
@@ -48,8 +52,9 @@ export function Chat() {
 
   useEffect(() => {
     hydratePrefs();
+    hydrateLocale();
     void init();
-  }, [hydratePrefs, init]);
+  }, [hydratePrefs, hydrateLocale, init]);
 
   const chat = useMemo(() => chats.find((c) => c.id === activeId) ?? null, [chats, activeId]);
   const messages = chat?.messages ?? [];
@@ -119,7 +124,7 @@ export function Chat() {
             <button
               onClick={() => setDrawer(true)}
               className="grid h-8 w-8 place-items-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-fg md:hidden"
-              aria-label="Open menu"
+              aria-label={t("chat.menu")}
             >
               <IconMenu size={18} />
             </button>
@@ -162,7 +167,7 @@ export function Chat() {
                   className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-subtle transition-colors hover:bg-hover hover:text-fg"
                 >
                   <IconTrash size={13} />
-                  <span className="hidden sm:inline">Clear</span>
+                  <span className="hidden sm:inline">{t("chat.clear")}</span>
                 </motion.button>
               )}
             </AnimatePresence>
@@ -172,8 +177,8 @@ export function Chat() {
               whileTap={{ scale: 0.94 }}
               onClick={() => setSettingsOpen(true)}
               className="grid h-8 w-8 place-items-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-fg"
-              aria-label="Settings"
-              title="Settings"
+              aria-label={t("chat.settings")}
+              title={t("chat.settings")}
             >
               <IconSliders size={16} />
             </motion.button>
@@ -237,7 +242,7 @@ export function Chat() {
             onSend={submit}
             streaming={streaming}
             onStop={stop}
-            placeholder={showWelcome ? "How can I help today?" : "Reply to Keew"}
+            placeholder={showWelcome ? t("composer.placeholder") : t("composer.reply")}
           />
         </div>
 
@@ -252,13 +257,13 @@ export function Chat() {
             >
               <div className="flex items-center gap-2 rounded-xl border border-accent/35 bg-panel px-3 py-2 shadow-xl">
                 <span className="min-w-0 flex-1 truncate text-[12px] text-muted">
-                  Editing: {draft.slice(0, 80)}
+                  {t("chat.editing", { text: draft.slice(0, 80) })}
                 </span>
                 <button
                   onClick={() => setDraft("")}
                   className="rounded-md px-2 py-0.5 text-[11.5px] font-medium text-subtle hover:text-fg"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
               </div>
             </motion.div>

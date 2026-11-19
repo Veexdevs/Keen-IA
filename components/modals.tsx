@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import { IconClose, IconEye, IconEyeOff, IconGoogle, IconUser } from "./icons";
 import { Logo } from "./logo";
+import { useT } from "@/lib/i18n/use";
 import { isSupabaseConfigured, supabaseBrowser } from "@/lib/supabase/client";
 
 /* ── casca comum ───────────────────────────────────────────────────────── */
@@ -71,6 +72,7 @@ function Shell({
 }
 
 function Header({ title, subtitle, onClose }: { title: string; subtitle?: string; onClose: () => void }) {
+  const t = useT();
   return (
     <div className="flex items-start justify-between gap-4 border-b border-border px-6 pb-5 pt-6">
       <div>
@@ -82,7 +84,7 @@ function Header({ title, subtitle, onClose }: { title: string; subtitle?: string
         whileTap={{ scale: 0.92 }}
         onClick={onClose}
         className="-mr-1 -mt-1 rounded-lg p-1.5 text-subtle transition-colors hover:bg-dark hover:text-fg"
-        aria-label="Close"
+        aria-label={t("common.close")}
       >
         <IconClose size={17} />
       </motion.button>
@@ -102,6 +104,7 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
   const first = useRef<HTMLInputElement>(null);
 
   const enabled = isSupabaseConfigured();
+  const t = useT();
 
   useEffect(() => {
     if (!open) return;
@@ -114,15 +117,15 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
     e.preventDefault();
     const sb = supabaseBrowser();
     if (!sb) {
-      setMsg({ kind: "error", text: "Accounts are not set up on this deployment." });
+      setMsg({ kind: "error", text: t("login.errNoDb") });
       return;
     }
     if (!email.includes("@")) {
-      setMsg({ kind: "error", text: "That email doesn't look right." });
+      setMsg({ kind: "error", text: t("login.errEmail") });
       return;
     }
     if (password.length < 6) {
-      setMsg({ kind: "error", text: "Password needs at least 6 characters." });
+      setMsg({ kind: "error", text: t("login.errPw") });
       return;
     }
 
@@ -136,8 +139,8 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
         setMsg({
           kind: "error",
           text: error.message.includes("Invalid login")
-            ? "Wrong email or password."
-            : "Couldn't sign you in. Try again.",
+            ? t("login.errWrong")
+            : t("login.errSignIn"),
         });
         return;
       }
@@ -154,8 +157,8 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
         setMsg({
           kind: "error",
           text: error.message.includes("already registered")
-            ? "This email already has an account — sign in instead."
-            : "Couldn't create the account. Try again.",
+            ? t("login.errExists")
+            : t("login.errSignUp"),
         });
         return;
       }
@@ -163,7 +166,7 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
         onClose();
         window.location.reload();
       } else {
-        setMsg({ kind: "ok", text: "Account created. Check your email to confirm it, then sign in." });
+        setMsg({ kind: "ok", text: t("login.okConfirm") });
         setMode("signin");
       }
     }
@@ -172,7 +175,7 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
   const google = async () => {
     const sb = supabaseBrowser();
     if (!sb) {
-      setMsg({ kind: "error", text: "Accounts are not set up on this deployment." });
+      setMsg({ kind: "error", text: t("login.errNoDb") });
       return;
     }
     if (busy) return;
@@ -195,35 +198,33 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
       setBusy(false);
       const m = error.message.toLowerCase();
       const text = m.includes("not enabled") || m.includes("provider")
-        ? "Google sign-in is not enabled for this project yet. In Supabase → Authentication → Providers, turn on Google and paste the client ID and secret."
+        ? t("login.errGoogleProvider")
         : m.includes("redirect") || m.includes("url")
-          ? `This address is not in Supabase's allowed redirect list. Add ${redirectTo} in Authentication → URL configuration.`
-          : "Google sign-in could not start. Try again, or use email and password.";
+          ? t("login.errGoogleRedirect", { url: redirectTo })
+          : t("login.errGoogle");
       setMsg({ kind: "error", text });
       return;
     }
 
     if (!data?.url) {
       setBusy(false);
-      setMsg({ kind: "error", text: "Google sign-in did not return a URL. Check the provider setup in Supabase." });
+      setMsg({ kind: "error", text: t("login.errGoogleUrl") });
     }
   };
 
   return (
     <Shell open={open} onClose={onClose}>
       <Header
-        title={mode === "signin" ? "Welcome back" : "Create your account"}
+        title={mode === "signin" ? t("login.welcome") : t("login.create")}
         subtitle={
-          mode === "signin"
-            ? "Sign in to keep your chats, files and settings across devices."
-            : "Your chats are saved to your account, on every device you use."
+          mode === "signin" ? t("login.signInSub") : t("login.signUpSub")
         }
         onClose={onClose}
       />
 
       <form onSubmit={submit} className="px-6 py-5">
         <label className="mb-1.5 block text-[12px] font-semibold uppercase tracking-wider text-subtle">
-          Email
+          {t("login.email")}
         </label>
         <input
           ref={first}
@@ -236,7 +237,7 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
         />
 
         <label className="mb-1.5 block text-[12px] font-semibold uppercase tracking-wider text-subtle">
-          Password
+          {t("login.password")}
         </label>
         <div className="relative">
           <input
@@ -244,14 +245,14 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
             autoComplete={mode === "signin" ? "current-password" : "new-password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="At least 6 characters"
+            placeholder={t("login.passwordHint")}
             className="w-full rounded-xl border border-border-strong bg-dark py-2.5 pl-3.5 pr-11 text-[14px] text-fg outline-none transition-all placeholder:text-subtle focus:border-accent focus:ring-2 focus:ring-accent/25"
           />
           <button
             type="button"
             onClick={() => setShow((v) => !v)}
             className="absolute right-1 top-1 grid h-9 w-9 place-items-center rounded-lg text-subtle transition-colors hover:text-fg"
-            aria-label={show ? "Hide password" : "Show password"}
+            aria-label={show ? t("login.hidePw") : t("login.showPw")}
           >
             {show ? <IconEyeOff size={16} /> : <IconEye size={16} />}
           </button>
@@ -282,19 +283,18 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
           className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-accent-light disabled:opacity-50"
         >
           {busy ? <Spinner /> : null}
-          {mode === "signin" ? "Sign in" : "Create account"}
+          {mode === "signin" ? t("login.signIn") : t("login.signUp")}
         </motion.button>
 
         {!enabled && (
           <p className="mt-3 rounded-lg bg-amber-500/10 px-3 py-2 text-[12px] leading-relaxed text-amber-300/90">
-            The database is not configured on this deployment, so accounts are off. You can still
-            chat — messages stay in this browser only.
+            {t("login.noDb")}
           </p>
         )}
 
         <div className="my-5 flex items-center gap-3">
           <span className="h-px flex-1 bg-border" />
-          <span className="text-[11px] font-medium uppercase tracking-wider text-subtle">or</span>
+          <span className="text-[11px] font-medium uppercase tracking-wider text-subtle">{t("login.or")}</span>
           <span className="h-px flex-1 bg-border" />
         </div>
 
@@ -307,21 +307,21 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
           className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-border-strong bg-dark py-2.5 text-[14px] font-medium text-fg transition-colors hover:bg-panel disabled:opacity-50"
         >
           <IconGoogle />
-          Continue with Google
+          {t("login.google")}
         </motion.button>
 
         <p className="mt-2.5 text-center text-[10.5px] leading-relaxed text-subtle">
-          Google sign-in opens Google in this tab and returns you here.
+          {t("login.googleNote")}
         </p>
 
         <p className="mt-5 text-center text-[13px] text-muted">
-          {mode === "signin" ? "New here? " : "Already have an account? "}
+          {mode === "signin" ? `${t("login.newHere")} ` : `${t("login.haveAccount")} `}
           <button
             type="button"
             onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
             className="font-semibold text-accent-light underline-offset-4 hover:underline"
           >
-            {mode === "signin" ? "Create an account" : "Sign in"}
+            {mode === "signin" ? t("login.createLink") : t("login.signInLink")}
           </button>
         </p>
       </form>
@@ -342,6 +342,7 @@ export function ProfileModal({
   profile: { display_name: string; avatar_url: string; email: string };
   onSave: (patch: { display_name?: string; avatar_url?: string }) => void;
 }) {
+  const t = useT();
   const [name, setName] = useState(profile.display_name);
   const [avatar, setAvatar] = useState(profile.avatar_url);
   const file = useRef<HTMLInputElement>(null);
@@ -362,7 +363,7 @@ export function ProfileModal({
 
   return (
     <Shell open={open} onClose={onClose}>
-      <Header title="Your profile" subtitle="How your account appears in Keew IA." onClose={onClose} />
+      <Header title={t("profile.title")} subtitle={t("profile.subtitle")} onClose={onClose} />
 
       <div className="px-6 py-6">
         <div className="flex flex-col items-center">
@@ -394,7 +395,7 @@ export function ProfileModal({
               onClick={() => file.current?.click()}
               className="rounded-lg border border-border-strong px-3 py-1.5 text-[12.5px] font-medium text-fg transition-colors hover:bg-dark"
             >
-              Upload photo
+              {t("profile.upload")}
             </motion.button>
             {avatar && (
               <motion.button
@@ -405,7 +406,7 @@ export function ProfileModal({
                 onClick={() => setAvatar("")}
                 className="rounded-lg px-3 py-1.5 text-[12.5px] font-medium text-muted transition-colors hover:bg-dark hover:text-fg"
               >
-                Remove
+                {t("profile.remove")}
               </motion.button>
             )}
           </div>
@@ -421,18 +422,18 @@ export function ProfileModal({
         <div className="mt-6 space-y-4">
           <div>
             <label className="mb-1.5 block text-[12px] font-semibold uppercase tracking-wider text-subtle">
-              Display name
+              {t("profile.name")}
             </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
+              placeholder={t("profile.namePlaceholder")}
               className="w-full rounded-xl border border-border-strong bg-dark px-3.5 py-2.5 text-[14px] text-fg outline-none transition-all placeholder:text-subtle focus:border-accent focus:ring-2 focus:ring-accent/25"
             />
           </div>
           <div>
             <label className="mb-1.5 block text-[12px] font-semibold uppercase tracking-wider text-subtle">
-              Avatar URL
+              {t("profile.avatarUrl")}
             </label>
             <input
               value={avatar.startsWith("data:") ? "" : avatar}
@@ -443,7 +444,7 @@ export function ProfileModal({
           </div>
           <div>
             <label className="mb-1.5 block text-[12px] font-semibold uppercase tracking-wider text-subtle">
-              Email
+              {t("profile.email")}
             </label>
             <input
               value={profile.email}
@@ -463,14 +464,14 @@ export function ProfileModal({
             }}
             className="flex-1 rounded-xl bg-accent py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-accent-light"
           >
-            Save changes
+            {t("profile.save")}
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.985 }}
             onClick={onClose}
             className="rounded-xl border border-border-strong px-4 py-2.5 text-[14px] font-medium text-muted transition-colors hover:bg-dark hover:text-fg"
           >
-            Cancel
+            {t("common.cancel")}
           </motion.button>
         </div>
       </div>
@@ -492,6 +493,7 @@ export function ShareModal({
   title: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const t = useT();
 
   useEffect(() => {
     if (!open) return;
@@ -510,8 +512,8 @@ export function ShareModal({
   return (
     <Shell open={open} onClose={onClose} width={440}>
       <Header
-        title="Share this chat"
-        subtitle="Anyone with the link will be able to read this conversation."
+        title={t("share.title")}
+        subtitle={t("share.subtitle")}
         onClose={onClose}
       />
       <div className="px-6 py-6">
@@ -525,10 +527,10 @@ export function ShareModal({
           onClick={copy}
           className="mt-4 w-full rounded-xl bg-accent py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-accent-light"
         >
-          {copied ? "Link copied" : "Copy link"}
+          {copied ? t("share.copied") : t("share.copy")}
         </motion.button>
         <p className="mt-3 text-center text-[12px] leading-relaxed text-subtle">
-          Share links are generated on this device. Copy the address bar to share this chat.
+          {t("share.note")}
         </p>
       </div>
     </Shell>
