@@ -137,7 +137,7 @@ export const Message = memo(function Message({
             </span>
           )
         ) : (
-          <span className="grid h-6 w-6 place-items-center rounded-full bg-accent/12">
+          <span className="grid h-6 w-6 place-items-center rounded-full bg-black ring-1 ring-black/70">
             <Logo size={14} />
           </span>
         )}

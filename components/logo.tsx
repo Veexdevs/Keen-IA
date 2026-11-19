@@ -36,8 +36,8 @@ export function Wordmark({ size = 24 }: { size?: number }) {
   return (
     <span className="flex items-center gap-2.5">
       <Logo size={size} />
-      <span className="text-[15px] font-extrabold tracking-wider text-white">
-        Keew <span className="text-accent-light">IA</span>
+      <span className="text-[15px] font-extrabold tracking-wider text-fg">
+        Keew <span className="text-fg">IA</span>
       </span>
     </span>
   );

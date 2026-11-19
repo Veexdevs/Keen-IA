@@ -64,7 +64,7 @@ export function Composer({
   };
 
   return (
-    <div className="mx-auto w-full max-w-[760px] shrink-0 px-4 pb-3 sm:px-0">
+    <div className="mx-auto w-full max-w-[760px] shrink-0 self-end px-4 pb-3 sm:px-0">
       <motion.div
         animate={dragging ? { scale: 1.008 } : { scale: 1 }}
         transition={{ type: "spring", stiffness: 420, damping: 32 }}

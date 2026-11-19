@@ -3,6 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
+import {
+  CurrencyMark,
+  GitHubMark,
+  HackerNewsMark,
+  SupabaseMark,
+  VercelMark,
+  WeatherMark,
+  WikipediaMark,
+} from "./brand-icons";
 import { Spinner } from "./modals";
 import {
   IconCheck,
@@ -11,8 +20,10 @@ import {
   IconEye,
   IconEyeOff,
   IconLogout,
+  IconSearch,
   IconTrash,
   IconUser,
+  IconChevronLeft,
 } from "./icons";
 import {
   CONNECTORS,
@@ -42,6 +53,18 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 
 export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [tab, setTab] = useState<Tab>("connectors");
+  const [dir, setDir] = useState(0);
+
+  const order = TABS.map((t) => t.id);
+  const index = Math.max(0, order.indexOf(tab));
+
+  /* swiping left goes forward, right goes back — and never past the ends */
+  const go = (delta: number) => {
+    const next = index + delta;
+    if (next < 0 || next >= order.length) return;
+    setDir(delta);
+    setTab(order[next]);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -91,8 +114,41 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
               </motion.button>
             </div>
 
-            {/* tabs */}
-            <div className="flex shrink-0 gap-1 border-b border-border px-3 py-2">
+            {/* arrows: the same move, without the gesture */}
+            <div className="flex shrink-0 items-center gap-1 border-b border-border px-3 py-1.5">
+              <button
+                onClick={() => go(-1)}
+                disabled={index === 0}
+                className="grid h-6 w-6 place-items-center rounded-md text-subtle transition-colors hover:bg-hover hover:text-fg disabled:opacity-25"
+                aria-label="Previous section"
+              >
+                <IconChevronLeft size={14} />
+              </button>
+              <span className="flex-1 text-center text-[10.5px] uppercase tracking-[0.08em] text-subtle">
+                {index + 1} / {order.length}
+              </span>
+              <button
+                onClick={() => go(1)}
+                disabled={index === order.length - 1}
+                className="grid h-6 w-6 place-items-center rounded-md text-subtle transition-colors hover:bg-hover hover:text-fg disabled:opacity-25"
+                aria-label="Next section"
+              >
+                <IconChevronLeft size={14} className="rotate-180" />
+              </button>
+            </div>
+
+            {/* tabs — a row that swipes between panes, never off-screen */}
+            <motion.div
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.06}
+              dragMomentum={false}
+              onDragEnd={(_, info) => {
+                if (info.offset.x < -45 || info.velocity.x < -420) go(1);
+                else if (info.offset.x > 45 || info.velocity.x > 420) go(-1);
+              }}
+              className="flex shrink-0 touch-pan-y gap-0.5 overflow-x-auto border-b border-border px-2 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
               {TABS.map((t) => (
                 <button
                   key={t.id}
@@ -108,23 +164,33 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
                       transition={{ type: "spring", stiffness: 480, damping: 36 }}
                     />
                   )}
-                  <span className="relative flex items-center gap-1.5">
+                  <span className="relative flex shrink-0 items-center gap-1.5 whitespace-nowrap">
                     {t.icon}
                     {t.label}
                   </span>
                 </button>
               ))}
-            </div>
+            </motion.div>
 
-            {/* body */}
-            <div className="scroll-thin flex-1 overflow-y-auto px-5 py-5">
+            {/* body — swipe here too, the same gesture as the tabs */}
+            <motion.div
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.05}
+              dragMomentum={false}
+              onDragEnd={(_, info) => {
+                if (info.offset.x < -45 || info.velocity.x < -420) go(1);
+                else if (info.offset.x > 45 || info.velocity.x > 420) go(-1);
+              }}
+              className="scroll-thin flex-1 touch-pan-y overflow-y-auto px-5 py-5"
+            >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={tab}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.14 }}
+                  initial={{ opacity: 0, x: dir * 14 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: dir * -10 }}
+                  transition={{ duration: 0.16 }}
                 >
                   {tab === "connectors" && <ConnectorsTab />}
                   {tab === "appearance" && <AppearanceTab />}
@@ -132,7 +198,7 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
                   {tab === "about" && <AboutTab />}
                 </motion.div>
               </AnimatePresence>
-            </div>
+            </motion.div>
           </motion.aside>
         </motion.div>
       )}
@@ -142,12 +208,25 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
 
 /* ── connectors ────────────────────────────────────────────────────────── */
 
+const MARKS: Record<ConnectorId, React.ReactNode> = {
+  github: <GitHubMark size={19} />,
+  vercel: <VercelMark size={18} />,
+  supabase: <SupabaseMark size={19} />,
+  wikipedia: <WikipediaMark size={19} />,
+  hn: <HackerNewsMark size={19} />,
+  weather: <WeatherMark size={19} />,
+  currency: <CurrencyMark size={19} />,
+};
+
 function ConnectorsTab() {
   const user = useApp((s) => s.user);
   const owner = user?.email || "guest";
 
   const [states, setStates] = useState<Record<string, ConnectorState>>({});
-  const [openId, setOpenId] = useState<ConnectorId | null>(null);
+  const [query, setQuery] = useState("");
+  const [active, setActive] = useState<Connector | null>(null);
+  const [busyId, setBusyId] = useState<ConnectorId | null>(null);
+  const [note, setNote] = useState<{ id: ConnectorId; ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
     setStates(loadConnectorStates());
@@ -161,88 +240,143 @@ function ConnectorsTab() {
     });
   };
 
+  const list = query.trim()
+    ? CONNECTORS.filter((c) => c.name.toLowerCase().includes(query.trim().toLowerCase()))
+    : CONNECTORS;
+
   const online = Object.values(states).filter((s) => s.on).length;
 
-  const groups = useMemo(() => {
-    const map = new Map<string, Connector[]>();
-    for (const c of CONNECTORS) {
-      const list = map.get(c.category) ?? [];
-      list.push(c);
-      map.set(c.category, list);
+  /* a keyless connector connects with one real call */
+  const toggleKeyless = async (c: Connector) => {
+    if (states[c.id]?.on) {
+      update(c.id, { on: false, filled: {} });
+      return;
     }
-    return [...map.entries()];
-  }, []);
+    setBusyId(c.id);
+    const check = await checkConnector(c.id, {});
+    setBusyId(null);
+    setNote({ id: c.id, ok: check.ok, text: check.message });
+    if (check.ok) update(c.id, { on: true, filled: {}, checkedAt: Date.now(), label: check.message });
+  };
 
   return (
     <div>
-      <p className="mb-4 text-[12.5px] leading-relaxed text-muted">
-        Everything below works with something you already have. The ones marked{" "}
-        <span className="rounded bg-accent/15 px-1 py-0.5 text-[11px] font-semibold text-accent-light">
-          no key
-        </span>{" "}
-        start working the moment you switch them on.
-      </p>
-
-      <div className="mb-5 flex items-center gap-2 rounded-xl border border-border bg-panel px-3 py-2.5">
-        <span className={`h-1.5 w-1.5 rounded-full ${online ? "bg-emerald-400" : "bg-subtle"}`} />
-        <p className="text-[12px] text-muted">
-          {online ? `${online} connector${online === 1 ? "" : "s"} online` : "Nothing connected yet"}
-        </p>
+      {/* search */}
+      <div className="mb-3 flex items-center gap-2 rounded-lg border border-border bg-panel px-2.5 py-2">
+        <IconSearch size={14} className="shrink-0 text-subtle" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search connectors"
+          className="w-full bg-transparent text-[12.5px] text-fg outline-none placeholder:text-subtle"
+        />
+        {query && (
+          <button onClick={() => setQuery("")} className="shrink-0 text-subtle hover:text-fg" aria-label="Clear search">
+            <IconClose size={13} />
+          </button>
+        )}
       </div>
 
-      {groups.map(([category, list]) => (
-        <div key={category} className="mb-5">
-          <p className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-subtle">
-            {category}
-          </p>
-          <div className="space-y-2">
-            {list.map((c) => (
-              <ConnectorCard
-                key={c.id}
-                connector={c}
-                state={states[c.id] ?? { on: false, filled: {} }}
-                owner={owner}
-                open={openId === c.id}
-                onOpen={() => setOpenId(openId === c.id ? null : c.id)}
-                onState={(s) => update(c.id, s)}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
-
-      <p className="mt-6 text-[11.5px] leading-relaxed text-subtle">
-        Keys are encrypted and kept in this browser only — they never reach Keew&apos;s database or
-        server, except the Vercel call, which has to pass through a route because Vercel blocks
-        direct browser requests.
+      <p className="mb-2 px-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-subtle">
+        {online ? `${online} on` : "Off"}
       </p>
+
+      <div className="space-y-1.5">
+        {list.map((c) => {
+          const on = Boolean(states[c.id]?.on);
+          const busy = busyId === c.id;
+          return (
+            <div
+              key={c.id}
+              className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
+                on ? "border-accent/35 bg-accent/[0.05]" : "border-border bg-panel/50"
+              }`}
+            >
+              <span
+                className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${
+                  on ? "bg-raised text-fg" : "bg-raised text-muted"
+                }`}
+              >
+                {MARKS[c.id]}
+              </span>
+
+              <button
+                onClick={() => (c.keyless ? void toggleKeyless(c) : setActive(c))}
+                className="min-w-0 flex-1 text-left"
+              >
+                <p className="truncate text-[13px] font-medium text-fg">{c.name}</p>
+                {note?.id === c.id && (
+                  <p className={`truncate text-[10.5px] ${note.ok ? "text-emerald-400" : "text-red-400"}`}>
+                    {note.text}
+                  </p>
+                )}
+              </button>
+
+              {busy ? (
+                <Spinner size={14} />
+              ) : (
+                <button
+                  onClick={() => (c.keyless ? void toggleKeyless(c) : setActive(c))}
+                  role="switch"
+                  aria-checked={on}
+                  aria-label={`${on ? "Disconnect" : "Connect"} ${c.name}`}
+                  className={`relative h-[22px] w-[38px] shrink-0 rounded-full transition-colors ${
+                    on ? "bg-accent" : "bg-border-strong"
+                  }`}
+                >
+                  <motion.span
+                    layout
+                    transition={{ type: "spring", stiffness: 520, damping: 32 }}
+                    className={`absolute top-[3px] h-4 w-4 rounded-full bg-white shadow ${
+                      on ? "left-[19px]" : "left-[3px]"
+                    }`}
+                  />
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {query && !list.length && (
+        <p className="py-6 text-center text-[12px] text-subtle">No connector matches that.</p>
+      )}
+
+      <p className="mt-5 px-1 text-[11px] leading-relaxed text-subtle">
+        Keys stay encrypted in this browser. Vercel needs a token you create there — tap its row.
+      </p>
+
+      {/* key sheet */}
+      <ConnectorSheet
+        connector={active}
+        owner={owner}
+        onClose={() => setActive(null)}
+        onState={(id, st) => update(id, st)}
+      />
     </div>
   );
 }
 
-function ConnectorCard({
+/** The small sheet for connectors that need a key, opened from the toggle. */
+function ConnectorSheet({
   connector: c,
-  state,
   owner,
-  open,
-  onOpen,
+  onClose,
   onState,
 }: {
-  connector: Connector;
-  state: ConnectorState;
+  connector: Connector | null;
   owner: string;
-  open: boolean;
-  onOpen: () => void;
-  onState: (s: ConnectorState) => void;
+  onClose: () => void;
+  onState: (id: ConnectorId, s: ConnectorState) => void;
 }) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [reveal, setReveal] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
 
-  // when reopening, load what is already in the vault so the user sees it is set
   useEffect(() => {
-    if (!open) return;
+    if (!c) return;
+    setResult(null);
     void (async () => {
       const next: Record<string, string> = {};
       for (const f of c.fields) {
@@ -251,13 +385,13 @@ function ConnectorCard({
       }
       setValues(next);
     })();
-  }, [open, c, owner]);
+  }, [c, owner]);
 
   const connect = async () => {
+    if (!c) return;
     setBusy(true);
     setResult(null);
 
-    // store whatever was typed first, so a failed check does not lose the key
     for (const f of c.fields) {
       const v = values[f.key]?.trim();
       if (v) await saveField(c.id, f.key, v, owner);
@@ -268,205 +402,134 @@ function ConnectorCard({
     setResult(check);
 
     if (check.ok) {
-      onState({
+      onState(c.id, {
         on: true,
         filled: Object.fromEntries(c.fields.map((f) => [f.key, Boolean(values[f.key]?.trim())])),
         checkedAt: Date.now(),
         label: check.message,
       });
+      setTimeout(onClose, 900);
     }
   };
 
   const disconnect = async () => {
+    if (!c) return;
     await forgetConnector(c.id, c.fields.map((f) => f.key));
     setValues({});
-    setResult(null);
-    onState({ on: false, filled: {} });
-  };
-
-  const toggleKeyless = async () => {
-    if (state.on) {
-      onState({ on: false, filled: {} });
-      return;
-    }
-    setBusy(true);
-    const check = await checkConnector(c.id, {});
-    setBusy(false);
-    setResult(check);
-    if (check.ok) onState({ on: true, filled: {}, checkedAt: Date.now(), label: check.message });
+    onState(c.id, { on: false, filled: {} });
+    onClose();
   };
 
   return (
-    <div
-      className={`overflow-hidden rounded-xl border transition-colors ${
-        state.on ? "border-accent/35 bg-accent/[0.04]" : "border-border bg-panel/60"
-      }`}
-    >
-      <div className="flex items-start gap-3 p-3">
-        <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-raised text-[12px] font-bold text-muted">
-          {c.name.slice(0, 2).toUpperCase()}
-        </span>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <p className="text-[13px] font-semibold text-fg">{c.name}</p>
-            {c.keyless && (
-              <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-accent-light">
-                no key
-              </span>
-            )}
-            {state.on && (
-              <span className="flex items-center gap-1 text-[10.5px] font-medium text-emerald-400">
-                <IconCheck size={10} /> on
-              </span>
-            )}
-          </div>
-          <p className="mt-0.5 text-[11.5px] leading-relaxed text-muted">{c.blurb}</p>
-        </div>
-
-        {/* switch, or expand for keyed connectors */}
-        {c.keyless ? (
-          <button
-            onClick={() => void toggleKeyless()}
-            disabled={busy}
-            className={`relative h-[22px] w-[38px] shrink-0 rounded-full transition-colors ${
-              state.on ? "bg-accent" : "bg-border-strong"
-            }`}
-            aria-label={`${state.on ? "Disconnect" : "Connect"} ${c.name}`}
-          >
-            <motion.span
-              layout
-              transition={{ type: "spring", stiffness: 520, damping: 32 }}
-              className={`absolute top-[3px] h-4 w-4 rounded-full bg-white shadow ${
-                state.on ? "left-[19px]" : "left-[3px]"
-              }`}
-            />
-          </button>
-        ) : (
-          <button
-            onClick={onOpen}
-            className="shrink-0 rounded-lg border border-border-strong px-2 py-1 text-[11.5px] font-medium text-muted transition-colors hover:bg-hover hover:text-fg"
-          >
-            {open ? "Close" : state.on ? "Manage" : "Connect"}
-          </button>
-        )}
-      </div>
-
-      {/* expanded */}
-      <AnimatePresence initial={false}>
-        {open && !c.keyless && (
+    <AnimatePresence>
+      {c && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          onClick={onClose}
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
+        >
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
+            initial={{ y: 24, opacity: 0.7 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 24, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 420, damping: 34 }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-[420px] rounded-t-2xl border border-border bg-panel p-4 shadow-2xl sm:rounded-2xl"
           >
-            <div className="border-t border-border px-3 py-3">
-              <ul className="mb-3 space-y-1">
-                {c.does.map((d) => (
-                  <li key={d} className="flex gap-1.5 text-[11.5px] leading-relaxed text-muted">
-                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent/70" />
-                    {d}
-                  </li>
-                ))}
-              </ul>
-
-              {c.fields.map((f) => (
-                <div key={f.key} className="mb-3">
-                  <div className="mb-1 flex items-center justify-between">
-                    <label className="text-[11.5px] font-medium text-fg">{f.label}</label>
-                    {f.link && (
-                      <a
-                        href={f.link.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[10.5px] text-accent-light hover:underline"
-                      >
-                        {f.link.label} ↗
-                      </a>
-                    )}
-                  </div>
-                  <div className="relative">
-                    <input
-                      type={f.secret && !reveal[f.key] ? "password" : "text"}
-                      value={values[f.key] ?? ""}
-                      onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
-                      placeholder={f.placeholder}
-                      autoComplete="off"
-                      spellCheck={false}
-                      className="w-full rounded-lg border border-border-strong bg-bg px-2.5 py-2 pr-9 font-mono text-[12px] text-fg outline-none transition-colors placeholder:text-subtle focus:border-accent/60"
-                    />
-                    {f.secret && (
-                      <button
-                        onClick={() => setReveal((r) => ({ ...r, [f.key]: !r[f.key] }))}
-                        className="absolute right-1 top-1 grid h-7 w-7 place-items-center rounded text-subtle hover:text-fg"
-                        aria-label={reveal[f.key] ? "Hide" : "Show"}
-                      >
-                        {reveal[f.key] ? <IconEyeOff size={13} /> : <IconEye size={13} />}
-                      </button>
-                    )}
-                  </div>
-                  {f.hint && <p className="mt-1 text-[10.5px] leading-relaxed text-subtle">{f.hint}</p>}
-                </div>
-              ))}
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => void connect()}
-                  disabled={busy}
-                  className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-[12px] font-semibold text-white transition-colors hover:bg-accent-light disabled:opacity-60"
-                >
-                  {busy && <Spinner size={12} />}
-                  {state.on ? "Check again" : "Connect"}
-                </button>
-
-                {state.on && (
-                  <button
-                    onClick={() => void disconnect()}
-                    className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11.5px] text-muted transition-colors hover:bg-hover hover:text-fg"
-                  >
-                    <IconTrash size={12} />
-                    Disconnect
-                  </button>
-                )}
+            <div className="mb-3 flex items-center gap-2.5">
+              <span className="grid h-9 w-9 place-items-center rounded-lg bg-raised text-fg">
+                {MARKS[c.id]}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[13.5px] font-semibold text-fg">{c.name}</p>
+                <p className="truncate text-[11px] text-subtle">{c.blurb}</p>
               </div>
-
-              <AnimatePresence>
-                {result && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -3 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className={`mt-2 rounded-lg px-2.5 py-1.5 text-[11.5px] leading-relaxed ${
-                      result.ok ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
-                    }`}
-                  >
-                    {result.message}
-                  </motion.p>
-                )}
-              </AnimatePresence>
+              <button
+                onClick={onClose}
+                className="grid h-7 w-7 place-items-center rounded-lg text-subtle hover:bg-hover hover:text-fg"
+                aria-label="Close"
+              >
+                <IconClose size={15} />
+              </button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      {/* keyless check result */}
-      <AnimatePresence>
-        {result && c.keyless && (
-          <motion.p
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className={`overflow-hidden border-t border-border px-3 text-[11px] leading-relaxed ${
-              result.ok ? "py-2 text-emerald-400" : "py-2 text-red-400"
-            }`}
-          >
-            {result.message}
-          </motion.p>
-        )}
-      </AnimatePresence>
-    </div>
+            {c.fields.map((f) => (
+              <div key={f.key} className="mb-2.5">
+                <div className="mb-1 flex items-center justify-between">
+                  <label className="text-[11.5px] font-medium text-fg">{f.label}</label>
+                  {f.link && (
+                    <a
+                      href={f.link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10.5px] text-accent-light hover:underline"
+                    >
+                      {f.link.label} ↗
+                    </a>
+                  )}
+                </div>
+                <div className="relative">
+                  <input
+                    type={f.secret && !reveal[f.key] ? "password" : "text"}
+                    value={values[f.key] ?? ""}
+                    onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+                    placeholder={f.placeholder}
+                    autoComplete="off"
+                    spellCheck={false}
+                    className="w-full rounded-lg border border-border-strong bg-bg px-2.5 py-2 pr-9 font-mono text-[12px] text-fg outline-none transition-colors placeholder:text-subtle focus:border-accent/60"
+                  />
+                  {f.secret && (
+                    <button
+                      onClick={() => setReveal((r) => ({ ...r, [f.key]: !r[f.key] }))}
+                      className="absolute right-1 top-1 grid h-7 w-7 place-items-center rounded text-subtle hover:text-fg"
+                      aria-label={reveal[f.key] ? "Hide" : "Show"}
+                    >
+                      {reveal[f.key] ? <IconEyeOff size={13} /> : <IconEye size={13} />}
+                    </button>
+                  )}
+                </div>
+                {f.hint && <p className="mt-1 text-[10.5px] leading-relaxed text-subtle">{f.hint}</p>}
+              </div>
+            ))}
+
+            <div className="mt-3 flex items-center gap-2">
+              <button
+                onClick={() => void connect()}
+                disabled={busy}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-[12.5px] font-semibold text-white transition-colors hover:bg-accent-light disabled:opacity-60"
+              >
+                {busy && <Spinner size={12} />}
+                Connect
+              </button>
+              <button
+                onClick={() => void disconnect()}
+                className="rounded-lg px-2.5 py-2 text-[11.5px] text-muted transition-colors hover:bg-hover hover:text-fg"
+              >
+                Disconnect
+              </button>
+            </div>
+
+            <AnimatePresence>
+              {result && (
+                <motion.p
+                  initial={{ opacity: 0, y: -3 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className={`mt-2 rounded-lg px-2.5 py-1.5 text-[11.5px] leading-relaxed ${
+                    result.ok ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
+                  }`}
+                >
+                  {result.message}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
