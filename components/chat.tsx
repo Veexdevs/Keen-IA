@@ -87,7 +87,7 @@ export function Chat() {
   const displayName = profile?.display_name || user?.email?.split("@")[0] || undefined;
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-bg">
+    <div className="fixed inset-0 flex overflow-hidden bg-bg" style={{ height: "100dvh" }}>
       <Sidebar
         open={drawer}
         onClose={() => setDrawer(false)}
@@ -112,9 +112,9 @@ export function Chat() {
         }
       />
 
-      <div className="relative flex min-w-0 flex-1 flex-col">
+      <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col">
         {/* header */}
-        <header className="flex h-13 shrink-0 items-center justify-between gap-3 px-3 py-2 sm:px-5">
+        <header className="flex h-[52px] shrink-0 items-center justify-between gap-3 px-3 sm:px-5">
           <div className="flex min-w-0 items-center gap-2">
             <button
               onClick={() => setDrawer(true)}
@@ -181,7 +181,7 @@ export function Chat() {
         </header>
 
         {/* the stream — ends where the composer begins */}
-        <div ref={stream} className="scroll-thin flex-1 overflow-y-auto overscroll-contain">
+        <div ref={stream} className="scroll-thin min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <AnimatePresence mode="wait" initial={false}>
             {showWelcome ? (
               <motion.div
@@ -231,8 +231,8 @@ export function Chat() {
           </AnimatePresence>
         </div>
 
-        {/* composer sits right under the last message */}
-        <div className="shrink-0 px-0">
+        {/* composer sits right under the last message, never overflows */}
+        <div className="w-full shrink-0">
           <Composer
             onSend={submit}
             streaming={streaming}

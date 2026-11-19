@@ -37,7 +37,7 @@ export function Welcome({ name }: { name?: string }) {
         variants={rise}
         initial="hidden"
         animate="show"
-        className="text-[27px] font-bold leading-tight tracking-[-0.025em] text-white sm:text-[32px]"
+        className="text-[27px] font-bold leading-tight tracking-[-0.025em] text-fg sm:text-[32px]"
       >
         {name ? (
           <>
@@ -45,7 +45,7 @@ export function Welcome({ name }: { name?: string }) {
           </>
         ) : (
           <>
-            Keew <span className="text-accent-light">IA</span>
+            Keew <span className="text-white">IA</span>
           </>
         )}
       </motion.h1>

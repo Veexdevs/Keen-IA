@@ -190,3 +190,9 @@ export const IconSliders = ({ size = 16, className }: P) => (
     <circle cx="15" cy="17" r="2" />
   </svg>
 );
+
+export const IconChevronLeft = ({ size = 14, className }: P) => (
+  <svg {...base(size, className)} strokeWidth={2}>
+    <path d="m14.5 6-6 6 6 6" />
+  </svg>
+);
