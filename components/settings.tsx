@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import {
@@ -12,6 +12,7 @@ import {
   WeatherMark,
   WikipediaMark,
 } from "./brand-icons";
+import { Flag } from "./flags";
 import { Spinner } from "./modals";
 import {
   IconCheck,
@@ -59,9 +60,19 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
   const [tab, setTab] = useState<Tab>("connectors");
   const [dir, setDir] = useState(0);
   const tt = useT();
+  const locale = useLocale((s) => s.locale);
+
+  /* the strip scrolls itself to the active tab; the pane scrolls to the top */
+  const stripRef = useRef<HTMLDivElement | null>(null);
+  const paneRef = useRef<HTMLDivElement | null>(null);
+  const touch = useRef<{ x: number; y: number; at: number } | null>(null);
 
   const order = TABS.map((t) => t.id);
   const index = Math.max(0, order.indexOf(tab));
+
+  /* In Arabic and Hebrew the pager runs the other way: the first section sits
+     on the right, and a swipe to the left goes back, not forward. */
+  const rtl = LOCALE_META[locale]?.rtl === true;
 
   /* swiping left goes forward, right goes back — and never past the ends */
   const go = (delta: number) => {
@@ -69,7 +80,29 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
     if (next < 0 || next >= order.length) return;
     setDir(delta);
     setTab(order[next]);
+    requestAnimationFrame(() => paneRef.current?.scrollTo({ top: 0 }));
   };
+
+  /* tapping a tab name: same move, and the new pane starts at its top */
+  const jump = (id: Tab) => {
+    const next = order.indexOf(id);
+    if (next === index) return;
+    setDir(next > index ? 1 : -1);
+    setTab(id);
+    requestAnimationFrame(() => paneRef.current?.scrollTo({ top: 0, behavior: "smooth" }));
+  };
+
+  /* keep the active tab visible in the strip, which is wider than the panel */
+  useEffect(() => {
+    const strip = stripRef.current;
+    if (!strip) return;
+    const active = strip.querySelector<HTMLElement>(`[data-tab="${tab}"]`);
+    if (!active) return;
+    const hidden = strip.scrollWidth > strip.clientWidth;
+    if (!hidden) return;
+    const left = active.offsetLeft - strip.clientWidth / 2 + active.offsetWidth / 2;
+    strip.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
+  }, [tab]);
 
   useEffect(() => {
     if (!open) return;
@@ -103,7 +136,8 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
             exit={{ x: 34, opacity: 0 }}
             transition={{ type: "spring", stiffness: 420, damping: 36 }}
             onClick={(e) => e.stopPropagation()}
-            className="flex h-full w-full max-w-[560px] flex-col border-l border-border bg-bg shadow-2xl"
+            dir={rtl ? "rtl" : "ltr"}
+            className="flex h-full w-full max-w-[560px] flex-col border-s border-border bg-bg shadow-2xl"
           >
             {/* head */}
             <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
@@ -127,7 +161,7 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
                 className="grid h-6 w-6 place-items-center rounded-md text-subtle transition-colors hover:bg-hover hover:text-fg disabled:opacity-25"
                 aria-label={tt("settings.prev")}
               >
-                <IconChevronLeft size={14} />
+                <IconChevronLeft size={14} className={rtl ? "rotate-180" : undefined} />
               </button>
               <span className="flex-1 text-center text-[10.5px] uppercase tracking-[0.08em] text-subtle">
                 {index + 1} / {order.length}
@@ -138,27 +172,25 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
                 className="grid h-6 w-6 place-items-center rounded-md text-subtle transition-colors hover:bg-hover hover:text-fg disabled:opacity-25"
                 aria-label={tt("settings.next")}
               >
-                <IconChevronLeft size={14} className="rotate-180" />
+                <IconChevronLeft size={14} className={rtl ? undefined : "rotate-180"} />
               </button>
             </div>
 
-            {/* tabs — a row that swipes between panes, never off-screen */}
-            <motion.div
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.06}
-              dragMomentum={false}
-              onDragEnd={(_, info) => {
-                if (info.offset.x < -45 || info.velocity.x < -420) go(1);
-                else if (info.offset.x > 45 || info.velocity.x > 420) go(-1);
-              }}
-              className="flex shrink-0 touch-pan-y gap-0.5 overflow-x-auto border-b border-border px-2 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            {/* tabs — scrolls on its own axis, so no drag handler here:
+                a horizontal drag would only fight the strip's own scrolling */}
+            <div
+              ref={stripRef}
+              role="tablist"
+              className="flex shrink-0 gap-0.5 overflow-x-auto border-b border-border px-2 py-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {TABS.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setTab(item.id)}
-                  className={`relative flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12.5px] font-medium transition-colors ${
+                  data-tab={item.id}
+                  role="tab"
+                  aria-selected={tab === item.id}
+                  onClick={() => jump(item.id)}
+                  className={`relative flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12.5px] font-medium transition-colors ${
                     tab === item.id ? "text-fg" : "text-muted hover:text-fg"
                   }`}
                 >
@@ -175,19 +207,33 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
                   </span>
                 </button>
               ))}
-            </motion.div>
+            </div>
 
-            {/* body — swipe here too, the same gesture as the tabs */}
-            <motion.div
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.05}
-              dragMomentum={false}
-              onDragEnd={(_, info) => {
-                if (info.offset.x < -45 || info.velocity.x < -420) go(1);
-                else if (info.offset.x > 45 || info.velocity.x > 420) go(-1);
+            {/* body — the only place that votes on a swipe. A short move with
+                real speed (a flick) counts too, which is how a phone scrolls. */}
+            <div
+              ref={paneRef}
+              className="scroll-thin relative flex-1 overflow-y-auto overscroll-contain px-5 py-5"
+              onTouchStart={(e) => {
+                const t = e.touches[0];
+                touch.current = { x: t.clientX, y: t.clientY, at: Date.now() };
               }}
-              className="scroll-thin flex-1 touch-pan-y overflow-y-auto px-5 py-5"
+              onTouchEnd={(e) => {
+                const from = touch.current;
+                if (!from) return;
+                touch.current = null;
+                const t = e.changedTouches[0];
+                const dx = t.clientX - from.x;
+                const dy = t.clientY - from.y;
+                const ms = Math.max(1, Date.now() - from.at);
+                /* horizontal intent only: a vertical scroll must never page */
+                const speed = Math.abs(dx) / ms;
+                const sideways = Math.abs(dx) >= 60 && Math.abs(dx) >= Math.abs(dy) * 1.6;
+                const flick = Math.abs(dx) >= 24 && speed >= 0.5 && Math.abs(dx) >= Math.abs(dy);
+                if (!sideways && !flick) return;
+                /* finger moved left → next section; moved right → previous */
+                go((dx < 0 ? 1 : -1) * (rtl ? -1 : 1));
+              }}
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
@@ -204,7 +250,7 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
                   {tab === "about" && <AboutTab />}
                 </motion.div>
               </AnimatePresence>
-            </motion.div>
+            </div>
           </motion.aside>
         </motion.div>
       )}
@@ -652,58 +698,121 @@ function AppearanceTab() {
 function LanguageTab() {
   const tt = useT();
   const { locale, auto, choose } = useLocale();
+  const [query, setQuery] = useState("");
+
+  const detected = detectLocale();
+
+  /* Search over what a person would actually type: the language in its own
+     name, its English name, its region, the locale code, or one of its
+     aliases. Accents are folded both ways, so "russia" finds "Rússia" and
+     "japao" finds "Japão" — nobody types the accent when searching. */
+  const needle = fold(query.trim());
+  const list = useMemo(() => {
+    if (!needle) return LOCALES;
+    return LOCALES.filter((l) => {
+      const m = LOCALE_META[l];
+      return (
+        fold(l).includes(needle) ||
+        fold(m.name).includes(needle) ||
+        fold(m.native).includes(needle) ||
+        fold(m.region).includes(needle) ||
+        m.flag.includes(needle) ||
+        fold(m.aliases ?? "").includes(needle)
+      );
+    });
+  }, [needle]);
 
   return (
     <div className="space-y-4">
       <p className="text-[12px] leading-relaxed text-muted">{tt("language.hint")}</p>
 
-      <div className="space-y-1.5">
-        {/* automatic */}
-        <button
-          onClick={() => choose("auto")}
-          className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${
-            auto ? "border-accent/40 bg-accent/[0.05]" : "border-border bg-panel/50 hover:bg-hover"
-          }`}
-        >
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-raised text-muted">
-            <GlobeIcon />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[13px] font-medium text-fg">{tt("language.auto")}</span>
-            <span className="block truncate text-[11px] text-subtle">
-              {tt("language.autoDetected", { lang: LOCALE_META[detectLocale()].native })}
-            </span>
-          </span>
-          {auto && <IconCheck size={15} className="shrink-0 text-accent-light" />}
-        </button>
+      {/* search */}
+      <div className="relative">
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-subtle">
+          <IconSearch size={14} />
+        </span>
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={tt("language.search")}
+          aria-label={tt("language.search")}
+          className="w-full rounded-xl border border-border bg-panel/60 py-2.5 pl-9 pr-9 text-[13px] text-fg outline-none transition-colors placeholder:text-subtle focus:border-accent focus:ring-2 focus:ring-accent/20"
+        />
+        {query && (
+          <button
+            onClick={() => setQuery("")}
+            className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-md text-subtle transition-colors hover:bg-hover hover:text-fg"
+            aria-label={tt("common.close")}
+          >
+            <IconClose size={13} />
+          </button>
+        )}
+      </div>
 
-        {LOCALES.map((l) => {
+      <div className="space-y-1.5">
+        {/* automatic — the fallback that always exists */}
+        {!needle && (
+          <button
+            onClick={() => choose("auto")}
+            className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${
+              auto ? "border-accent/40 bg-accent/[0.06]" : "border-border bg-panel/50 hover:bg-hover"
+            }`}
+          >
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-raised text-muted">
+              <GlobeIcon />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13px] font-medium text-fg">{tt("language.auto")}</span>
+              <span className="block truncate text-[11px] text-subtle">
+                {tt("language.autoDetected", { lang: LOCALE_META[detected].native })}
+              </span>
+            </span>
+            {auto && <IconCheck size={15} className="shrink-0 text-accent-light" />}
+          </button>
+        )}
+
+        {list.map((l) => {
           const meta = LOCALE_META[l];
           const on = !auto && locale === l;
           return (
-            <button
+            <motion.button
               key={l}
-              onClick={() => choose(l as Locale)}
+              layout
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.14 }}
+              onClick={() => choose(l)}
+              dir={meta.rtl ? "rtl" : "ltr"}
               className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${
-                on ? "border-accent/40 bg-accent/[0.05]" : "border-border bg-panel/50 hover:bg-hover"
+                on ? "border-accent/40 bg-accent/[0.06]" : "border-border bg-panel/50 hover:bg-hover"
               }`}
             >
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-raised text-[11px] font-semibold uppercase text-muted">
-                {l.slice(0, 2)}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[13px] font-medium text-fg">{meta.native}</span>
+              <Flag code={meta.flag} size={30} />
+              <span className="min-w-0 flex-1" dir={meta.rtl ? "rtl" : "ltr"}>
+                <span className="block truncate text-[13px] font-medium text-fg">{meta.native}</span>
                 <span className="block truncate text-[11px] text-subtle">
                   {meta.name} · {meta.region}
                 </span>
               </span>
               {on && <IconCheck size={15} className="shrink-0 text-accent-light" />}
-            </button>
+            </motion.button>
           );
         })}
+
+        {list.length === 0 && (
+          <p className="px-1 py-6 text-center text-[12.5px] text-subtle">{tt("language.none")}</p>
+        )}
       </div>
     </div>
   );
+}
+
+/** lower-cased and accent-free, so a search ignores diacritics */
+function fold(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 }
 
 /* ── account ───────────────────────────────────────────────────────────── */
@@ -828,6 +937,39 @@ function AboutTab() {
             </li>
           ))}
         </ul>
+      </div>
+
+      {/* installers — the honest version: the browser can install it now,
+          the native files come from the release the CI builds */}
+      <div className="rounded-xl border border-border bg-panel p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-subtle">
+          {tt("about.install")}
+        </p>
+        <p className="mt-1.5">{tt("about.installHint")}</p>
+
+        <div className="mt-3 grid grid-cols-2 gap-1.5">
+          {[
+            { label: "Android", ext: ".apk" },
+            { label: "iOS", ext: ".ipa" },
+            { label: "Windows", ext: ".exe" },
+            { label: "Linux", ext: "AppImage" },
+          ].map((t) => (
+            <a
+              key={t.label}
+              href="https://github.com/Veexdevs/Keew-IA/releases/tag/installers"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-between gap-2 rounded-lg border border-border bg-raised/60 px-2.5 py-2 text-[12px] text-fg transition-colors hover:border-border-strong hover:bg-hover"
+            >
+              <span className="truncate font-medium">{t.label}</span>
+              <span className="shrink-0 text-[10.5px] text-subtle">{t.ext}</span>
+            </a>
+          ))}
+        </div>
+
+        <p className="mt-2.5 text-[11px] leading-relaxed text-subtle">
+          {tt("about.installNote")}
+        </p>
       </div>
 
       <p className="text-[11px] text-subtle">

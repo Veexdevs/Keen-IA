@@ -305,3 +305,32 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ── theme cross-fade ──────────────────────────────────────────────────────
+   Switching between light, gray and dark changes two dozen custom properties
+   at once. Transitioning each one independently makes the surface crawl from
+   one colour to the next; a view-transition snapshot cross-fades the whole
+   frame, which is what "the colours changing" should look like.
+
+   The browser feature-detects this: where it is missing, the switch is instant
+   and still correct. Reduced motion turns it off with the rest.            */
+
+@supports (view-transition-name: root) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.42s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+[data-motion="reduced"]::view-transition-old(root),
+[data-motion="reduced"]::view-transition-new(root) {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}
