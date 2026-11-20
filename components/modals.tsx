@@ -570,16 +570,28 @@ export function ShareModal({
           <p className="truncate text-[13px] text-muted">{title}</p>
           <p className="mt-1 truncate font-mono text-[12px] text-subtle">{url}</p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.985 }}
-          onClick={copy}
-          className="mt-4 w-full rounded-xl bg-accent py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-accent-light"
-        >
-          {copied ? t("share.copied") : t("share.copy")}
-        </motion.button>
+        <div className="mt-4 flex gap-2">
+          <motion.button
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.985 }}
+            onClick={copy}
+            className="flex-1 rounded-xl bg-accent py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-accent-light"
+          >
+            {copied ? t("share.copied") : t("share.copy")}
+          </motion.button>
+          {/* abrir a página é o que prova que o link funciona antes de colar
+              num chat — e o que mostra ao dono o que o outro vai ver */}
+          <a
+            href={url || "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="grid shrink-0 place-items-center rounded-xl border border-border-strong px-4 text-[13px] font-medium text-muted transition-colors hover:border-accent/40 hover:text-fg"
+          >
+            {t("share.open")}
+          </a>
+        </div>
         <p className="mt-3 text-center text-[12px] leading-relaxed text-subtle">
-          {t("share.note")}
+          {t("share.publicNote")}
         </p>
       </div>
     </Shell>

@@ -9,6 +9,12 @@ import { useT } from "@/lib/i18n/use";
  *
  * Usa o SVG traçado da arte original (IoU 97,3% com o arquivo), então
  * escala sem perder qualidade em qualquer tamanho e nunca corta.
+ *
+ * `size` é o diâmetro que a marca ocupa na tela, de ponta a ponta da tinta —
+ * o viewBox do arquivo já é justo em torno do desenho. Não aplique scale(),
+ * zoom nem `object-fit` por cima: a rodada em que o <img> ganhou
+ * `transform: scale(1.15)` a marca ficou 15% maior que a referência em toda
+ * tela, e 108 px no centro chegaram à tela como se fossem 124.
  */
 export function Logo({
   size = 28,
@@ -28,7 +34,7 @@ export function Logo({
       transition={spin ? { duration: 22, repeat: Infinity, ease: "linear" } : { duration: 0.3 }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/mark.svg" alt="Keen IA" width={size} height={size} style={{ display: "block", transform: "scale(1.15)" }} />
+      <img src="/mark.svg" alt="Keen IA" width={size} height={size} style={{ display: "block" }} />
     </motion.span>
   );
 }
@@ -46,7 +52,7 @@ export function Wordmark({ size = 24, fontSize }: { size?: number; fontSize?: nu
   return (
     /* dir="ltr": a marca é um nome próprio e nunca se inverte, mesmo que
        alguma tradução traga um trecho RTL para dentro do texto */
-    <span dir="ltr" className="flex items-center gap-2.5">
+    <span dir="ltr" className="flex items-center gap-2">
       <Logo size={size} />
       <span className="font-extrabold leading-none tracking-[-0.01em] text-fg" style={{ fontSize: type }}>
         Keen <span className="text-accent">{t("brand.ia")}</span>

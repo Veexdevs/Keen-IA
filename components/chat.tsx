@@ -8,12 +8,13 @@ import { Viewer } from "./attachments";
 import { IconMenu, IconProfile, IconTrash } from "./icons";
 import { Wordmark } from "./logo";
 import { Message } from "./message";
-import { LoginModal, ProfileModal } from "./modals";
+import { LoginModal, ProfileModal, ShareModal } from "./modals";
 import { SettingsSheet } from "./settings";
 import { Sidebar } from "./sidebar";
 import { Tabs } from "./tabs";
 import { Welcome } from "./welcome";
 import type { Attachment } from "@/lib/attach";
+import { IconClose, IconEdit } from "./icons";
 import { useLocale } from "@/lib/i18n/store";
 import { useStrings, useT } from "@/lib/i18n/use";
 import { usePrefs } from "@/lib/settings";
@@ -41,6 +42,7 @@ export function Chat() {
 
   const hydratePrefs = usePrefs((s) => s.hydrate);
   const hydrateLocale = useLocale((s) => s.hydrate);
+  const localeTag = useLocale((s) => s.tag);
   const t = useT();
 
   useStrings(["chat.clear", "chat.editing", "chat.menu", "chat.settings", "common.cancel", "common.close", "composer.placeholder", "composer.reply", "login.errCallback", "chat.emptyHistory", "chat.new", "chat.noMatch", "chat.searchChats", "chat.signInSave", "chat.signOut", "common.earlier", "common.remove", "common.today", "common.week", "msg.edit", "welcome.greeting", "welcome.guest", "welcome.subtitle", "composer.disclaimer", "tabs.label", "tabs.soon"]);
@@ -51,8 +53,19 @@ export function Chat() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [viewing, setViewing] = useState<Attachment | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [draft, setDraft] = useState("");
+  /* editar uma mensagem: o texto vai para o composer e o envio SUBSTITUI a
+     mensagem original, em vez de criar outra. */
+  const [editing, setEditing] = useState<{ id: string; text: string } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [share, setShare] = useState<{ open: boolean; url: string; title: string } | null>(null);
+  /* o compartilhar tem erro próprio: reaproveitar o aviso de login fazia a tela
+     dizer "o login não foi concluído" para quem só queria um link */
+  const [shareError, setShareError] = useState<string | null>(null);
   const stream = useRef<HTMLDivElement>(null);
+
+  const deleteMessage = useApp((s) => s.deleteMessage);
+  const editMessage = useApp((s) => s.editMessage);
+  const regenerate = useApp((s) => s.regenerate);
 
   useEffect(() => {
     hydratePrefs();
@@ -85,6 +98,49 @@ export function Chat() {
       void send(text, files);
     },
     [send],
+  );
+
+  /**
+   * Publica a resposta e abre o modal com o link.
+   *
+   * O texto vai sozinho: é a única coisa que a página pública mostra. O id da
+   * mensagem não é enviado de propósito — sem ele, quem tem o link não tem
+   * como chegar ao resto da conversa.
+   */
+  const openShare = useCallback(
+    async (content: string) => {
+      const title = chat?.title ?? "Keen IA";
+      try {
+        const res = await fetch("/api/share", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ text: content, lang: localeTag, title }),
+        });
+        const data = (await res.json()) as { url?: string; error?: string };
+        if (!res.ok || !data.url) {
+          setShareError(
+            data.error === "no-store"
+              ? t("share.noStore")
+              : data.error === "rate-limited"
+                ? t("share.rateLimited")
+                : t("share.failed"),
+          );
+          return;
+        }
+        setShare({ open: true, url: data.url, title });
+      } catch {
+        setShareError(t("share.failed"));
+      }
+    },
+    [chat?.title, localeTag, t],
+  );
+
+  const remove = useCallback(
+    async (id: string) => {
+      setConfirmDelete(null);
+      await deleteMessage(id);
+    },
+    [deleteMessage],
   );
 
   if (!ready) {
@@ -149,7 +205,7 @@ export function Chat() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  <Wordmark size={24} fontSize={19} />
+                  <Wordmark size={21} fontSize={18.5} />
                 </motion.div>
               ) : (
                 <motion.h1
@@ -231,18 +287,17 @@ export function Chat() {
                     onOpenAttachment={setViewing}
                     onRegenerate={
                       m.role === "assistant" && i === messages.length - 1
-                        ? () => {
-                            const prev = messages[i - 1];
-                            if (prev?.role === "user") void send(prev.content, prev.attachments ?? []);
-                          }
+                        ? () => void regenerate()
                         : undefined
                     }
+                    canRegenerate={i === messages.length - 1}
                     onEdit={
-                      m.role === "user"
-                        ? () => {
-                            setDraft(m.content);
-                            void clearChat();
-                          }
+                      m.role === "user" ? (text) => setEditing({ id: m.id, text }) : undefined
+                    }
+                    onDelete={() => setConfirmDelete(m.id)}
+                    onShare={
+                      m.role === "assistant" && m.content
+                        ? () => void openShare(m.content)
                         : undefined
                     }
                   />
@@ -254,37 +309,50 @@ export function Chat() {
 
         {/* composer sits right under the last message, never overflows */}
         <div className="w-full shrink-0">
+          {/* editando: uma faixa acima do campo diz o que o envio vai fazer */}
+          <AnimatePresence>
+            {editing && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                className="mx-auto flex w-full max-w-[760px] items-center gap-2 px-3 pb-1.5 sm:px-0"
+              >
+                <span className="flex min-w-0 flex-1 items-center gap-1.5 text-[11.5px] text-accent-light">
+                  <IconEdit size={12} />
+                  <span className="truncate">{t("chat.editing", { text: editing.text.slice(0, 68) })}</span>
+                </span>
+                <button
+                  onClick={() => setEditing(null)}
+                  className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-subtle transition-colors hover:bg-hover hover:text-fg"
+                  aria-label={t("common.cancel")}
+                  title={t("common.cancel")}
+                >
+                  <IconClose size={12} />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <Composer
-            onSend={submit}
+            onSend={(text, files) => {
+              /* editando, o envio troca o texto no lugar: sem nova mensagem do
+                 usuário e sem outra resposta — só o que estava errado corrigido */
+              if (editing) {
+                void editMessage(editing.id, text);
+                setEditing(null);
+                return;
+              }
+              submit(text, files);
+            }}
+            value={editing?.text}
+            onValueChange={editing ? (next) => setEditing({ ...editing, text: next }) : undefined}
             streaming={streaming}
             onStop={stop}
-            placeholder={showWelcome ? t("composer.placeholder") : t("composer.reply")}
+            placeholder={editing ? t("chat.editingHint") : showWelcome ? t("composer.placeholder") : t("composer.reply")}
           />
         </div>
 
-        {/* editing an earlier message */}
-        <AnimatePresence>
-          {draft && !showWelcome && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              className="absolute bottom-20 left-1/2 w-full max-w-[760px] -translate-x-1/2 px-4 sm:px-0"
-            >
-              <div className="flex items-center gap-2 rounded-xl border border-accent/35 bg-panel px-3 py-2 shadow-xl">
-                <span className="min-w-0 flex-1 truncate text-[12px] text-muted">
-                  {t("chat.editing", { text: draft.slice(0, 80) })}
-                </span>
-                <button
-                  onClick={() => setDraft("")}
-                  className="rounded-md px-2 py-0.5 text-[11.5px] font-medium text-subtle hover:text-fg"
-                >
-                  {t("common.cancel")}
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* /auth/callback sends people back with ?auth=error&reason=… — without
@@ -320,6 +388,84 @@ export function Chat() {
       </AnimatePresence>
 
       <Viewer item={viewing} onClose={() => setViewing(null)} />
+
+      {/* apagar pede um segundo toque: é o único botão da fileira que não
+          desfaz, e o alvo é pequeno */}
+      <AnimatePresence>
+        {confirmDelete && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[65] grid place-items-center bg-black/75 p-5 backdrop-blur-sm"
+            onClick={() => setConfirmDelete(null)}
+            role="dialog"
+            aria-modal="true"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-[360px] rounded-2xl border border-border bg-panel p-5 shadow-2xl"
+            >
+              <span className="mb-3 grid h-9 w-9 place-items-center rounded-full bg-red-500/12 text-red-300">
+                <IconTrash size={16} />
+              </span>
+              <p className="text-[14.5px] font-semibold text-fg">{t("msg.deleteTitle")}</p>
+              <p className="mt-1 text-[12.5px] leading-relaxed text-muted">{t("msg.deleteBody")}</p>
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  onClick={() => setConfirmDelete(null)}
+                  className="rounded-lg border border-border-strong px-3.5 py-2 text-[12.5px] font-medium text-muted transition-colors hover:bg-dark hover:text-fg"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  onClick={() => void remove(confirmDelete)}
+                  className="rounded-lg bg-red-500/90 px-3.5 py-2 text-[12.5px] font-semibold text-white transition-colors hover:bg-red-500"
+                >
+                  {t("msg.delete")}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* aviso do compartilhar, discreto e com prazo próprio */}
+      <AnimatePresence>
+        {shareError && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            role="status"
+            className="fixed bottom-24 left-1/2 z-[70] w-[min(92vw,420px)] -translate-x-1/2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-amber-200 shadow-xl backdrop-blur-md"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span>{shareError}</span>
+              <button
+                onClick={() => setShareError(null)}
+                className="shrink-0 text-amber-300/70 hover:text-amber-100"
+                aria-label={t("common.close")}
+              >
+                <IconClose size={12} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* some sozinho: é sobre uma tentativa, não sobre a tela */}
+      <ShareErrorTimer value={shareError} onDone={() => setShareError(null)} />
+
+      <ShareModal
+        open={Boolean(share?.open)}
+        onClose={() => setShare(null)}
+        url={share?.url ?? ""}
+        title={share?.title ?? ""}
+      />
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       <LoginModal open={login} onClose={() => setLogin(false)} />
@@ -335,4 +481,14 @@ export function Chat() {
       />
     </div>
   );
+}
+
+/** Um aviso de compartilhar que some sozinho depois de alguns segundos. */
+function ShareErrorTimer({ value, onDone }: { value: string | null; onDone: () => void }) {
+  useEffect(() => {
+    if (!value) return;
+    const id = setTimeout(onDone, 6000);
+    return () => clearTimeout(id);
+  }, [value, onDone]);
+  return null;
 }

@@ -13,6 +13,7 @@ import {
   IconRefresh,
   IconShare,
   IconSpeak,
+  IconTrash,
   IconUser,
 } from "./icons";
 import type { Attachment } from "@/lib/attach";
@@ -26,11 +27,13 @@ function Action({
   onClick,
   children,
   active,
+  danger,
 }: {
   label: string;
   onClick: () => void;
   children: React.ReactNode;
   active?: boolean;
+  danger?: boolean;
 }) {
   return (
     <motion.button
@@ -40,7 +43,11 @@ function Action({
       title={label}
       aria-label={label}
       className={`grid h-6 w-6 place-items-center rounded-md transition-colors ${
-        active ? "text-accent-light" : "text-subtle hover:bg-hover hover:text-fg"
+        active
+          ? "text-accent-light"
+          : danger
+            ? "text-subtle hover:bg-red-500/10 hover:text-red-300"
+            : "text-subtle hover:bg-hover hover:text-fg"
       }`}
     >
       {children}
@@ -72,21 +79,27 @@ export const Message = memo(function Message({
   avatar,
   onRegenerate,
   onEdit,
+  onDelete,
   onShare,
   onOpenAttachment,
   isLast,
+  canRegenerate,
 }: {
   msg: Msg;
   avatar?: string;
   onRegenerate?: () => void;
   onEdit?: (text: string) => void;
+  onDelete?: () => void;
+  /** gera o link público desta resposta; só existe para a IA */
   onShare?: () => void;
   onOpenAttachment?: (a: Attachment) => void;
   isLast?: boolean;
+  /** o regerar vale para a última resposta da conversa, não para o meio dela */
+  canRegenerate?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
-  const t = useT();
   const [speaking, setSpeaking] = useState(false);
+  const t = useT();
   const isUser = msg.role === "user";
   const files = msg.attachments ?? [];
 
@@ -100,6 +113,9 @@ export const Message = memo(function Message({
     }
   };
 
+  /* Leitura em voz alta pelo próprio navegador: sem chave, sem custo e sem
+     mandar o texto para fora. A voz é a do sistema, então ela também responde
+     no idioma em que o aparelho está configurado. */
   const speak = () => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
     if (speaking) {
@@ -117,6 +133,8 @@ export const Message = memo(function Message({
     window.speechSynthesis.speak(utter);
     setSpeaking(true);
   };
+
+  const showActions = !msg.pending && (msg.content || files.length > 0);
 
   return (
     <motion.div
@@ -223,8 +241,11 @@ export const Message = memo(function Message({
           </div>
         )}
 
-        {/* actions, revealed on hover like Arena and Claude */}
-        {!msg.pending && (msg.content || files.length > 0) && (
+        {/* ── ações ────────────────────────────────────────────────────────
+            A ordem é a de quem usa: primeiro o que lê a mensagem (copiar, ouvir,
+            compartilhar), depois o que a transforma (regerar, editar) e por
+            último o que a apaga — o único que pede um segundo toque. */}
+        {showActions && (
           <div
             className={`mt-1.5 flex items-center gap-0.5 transition-opacity duration-150 ${
               isUser
@@ -232,6 +253,28 @@ export const Message = memo(function Message({
                 : "opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100"
             }`}
           >
+            {isUser ? (
+              <>
+                {/* você: editar · copiar · apagar */}
+                {onEdit && (
+                  <Action label={t("msg.edit")} onClick={() => onEdit(msg.content)}>
+                    <IconEdit size={13} />
+                  </Action>
+                )}
+              </>
+            ) : (
+              <>
+                {/* a IA: ouvir · copiar · compartilhar · regerar · apagar */}
+                <Action
+                  label={speaking ? t("msg.stopReading") : t("msg.read")}
+                  onClick={speak}
+                  active={speaking}
+                >
+                  <IconSpeak size={13} />
+                </Action>
+              </>
+            )}
+
             <Action label={copied ? t("msg.copied") : t("msg.copy")} onClick={copy} active={copied}>
               <AnimatePresence mode="wait" initial={false}>
                 {copied ? (
@@ -256,28 +299,21 @@ export const Message = memo(function Message({
               </AnimatePresence>
             </Action>
 
-            {!isUser && (
-              <>
-                <Action label={speaking ? t("msg.stopReading") : t("msg.read")} onClick={speak} active={speaking}>
-                  <IconSpeak size={13} />
-                </Action>
-                {isLast && onRegenerate && (
-                  <Action label={t("msg.regenerate")} onClick={onRegenerate}>
-                    <IconRefresh size={13} />
-                  </Action>
-                )}
-              </>
-            )}
-
-            {isUser && onEdit && (
-              <Action label={t("msg.edit")} onClick={() => onEdit(msg.content)}>
-                <IconEdit size={13} />
+            {!isUser && onShare && (
+              <Action label={t("msg.share")} onClick={onShare}>
+                <IconShare size={13} />
               </Action>
             )}
 
-            {onShare && (
-              <Action label={t("msg.share")} onClick={onShare}>
-                <IconShare size={13} />
+            {!isUser && isLast && canRegenerate && onRegenerate && (
+              <Action label={t("msg.regenerate")} onClick={onRegenerate}>
+                <IconRefresh size={13} />
+              </Action>
+            )}
+
+            {onDelete && (
+              <Action label={t("msg.delete")} onClick={onDelete} danger>
+                <IconTrash size={13} />
               </Action>
             )}
           </div>

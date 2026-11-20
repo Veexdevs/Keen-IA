@@ -68,6 +68,19 @@ type State = {
 
   send: (text: string, files?: Attachment[]) => Promise<void>;
   stop: () => void;
+
+  /** apaga uma única mensagem da conversa */
+  deleteMessage: (id: string) => Promise<void>;
+  /** troca o texto de uma mensagem já enviada */
+  editMessage: (id: string, text: string) => Promise<void>;
+  /**
+   * Gera a resposta de novo a partir do último pedido. Substitui a resposta
+   * atual em vez de acrescentar outra: duas respostas para a mesma pergunta
+   * era o que acontecia antes de o botão existir de verdade.
+   */
+  regenerate: () => Promise<void>;
+  /** acrescenta uma mensagem (a bolha "pensando") numa conversa */
+  appendPending: (chatId: string, msg: Msg) => void;
 };
 
 const uid = () => crypto.randomUUID();
@@ -99,6 +112,127 @@ const titleFrom = (text: string) => {
   const clean = text.trim().replace(/\s+/g, " ");
   return clean.length > 42 ? `${clean.slice(0, 42)}…` : clean || "New chat";
 };
+
+
+/**
+ * Pede a resposta de um pedido que já está no histórico.
+ *
+ * `send()` faz duas coisas: acrescenta o turno do usuário e busca a resposta.
+ * Regerar precisa só da segunda metade — repetir o turno duplicaria a pergunta
+ * na tela e no banco. Por isso o pedido é: um turno do usuário já existente,
+ * e a resposta é gravada como uma mensagem nova.
+ */
+async function askAgain(chatId: string, history: Msg[], question: string, files: Attachment[]) {
+  const botId = uid();
+  const store = useApp.getState();
+  const user = store.user;
+
+  store.appendPending(chatId, { id: botId, role: "assistant", content: "", pending: true });
+
+  const patch = (fn: (m: Msg) => Msg) =>
+    useApp.setState((s) => ({
+      chats: s.chats.map((c) =>
+        c.id === chatId ? { ...c, messages: c.messages.map((m) => (m.id === botId ? fn(m) : m)) } : c,
+      ),
+    }));
+
+  const readable = files.filter((f) => f.text);
+  const grounded = readable.length
+    ? `${question}\n\n${readable
+        .map((f) => `--- ${f.name} ---\n${f.text!.slice(0, 8000)}`)
+        .join("\n\n")}`.trim()
+    : question;
+  const visual = files
+    .filter((f) => f.kind === "image" || f.kind === "video")
+    .map((f) => `[Attached ${f.kind}: ${f.name}]`)
+    .join("\n");
+
+  controller = new AbortController();
+
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        messages: history.map((m) => ({
+          role: m.role,
+          content:
+            m.role === "user" && m.content === question && m === history[history.length - 1]
+              ? [grounded, visual].filter(Boolean).join("\n\n")
+              : m.content,
+        })),
+      }),
+    });
+
+    if (!res.ok || !res.body) {
+      patch((m) => ({ ...m, pending: false, error: "Could not reach the server." }));
+      return;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let out = "";
+    let sources: Msg["sources"] = [];
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split("\n\n");
+      buffer = parts.pop() ?? "";
+
+      for (const part of parts) {
+        const line = part.split("\n").find((l) => l.startsWith("data:"));
+        if (!line) continue;
+        let frame: { t: string; v?: unknown };
+        try {
+          frame = JSON.parse(line.slice(5).trim());
+        } catch {
+          continue;
+        }
+        if (frame.t === "text" && typeof frame.v === "string") {
+          out += frame.v;
+          patch((m) => ({ ...m, content: out }));
+        } else if (frame.t === "sources" && Array.isArray(frame.v)) {
+          sources = frame.v as Msg["sources"];
+          patch((m) => ({ ...m, sources }));
+        } else if (frame.t === "error" && typeof frame.v === "string") {
+          patch((m) => ({ ...m, error: frame.v as string }));
+        }
+      }
+    }
+
+    const final = out || "I couldn't complete this answer.";
+    patch((m) => ({ ...m, pending: false, content: final }));
+
+    const sb = supabaseBrowser();
+    if (sb && user) {
+      await sb.from("messages").insert({
+        chat_id: chatId,
+        user_id: user.id,
+        role: "assistant",
+        content: final,
+        sources: sources ?? [],
+        attachments: [],
+      });
+    }
+  } catch (err) {
+    const aborted = (err as Error).name === "AbortError";
+    patch((m) => ({
+      ...m,
+      pending: false,
+      error: aborted ? undefined : "The connection dropped mid-answer.",
+    }));
+  } finally {
+    controller = null;
+    useApp.setState((s) => {
+      if (s.dbEnabled === false) saveGuest(s.chats);
+      return { streaming: false };
+    });
+  }
+}
 
 export const useApp = create<State>()((set, get) => ({
   ready: false,
@@ -472,6 +606,100 @@ export const useApp = create<State>()((set, get) => ({
         return { streaming: false };
       });
     }
+  },
+
+  appendPending: (chatId, msg) => {
+    set((s) => ({
+      chats: s.chats.map((c) => (c.id === chatId ? { ...c, messages: [...c.messages, msg] } : c)),
+      streaming: true,
+    }));
+  },
+
+  /* ── mexer numa mensagem ─────────────────────────────────────────────── */
+
+  deleteMessage: async (id) => {
+    const { activeId, chats, user } = get();
+    const chat = chats.find((c) => c.id === activeId);
+    if (!chat || !activeId) return;
+
+    set((s) => {
+      const next = s.chats.map((c) =>
+        c.id === activeId ? { ...c, messages: c.messages.filter((m) => m.id !== id) } : c,
+      );
+      if (s.dbEnabled === false) saveGuest(next);
+      return { chats: next };
+    });
+
+    /* só com conta existe linha no banco; o id da mensagem é o mesmo de lá */
+    const sb = supabaseBrowser();
+    if (sb && user && /^[0-9a-f-]{32,36}$/i.test(id)) {
+      await sb.from("messages").delete().eq("id", id);
+    }
+  },
+
+  editMessage: async (id, text) => {
+    const clean = text.trim();
+    if (!clean) return;
+    const { activeId, user } = get();
+    if (!activeId) return;
+
+    set((s) => {
+      const next = s.chats.map((c) =>
+        c.id === activeId
+          ? { ...c, messages: c.messages.map((m) => (m.id === id ? { ...m, content: clean } : m)) }
+          : c,
+      );
+      if (s.dbEnabled === false) saveGuest(next);
+      return { chats: next };
+    });
+
+    const sb = supabaseBrowser();
+    if (sb && user && /^[0-9a-f-]{32,36}$/i.test(id)) {
+      /* updated_at existe na migração de hoje, mas o tipo gerado do banco
+         ainda não a conhece: o cast fica aqui, não no esquema */
+      await sb
+        .from("messages")
+        .update({ content: clean, updated_at: now() } as unknown as { content: string })
+        .eq("id", id);
+    }
+  },
+
+  regenerate: async () => {
+    const { activeId, chats, streaming } = get();
+    if (streaming) return;
+    const chat = chats.find((c) => c.id === activeId);
+    if (!chat || !activeId) return;
+
+    /* o último pedido é o que a resposta está respondendo; a partir dele tudo
+       o que veio depois (resposta e restos de tentativas) é refeito */
+    const at = [...chat.messages].reverse().findIndex((m) => m.role === "user");
+    if (at === -1) return;
+    const cut = chat.messages.length - 1 - at;
+    const asked = chat.messages[cut];
+    if (!asked) return;
+
+    const kept = chat.messages.slice(0, cut + 1);
+
+    set((s) => {
+      const next = s.chats.map((c) => (c.id === activeId ? { ...c, messages: kept } : c));
+      if (s.dbEnabled === false) saveGuest(next);
+      return { chats: next };
+    });
+
+    /* a resposta antiga sai do banco também, senão recarregar a página a
+       trazia de volta, abaixo de uma resposta nova */
+    const sb = supabaseBrowser();
+    const user = get().user;
+    if (sb && user) {
+      const stale = chat.messages.slice(cut + 1).filter((m) => m.role === "assistant");
+      for (const m of stale) {
+        if (/^[0-9a-f-]{32,36}$/i.test(m.id)) await sb.from("messages").delete().eq("id", m.id);
+      }
+    }
+
+    /* send() reconstruiria o turno do zero e duplicaria o pedido. Em vez
+       disso, a resposta é pedida aqui, com o histórico que sobrou. */
+    await askAgain(activeId, kept, asked.content, (asked.attachments ?? []) as Attachment[]);
   },
 
   stop: () => {
