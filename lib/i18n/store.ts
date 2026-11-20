@@ -98,11 +98,39 @@ function languageOf(tag: string): Language {
   );
 }
 
-/** Applies direction and language to <html>, which CSS and screen readers read. */
+/**
+ * Mirrors the choice into a cookie.
+ *
+ * localStorage is per-origin, so the download page (its own project, its own
+ * host) cannot read it. A first-party cookie on the parent domain would be
+ * better, but vercel.app is a public suffix: browsers refuse a cookie for
+ * "vercel.app". The page therefore falls back to English for the two letters,
+ * which is what an international page should default to anyway.
+ */
+function rememberCookie(tag: string) {
+  if (typeof document === "undefined") return;
+  document.cookie = `keew_locale=${encodeURIComponent(primaryTag(tag))}; path=/; max-age=31536000; samesite=lax`;
+}
+
+/**
+ * Applies the language to <html>, for hyphenation and screen readers.
+ *
+ * The direction is always LTR, on purpose. Ten of the 183 languages are
+ * right-to-left (Arabic, Hebrew, Persian, Urdu…), and flipping the document
+ * was making the whole interface mirror: the mark jumped to the right of the
+ * wordmark, turning "Keew IA" into "IA Keew", and the language list reversed
+ * row by row. A page can only be properly mirrored if every margin, icon,
+ * shadow and animation has an RTL counterpart, and this one has none — so the
+ * flip was half a mirror, which reads as broken.
+ *
+ * Right-to-left *text* still renders correctly: the bidi algorithm mirrors the
+ * glyphs inside a left-aligned line. What no longer happens is the layout
+ * turning inside out.
+ */
 function applyDocument(language: Language) {
   if (typeof document === "undefined") return;
   document.documentElement.lang = primaryTag(language.tag);
-  document.documentElement.dir = language.rtl ? "rtl" : "ltr";
+  document.documentElement.dir = "ltr";
 }
 
 export const useLocale = create<State>()((set, get) => ({
@@ -133,6 +161,7 @@ export const useLocale = create<State>()((set, get) => ({
 
     set({ locale, tag, language, auto, ready: true });
     applyDocument(language);
+    rememberCookie(tag);
 
     /* cached translations for this language, if the browser has them */
     try {
@@ -154,6 +183,7 @@ export const useLocale = create<State>()((set, get) => ({
 
     set({ locale, tag, language, auto });
     applyDocument(language);
+    rememberCookie(tag);
 
     try {
       localStorage.setItem("keew-ia-locale", auto ? "" : tag);

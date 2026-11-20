@@ -38,7 +38,9 @@ export const metadata: Metadata = {
     description: "Your own intelligence.",
     images: ["/og.png"],
   },
-  appleWebApp: { capable: true, title: "Keew IA", statusBarStyle: "black-translucent" },
+  /* Sem appleWebApp: "capable" o iOS abria o site em modo aplicativo, sem
+     barra de endereço — era metade da reclamação de "tela cheia". O título do
+     atalho continua vindo do <title>. */
   formatDetection: { telephone: false },
 };
 
@@ -47,7 +49,6 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

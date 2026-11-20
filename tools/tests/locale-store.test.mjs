@@ -47,7 +47,11 @@ console.log("   (dir depois:", JSON.stringify(globalThis.document.documentElemen
 check("persa escolhido", useLocale.getState().tag === "fa");
 check("cai no inglês até chegar tradução", useLocale.getState().locale === "en");
 check("<html lang> acompanha", globalThis.document.documentElement.lang === "fa");
-check("<html dir> é rtl para persa (persa é rtl)", globalThis.document.documentElement.dir === "rtl");
+/* A interface não espelha. Dez idiomas são escritos da direita para a esquerda,
+   e virar o documento inteiro virava meia-esquerda: a marca pulava para o lado
+   direito do nome ("IA Keew") e a lista de idiomas invertia linha a linha.
+   O texto RTL continua certo dentro da linha; o layout não vira. */
+check("<html dir> continua ltr em persa", globalThis.document.documentElement.dir === "ltr", globalThis.document.documentElement.dir);
 
 /* ── ensureStrings fetches once and caches ──────────────────────────────── */
 const before = requests;
@@ -70,13 +74,15 @@ await useLocale.getState().ensureStrings({
 });
 check("só pede a chave que falta", asked?.length === 1 && asked[0] === "chat.clear", JSON.stringify(asked));
 
-/* ── RTL ────────────────────────────────────────────────────────────────── */
+/* ── RTL: texto certo, layout sempre ltr ────────────────────────────────── */
 useLocale.getState().choose("pt-BR");
-check("voltar para ltr limpa o dir", globalThis.document.documentElement.dir === "ltr", globalThis.document.documentElement.dir);
+check("português fica ltr", globalThis.document.documentElement.dir === "ltr", globalThis.document.documentElement.dir);
 useLocale.getState().choose("ar");
-check("árabe é rtl", globalThis.document.documentElement.dir === "rtl");
+check("árabe não espelha o layout", globalThis.document.documentElement.dir === "ltr", globalThis.document.documentElement.dir);
+check("árabe ainda marca lang=ar", globalThis.document.documentElement.lang === "ar", globalThis.document.documentElement.lang);
+check("árabe é conhecido como rtl", useLocale.getState().language.rtl === true);
 useLocale.getState().choose("he");
-check("hebraico é rtl", globalThis.document.documentElement.dir === "rtl");
+check("hebraico não espelha o layout", globalThis.document.documentElement.dir === "ltr", globalThis.document.documentElement.dir);
 
 /* ── a bundled language never calls the server ──────────────────────────── */
 const n = requests;

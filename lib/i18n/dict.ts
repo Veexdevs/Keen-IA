@@ -10,7 +10,7 @@
  */
 
 export const en = {
-  "brand.ia": "IA",
+  "brand.ia": "AI",
   "common.close": "Close",
   "common.cancel": "Cancel",
   "common.save": "Save changes",
@@ -793,7 +793,7 @@ export const de: Dict = {
   "msg.errorServer": "Server nicht erreichbar.",
   "msg.errorDrop": "Die Verbindung brach mitten in der Antwort ab.",
   "msg.emptyAnswer": "Ich konnte diese Antwort nicht fertigstellen.",
-  "brand.ia": "IA",
+  "brand.ia": "KI",
   "language.search": "Sprachen suchen",
   "language.none": "Keine Sprache passt dazu.",
   "about.install": "Keew installieren",
@@ -967,7 +967,7 @@ export const it: Dict = {
 };
 
 export const nl: Dict = {
-  "brand.ia": "IA",
+  "brand.ia": "KI",
   "common.close": "Sluiten",
   "common.cancel": "Annuleren",
   "common.save": "Wijzigingen opslaan",
@@ -1126,7 +1126,7 @@ export const nl: Dict = {
 };
 
 export const pl: Dict = {
-  "brand.ia": "IA",
+  "brand.ia": "SI",
   "common.close": "Zamknij",
   "common.cancel": "Anuluj",
   "common.save": "Zapisz zmiany",
@@ -1285,7 +1285,7 @@ export const pl: Dict = {
 };
 
 export const tr: Dict = {
-  "brand.ia": "IA",
+  "brand.ia": "YZ",
   "common.close": "Kapat",
   "common.cancel": "İptal",
   "common.save": "Değişiklikleri kaydet",
@@ -1444,7 +1444,7 @@ export const tr: Dict = {
 };
 
 export const ru: Dict = {
-  "brand.ia": "IA",
+  "brand.ia": "ИИ",
   "common.close": "Закрыть",
   "common.cancel": "Отмена",
   "common.save": "Сохранить",
@@ -1603,7 +1603,7 @@ export const ru: Dict = {
 };
 
 export const uk: Dict = {
-  "brand.ia": "IA",
+  "brand.ia": "ШІ",
   "common.close": "Закрити",
   "common.cancel": "Скасувати",
   "common.save": "Зберегти зміни",
@@ -1762,7 +1762,7 @@ export const uk: Dict = {
 };
 
 export const ar: Dict = {
-  "brand.ia": "IA",
+  "brand.ia": "ذ.ا",
   "common.close": "إغلاق",
   "common.cancel": "إلغاء",
   "common.save": "حفظ التغييرات",
@@ -1921,7 +1921,7 @@ export const ar: Dict = {
 };
 
 export const hi: Dict = {
-  "brand.ia": "IA",
+  "brand.ia": "एआई",
   "common.close": "बंद करें",
   "common.cancel": "रद्द करें",
   "common.save": "बदलाव सहेजें",
@@ -2080,7 +2080,7 @@ export const hi: Dict = {
 };
 
 export const id: Dict = {
-  "brand.ia": "IA",
+  "brand.ia": "AI",
   "common.close": "Tutup",
   "common.cancel": "Batal",
   "common.save": "Simpan perubahan",
@@ -2239,7 +2239,7 @@ export const id: Dict = {
 };
 
 export const ja: Dict = {
-  "brand.ia": "IA",
+  "brand.ia": "AI",
   "common.close": "閉じる",
   "common.cancel": "キャンセル",
   "common.save": "変更を保存",
@@ -2398,7 +2398,7 @@ export const ja: Dict = {
 };
 
 export const ko: Dict = {
-  "brand.ia": "IA",
+  "brand.ia": "AI",
   "common.close": "닫기",
   "common.cancel": "취소",
   "common.save": "변경 사항 저장",
@@ -2557,7 +2557,7 @@ export const ko: Dict = {
 };
 
 export const zh: Dict = {
-  "brand.ia": "IA",
+  "brand.ia": "AI",
   "common.close": "关闭",
   "common.cancel": "取消",
   "common.save": "保存更改",
@@ -2716,7 +2716,7 @@ export const zh: Dict = {
 };
 
 export const vi: Dict = {
-  "brand.ia": "IA",
+  "brand.ia": "AI",
   "common.close": "Đóng",
   "common.cancel": "Hủy",
   "common.save": "Lưu thay đổi",
@@ -2875,7 +2875,7 @@ export const vi: Dict = {
 };
 
 export const th: Dict = {
-  "brand.ia": "IA",
+  "brand.ia": "AI",
   "common.close": "ปิด",
   "common.cancel": "ยกเลิก",
   "common.save": "บันทึกการเปลี่ยนแปลง",
@@ -3034,7 +3034,7 @@ export const th: Dict = {
 };
 
 export const he: Dict = {
-  "brand.ia": "IA",
+  "brand.ia": "ב.מ",
   "common.close": "סגירה",
   "common.cancel": "ביטול",
   "common.save": "שמירת שינויים",

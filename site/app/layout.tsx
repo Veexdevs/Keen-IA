@@ -4,13 +4,13 @@ import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Baixar o Keew IA — Android, iPhone, Windows, macOS e Linux",
+  title: "Baixar a Keew — Android, iPhone, Windows, macOS e Linux",
   description:
-    "Baixe o Keew IA para Android, iPhone, Windows, macOS e Linux.",
-  applicationName: "Keew IA",
+    "Baixe a Keew para Android, iPhone, Windows, macOS e Linux.",
+  applicationName: "Keew",
   metadataBase: new URL("https://keew-get.vercel.app"),
   openGraph: {
-    title: "Baixar o Keew IA",
+    title: "Baixar a Keew",
     description: "Android · iPhone · Windows · macOS · Linux.",
     type: "website",
     locale: "pt_BR",
@@ -30,7 +30,6 @@ export const viewport: Viewport = {
   themeColor: "#050506",
   width: "device-width",
   initialScale: 1,
-  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
