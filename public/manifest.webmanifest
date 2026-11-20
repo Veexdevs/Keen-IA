@@ -3,13 +3,30 @@
   "short_name": "Keew",
   "description": "Your own intelligence.",
   "start_url": "/",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#0a0a0a",
   "theme_color": "#0a0a0a",
-  "orientation": "portrait-primary",
   "icons": [
-    { "src": "/icons/android-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "/icons/android-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "display_override": [
+    "browser"
   ]
 }

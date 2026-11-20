@@ -27,6 +27,62 @@ export function createAdminClient() {
   });
 }
 
+/** The little of the query builder these helpers need, typed loosely on purpose. */
+type SupaLike = {
+  from: (table: string) => {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => {
+        maybeSingle: () => Promise<{ data: { value: unknown } | null; error: unknown }>;
+      };
+    };
+    upsert: (row: Record<string, unknown>) => Promise<{ error: { message: string } | null }>;
+  };
+};
+
+/**
+ * The model engine the server was given, if any.
+ *
+ * It lives in `private.app_config` — a schema PostgREST does not expose, so the
+ * anon key cannot reach it even if someone finds the table name. That is what
+ * makes it acceptable to keep a model key in the database instead of asking the
+ * owner to edit environment variables.
+ */
+export async function getStoredEngine(): Promise<{
+  key?: string;
+  baseUrl?: string;
+  model?: string;
+} | null> {
+  const sb = createAdminClient();
+  if (!sb) return null;
+  const { data, error } = await (sb as unknown as SupaLike)
+    .from("app_config")
+    .select("value")
+    .eq("id", "model")
+    .maybeSingle();
+  if (error || !data) return null;
+  const value = data.value;
+  return value && typeof value === "object" ? (value as { key?: string }) : null;
+}
+
+/** Writes the engine settings. Server-only, by the same argument as above. */
+export async function setStoredEngine(value: {
+  key: string;
+  baseUrl: string | null;
+  model: string | null;
+  setAt: string;
+}): Promise<string | null> {
+  const sb = createAdminClient();
+  if (!sb) return "no-database";
+  const { error } = await (sb as unknown as SupaLike)
+    .from("app_config")
+    .upsert({ id: "model", value, updated_at: value.setAt });
+  if (!error) return null;
+  /* "fetch failed" is what an unreachable database looks like: the network
+     dropped, not the write refused. Saying so is the difference between a
+     person checking their key and a person checking their connection. */
+  return /fetch failed|network|enotfound/i.test(error.message) ? "unreachable" : error.message;
+}
+
 /**
  * Turns a GoTrue message into an error code the interface can translate.
  *

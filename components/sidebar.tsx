@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import { IconClose, IconEdit, IconLogout, IconPlus, IconSearch, IconSliders, IconTrash, IconUser } from "./icons";
 import { Wordmark } from "./logo";
-import { useT } from "@/lib/i18n/use";
+import { useStrings, useT } from "@/lib/i18n/use";
 import { usePrefs } from "@/lib/settings";
 import type { Chat } from "@/lib/store";
 
@@ -27,6 +27,8 @@ function ChatRow({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(chat.title);
   const t = useT();
+
+  useStrings(["chat.emptyHistory", "chat.new", "chat.noMatch", "chat.searchChats", "chat.settings", "chat.signInSave", "chat.signOut", "common.close", "common.earlier", "common.remove", "common.today", "common.week", "msg.edit"]);
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {

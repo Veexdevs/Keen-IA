@@ -47,7 +47,9 @@ export function Welcome({ name }: { name?: string }) {
           </>
         ) : (
           <>
-            Keew <span className="text-white">IA</span>
+            {/* text-fg, não text-white: no tema claro o branco puro sumia
+                contra o fundo e sobrava só o "Keew" na tela */}
+            Keew <span className="text-fg">IA</span>
           </>
         )}
       </motion.h1>

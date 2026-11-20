@@ -165,6 +165,7 @@ export const en = {
   "login.errUnavailable": "Could not reach the server. Check the connection and try again.",
   "login.errCallback": "Sign-in did not finish ({reason}). Try again.",
   "about.getApps": "Get the apps",
+  "language.translating": "Translating this language… the rest stays in English until it arrives.",
 } as const;
 
 export type Key = keyof typeof en;
@@ -326,6 +327,7 @@ export const ptBR: Dict = {
   "login.errUnavailable": "Não foi possível falar com o servidor. Verifique a conexão e tente de novo.",
   "login.errCallback": "O login não foi concluído ({reason}). Tente de novo.",
   "about.getApps": "Baixar os aplicativos",
+  "language.translating": "Traduzindo este idioma… o resto continua em inglês até chegar.",
 };
 
 export const es: Dict = {
@@ -484,6 +486,7 @@ export const es: Dict = {
   "login.errUnavailable": "No se pudo contactar con el servidor. Revisa la conexión e inténtalo de nuevo.",
   "login.errCallback": "El inicio de sesión no se completó ({reason}). Inténtalo de nuevo.",
   "about.getApps": "Descargar las apps",
+  "language.translating": "Traduciendo este idioma… el resto sigue en inglés hasta que llegue.",
 };
 
 export const fr: Dict = {
@@ -642,6 +645,7 @@ export const fr: Dict = {
   "login.errUnavailable": "Impossible de joindre le serveur. Vérifiez la connexion et réessayez.",
   "login.errCallback": "La connexion ne s'est pas terminée ({reason}). Réessayez.",
   "about.getApps": "Télécharger les applications",
+  "language.translating": "Traduction de cette langue… le reste reste en anglais en attendant.",
 };
 
 export const de: Dict = {
@@ -800,6 +804,7 @@ export const de: Dict = {
   "login.errUnavailable": "Der Server war nicht erreichbar. Prüfe die Verbindung und versuche es erneut.",
   "login.errCallback": "Die Anmeldung wurde nicht abgeschlossen ({reason}). Versuche es erneut.",
   "about.getApps": "Apps herunterladen",
+  "language.translating": "Diese Sprache wird übersetzt… der Rest bleibt bis dahin auf Englisch.",
 };
 
 export const it: Dict = {
@@ -958,6 +963,7 @@ export const it: Dict = {
   "login.errUnavailable": "Impossibile raggiungere il server. Controlla la connessione e riprova.",
   "login.errCallback": "L'accesso non è stato completato ({reason}). Riprova.",
   "about.getApps": "Scarica le app",
+  "language.translating": "Traduzione di questa lingua… il resto resta in inglese nel frattempo.",
 };
 
 export const nl: Dict = {
@@ -1116,6 +1122,7 @@ export const nl: Dict = {
   "login.errUnavailable": "De server is niet bereikbaar. Controleer de verbinding en probeer het opnieuw.",
   "login.errCallback": "Inloggen is niet afgerond ({reason}). Probeer het opnieuw.",
   "about.getApps": "Apps downloaden",
+  "language.translating": "Deze taal wordt vertaald… de rest blijft Engels tot het aankomt.",
 };
 
 export const pl: Dict = {
@@ -1274,6 +1281,7 @@ export const pl: Dict = {
   "login.errUnavailable": "Nie można połączyć się z serwerem. Sprawdź połączenie i spróbuj ponownie.",
   "login.errCallback": "Logowanie nie zostało ukończone ({reason}). Spróbuj ponownie.",
   "about.getApps": "Pobierz aplikacje",
+  "language.translating": "Tłumaczenie tego języka… reszta pozostaje po angielsku do czasu.",
 };
 
 export const tr: Dict = {
@@ -1432,6 +1440,7 @@ export const tr: Dict = {
   "login.errUnavailable": "Sunucuya ulaşılamadı. Bağlantıyı kontrol edip tekrar deneyin.",
   "login.errCallback": "Giriş tamamlanmadı ({reason}). Tekrar deneyin.",
   "about.getApps": "Uygulamaları indir",
+  "language.translating": "Bu dil çevriliyor… geri kalanı gelene kadar İngilizce kalır.",
 };
 
 export const ru: Dict = {
@@ -1590,6 +1599,7 @@ export const ru: Dict = {
   "login.errUnavailable": "Не удалось связаться с сервером. Проверьте соединение и повторите.",
   "login.errCallback": "Вход не завершился ({reason}). Попробуйте снова.",
   "about.getApps": "Скачать приложения",
+  "language.translating": "Переводим этот язык… остальное остаётся на английском, пока не придёт.",
 };
 
 export const uk: Dict = {
@@ -1748,6 +1758,7 @@ export const uk: Dict = {
   "login.errUnavailable": "Не вдалося зв'язатися із сервером. Перевірте з'єднання й повторіть.",
   "login.errCallback": "Вхід не завершився ({reason}). Спробуйте знову.",
   "about.getApps": "Завантажити застосунки",
+  "language.translating": "Перекладаємо цю мову… решта залишається англійською, доки не надійде.",
 };
 
 export const ar: Dict = {
@@ -1906,6 +1917,7 @@ export const ar: Dict = {
   "login.errUnavailable": "تعذّر الوصول إلى الخادم. تحقق من الاتصال وحاول مرة أخرى.",
   "login.errCallback": "لم يكتمل تسجيل الدخول ({reason}). حاول مرة أخرى.",
   "about.getApps": "تنزيل التطبيقات",
+  "language.translating": "جارٍ ترجمة هذه اللغة… يبقى الباقي بالإنجليزية حتى يصل.",
 };
 
 export const hi: Dict = {
@@ -2064,6 +2076,7 @@ export const hi: Dict = {
   "login.errUnavailable": "सर्वर तक नहीं पहुँच सके। कनेक्शन जाँचें और फिर कोशिश करें।",
   "login.errCallback": "साइन इन पूरा नहीं हुआ ({reason})। फिर कोशिश करें।",
   "about.getApps": "ऐप डाउनलोड करें",
+  "language.translating": "इस भाषा का अनुवाद हो रहा है… बाकी आने तक अंग्रेज़ी में रहता है।",
 };
 
 export const id: Dict = {
@@ -2222,6 +2235,7 @@ export const id: Dict = {
   "login.errUnavailable": "Tidak bisa menghubungi server. Periksa koneksi lalu coba lagi.",
   "login.errCallback": "Masuk belum selesai ({reason}). Coba lagi.",
   "about.getApps": "Unduh aplikasinya",
+  "language.translating": "Menerjemahkan bahasa ini… sisanya tetap bahasa Inggris sampai tiba.",
 };
 
 export const ja: Dict = {
@@ -2380,6 +2394,7 @@ export const ja: Dict = {
   "login.errUnavailable": "サーバーに接続できませんでした。通信を確認してやり直してください。",
   "login.errCallback": "サインインが完了しませんでした（{reason}）。もう一度お試しください。",
   "about.getApps": "アプリをダウンロード",
+  "language.translating": "この言語を翻訳中です…届くまで残りは英語のままです。",
 };
 
 export const ko: Dict = {
@@ -2538,6 +2553,7 @@ export const ko: Dict = {
   "login.errUnavailable": "서버에 연결할 수 없습니다. 연결을 확인하고 다시 시도하세요.",
   "login.errCallback": "로그인이 완료되지 않았습니다({reason}). 다시 시도하세요.",
   "about.getApps": "앱 다운로드",
+  "language.translating": "이 언어를 번역하는 중입니다… 나머지는 도착할 때까지 영어로 표시됩니다.",
 };
 
 export const zh: Dict = {
@@ -2696,6 +2712,7 @@ export const zh: Dict = {
   "login.errUnavailable": "无法连接服务器。请检查网络后重试。",
   "login.errCallback": "登录未完成（{reason}）。请重试。",
   "about.getApps": "下载应用",
+  "language.translating": "正在翻译此语言……其余内容在完成前仍显示英文。",
 };
 
 export const vi: Dict = {
@@ -2854,6 +2871,7 @@ export const vi: Dict = {
   "login.errUnavailable": "Không kết nối được máy chủ. Kiểm tra kết nối rồi thử lại.",
   "login.errCallback": "Đăng nhập chưa hoàn tất ({reason}). Thử lại nhé.",
   "about.getApps": "Tải ứng dụng",
+  "language.translating": "Đang dịch ngôn ngữ này… phần còn lại vẫn là tiếng Anh cho đến khi có.",
 };
 
 export const th: Dict = {
@@ -3012,6 +3030,7 @@ export const th: Dict = {
   "login.errUnavailable": "ติดต่อเซิร์ฟเวอร์ไม่ได้ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง",
   "login.errCallback": "เข้าสู่ระบบไม่สำเร็จ ({reason}) ลองอีกครั้ง",
   "about.getApps": "ดาวน์โหลดแอป",
+  "language.translating": "กำลังแปลภาษานี้… ส่วนที่เหลือยังเป็นภาษาอังกฤษจนกว่าจะเสร็จ",
 };
 
 export const he: Dict = {
@@ -3170,6 +3189,7 @@ export const he: Dict = {
   "login.errUnavailable": "לא הצלחנו להגיע לשרת. בדוק את החיבור ונסה שוב.",
   "login.errCallback": "ההתחברות לא הושלמה ({reason}). נסה שוב.",
   "about.getApps": "הורדת האפליקציות",
+  "language.translating": "מתרגם את השפה הזו… השאר נשאר באנגלית עד שזה יגיע.",
 };
 
 export const DICTS = { en, "pt-BR": ptBR, es, fr, de, it, nl, pl, tr, ru, uk, ar, hi, id, ja, ko, zh, vi, th, he } as const;

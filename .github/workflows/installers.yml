@@ -1,9 +1,9 @@
-# Keew IA — instaladores para Windows, Linux, Android e iOS.
+# Keew IA — instaladores para Windows, macOS, Linux, Android e iOS.
 #
 # Um site não vira .exe nem .apk sozinho: esses arquivos só saem de uma máquina
-# com o sistema certo (Windows para .exe, Linux para .AppImage/.deb, um Mac com
-# Xcode para .ipa). Este workflow roda cada um no sistema que ele exige e
-# anexa os arquivos a um GitHub Release.
+# com o sistema certo (Windows para .exe, macOS para .dmg, Linux para
+# .AppImage/.deb, um Mac com Xcode para .ipa). Este workflow roda cada um no
+# sistema que ele exige e anexa os arquivos a um GitHub Release.
 #
 # Rodar pela aba Actions → "Instaladores" → Run workflow. Os arquivos aparecem
 # no Release "Keew IA — instaladores" (e ficam como artifact de cada execução).
@@ -51,6 +51,40 @@ jobs:
           name: keew-windows
           path: |
             desktop/release/*.exe
+            desktop/release/*.zip
+          if-no-files-found: error
+
+  # ── macOS: .dmg para Apple Silicon e Intel ──────────────────────────────
+  mac:
+    name: macOS .dmg
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package.json
+
+      - name: Instalar dependências
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+
+      - name: Gerar .dmg
+        working-directory: desktop
+        run: npm run pack:mac
+        env:
+          # electron-builder assina à procura de certificado; sem nenhum, ele
+          # precisa ser lembrado de que é isso mesmo que queremos
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keew-mac
+          path: |
+            desktop/release/*.dmg
             desktop/release/*.zip
           if-no-files-found: error
 
@@ -184,7 +218,7 @@ jobs:
   # ── um só lugar com tudo ────────────────────────────────────────────────
   release:
     name: Publicar
-    needs: [windows, linux, android, ios]
+    needs: [windows, mac, linux, android, ios]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -207,6 +241,7 @@ jobs:
 
             - **Android** — `keew-ia-android.apk` (instale permitindo "fontes desconhecidas")
             - **Windows** — `Keew IA Setup *.exe` (instalador) ou `Keew IA *.exe` (portátil)
+            - **macOS** — `*.dmg` (Apple Silicon e Intel: abra e arraste para Aplicativos)
             - **Linux** — `*.AppImage` (dá `chmod +x` e roda) ou `*.deb` (`sudo dpkg -i`)
             - **iOS** — `keew-ia-ios.ipa` (sem assinatura: precisa de sideload com AltStore/Sideloadly)
 

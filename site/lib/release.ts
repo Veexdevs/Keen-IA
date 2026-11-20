@@ -13,7 +13,7 @@
 const REPO = "Veexdevs/Keew-IA";
 const TAG = "installers";
 
-export type Platform = "android" | "ios" | "windows" | "linux";
+export type Platform = "android" | "ios" | "windows" | "mac" | "linux";
 
 export type Asset = {
   name: string;
@@ -37,6 +37,7 @@ function platformOf(name: string): Platform | null {
   const n = name.toLowerCase();
   if (n.endsWith(".apk")) return "android";
   if (n.endsWith(".ipa")) return "ios";
+  if (n.endsWith(".dmg") || (n.endsWith(".zip") && n.includes("mac"))) return "mac";
   if (n.endsWith(".exe") || (n.endsWith(".zip") && n.includes("win"))) return "windows";
   if (n.endsWith(".appimage") || n.endsWith(".deb") || n.endsWith(".rpm")) return "linux";
   return null;

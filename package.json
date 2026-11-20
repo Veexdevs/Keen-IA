@@ -11,7 +11,8 @@
     "start": "next start -H 0.0.0.0 -p 3000",
     "typecheck": "tsc --noEmit",
     "brand": "python3 tools/build_brand.py",
-    "installers": "node tools/installers.mjs"
+    "installers": "node tools/installers.mjs",
+    "test": "node tools/tests/run.mjs"
   },
   "dependencies": {
     "@fontsource-variable/plus-jakarta-sans": "^5.3.0",

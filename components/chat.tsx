@@ -14,7 +14,7 @@ import { Sidebar } from "./sidebar";
 import { Welcome } from "./welcome";
 import type { Attachment } from "@/lib/attach";
 import { useLocale } from "@/lib/i18n/store";
-import { useT } from "@/lib/i18n/use";
+import { useStrings, useT } from "@/lib/i18n/use";
 import { usePrefs } from "@/lib/settings";
 import { useApp } from "@/lib/store";
 
@@ -41,6 +41,8 @@ export function Chat() {
   const hydratePrefs = usePrefs((s) => s.hydrate);
   const hydrateLocale = useLocale((s) => s.hydrate);
   const t = useT();
+
+  useStrings(["chat.clear", "chat.editing", "chat.menu", "chat.settings", "common.cancel", "common.close", "composer.placeholder", "composer.reply", "login.errCallback", "chat.emptyHistory", "chat.new", "chat.noMatch", "chat.searchChats", "chat.signInSave", "chat.signOut", "common.earlier", "common.remove", "common.today", "common.week", "msg.edit", "welcome.greeting", "welcome.subtitle", "composer.disclaimer"]);
 
   const [drawer, setDrawer] = useState(false);
   const [login, setLogin] = useState(false);

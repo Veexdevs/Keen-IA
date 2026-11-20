@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { PendingTile } from "./attachments";
 import { IconArrowUp, IconPaperclip, IconStop } from "./icons";
 import { readAttachment, type Attachment } from "@/lib/attach";
-import { useT } from "@/lib/i18n/use";
+import { useStrings, useT } from "@/lib/i18n/use";
 import { usePrefs } from "@/lib/settings";
 
 /**
@@ -36,6 +36,8 @@ export function Composer({
   const picker = useRef<HTMLInputElement>(null);
   const enterToSend = usePrefs((s) => s.prefs.enterToSend);
   const t = useT();
+
+  useStrings(["attach.readingFile", "composer.attach", "composer.attachTitle", "composer.disclaimer", "composer.placeholder", "composer.send", "composer.stop"]);
   const hint = placeholder ?? t("composer.placeholder");
 
   /* grows with the content, up to about five lines */
