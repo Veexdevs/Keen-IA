@@ -2,7 +2,7 @@
   "name": "keew-get",
   "version": "1.0.0",
   "private": true,
-  "description": "Keew IA — download page.",
+  "description": "Keen IA — download page.",
   "scripts": {
     "dev": "next dev -H 0.0.0.0 -p 3001",
     "build": "next build",

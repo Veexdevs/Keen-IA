@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Keew IA — o caminho curto até um instalador.
+ * Keen IA — o caminho curto até um instalador.
  *
  * Um site não gera .exe, .apk ou .ipa sozinho. Este script não finge que gera:
  * ele diz o que cada alvo precisa e dispara o que dá para disparar daqui.
@@ -62,7 +62,7 @@ function which(bin) {
 
 const trigger = process.argv.includes("--trigger");
 
-console.log("\nKeew IA — instaladores\n");
+console.log("\nKeen IA — instaladores\n");
 for (const t of TARGETS) {
   const mark = t.local ? "✓" : "·";
   console.log(`  ${mark} ${t.name.padEnd(9)} ${t.artefact.padEnd(22)} ${t.runner}`);

@@ -1,8 +1,8 @@
 /**
- * The two letters after "Keew", in the visitor's language.
+ * The two letters after "Keen", in the visitor's language.
  *
- * The wordmark is "Keew IA" in Portuguese and Spanish, "Keew KI" in German and
- * Dutch, "Keew ИИ" in Russian. The app knows that from its dictionaries; this
+ * The wordmark is "Keen IA" in Portuguese and Spanish, "Keen KI" in German and
+ * Dutch, "Keen ИИ" in Russian. The app knows that from its dictionaries; this
  * page has no dictionaries, so it reads the language the app already stored.
  *
  * The cookie is written by the app (see lib/i18n/store.ts). When it is absent —

@@ -1,5 +1,5 @@
 /**
- * Keew IA — on-demand interface translation.
+ * Keen IA — on-demand interface translation.
  *
  * 181 languages cannot be hand-written. They are translated by the same model
  * engine the chat uses, one batch at a time, and cached in Supabase so the cost
@@ -44,7 +44,7 @@ function systemPrompt(languageName: string, native: string) {
     "Reply with ONLY a JSON object with the same keys and translated values.",
     "Rules: keep placeholders like {name} {n} {reason} {text} {count} exactly as they are;",
     "keep the tone short and plain, the way buttons and labels read;",
-    "never translate the product name Keew;",
+    "never translate the product name Keen;",
     "if a string is a language or country name, use the standard name in that language.",
     "No markdown fences, no explanation, nothing before or after the JSON.",
   ].join(" ");

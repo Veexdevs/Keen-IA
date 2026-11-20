@@ -159,7 +159,7 @@ export function Chat() {
                   transition={{ duration: 0.16 }}
                   className="truncate text-[13px] font-medium text-muted"
                 >
-                  {chat?.title ?? "Keew IA"}
+                  {chat?.title ?? "Keen IA"}
                 </motion.h1>
               )}
             </AnimatePresence>

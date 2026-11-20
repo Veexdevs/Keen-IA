@@ -3,7 +3,7 @@
 /**
  * Where connector keys are kept.
  *
- * Keys are never sent to Keew's server and never written to the database.
+ * Keys are never sent to Keen's server and never written to the database.
  * They live in this browser, encrypted with AES-GCM using a key derived from
  * the signed-in account's email — so the ciphertext on disk is useless to
  * anyone else reading the browser profile, and each account has its own vault.

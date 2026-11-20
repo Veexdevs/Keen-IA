@@ -2,8 +2,8 @@
   "name": "keew-ia",
   "version": "1.0.0",
   "private": true,
-  "description": "Keew IA — tela de conversa.",
-  "author": "Keew IA",
+  "description": "Keen IA — tela de conversa.",
+  "author": "Keen IA",
   "license": "MIT",
   "scripts": {
     "dev": "next dev -H 0.0.0.0 -p 3000",

@@ -1,5 +1,5 @@
 /**
- * Keew IA — interface language.
+ * Keen IA — interface language.
  *
  * The app speaks the language of the place it is opened from. The first run
  * decides from two signals the browser already knows: the preferred languages

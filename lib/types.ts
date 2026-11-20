@@ -1,5 +1,5 @@
 /**
- * Keew IA — os tipos que o raciocínio precisa.
+ * Keen IA — os tipos que o raciocínio precisa.
  *
  * A interface é uma tela só, então aqui só entra o que o núcleo local, o
  * conhecimento e o motor realmente usam. Nada de configuração, agente ou
@@ -42,7 +42,7 @@ export type Citation = {
   kind?: "knowledge" | "web";
 };
 
-/** O único nome público de inteligência da Keew. */
+/** O único nome público de inteligência da Keen. */
 export type ProviderKind = "keew";
 
 /** What the local reasoning core returns for a single request. */

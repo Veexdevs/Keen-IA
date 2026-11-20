@@ -1,5 +1,5 @@
 /**
- * Keew IA — estado da conversa.
+ * Keen IA — estado da conversa.
  *
  * Um único chat, guardado no navegador. Nada de múltiplas conversas, pastas,
  * agentes ou configurações: a interface é uma tela de conversa e o resto é
@@ -151,7 +151,7 @@ async function run(history: Msg[], set: (fn: (s: State) => Partial<State>) => vo
       ...m,
       pending: false,
       content: text || m.content,
-      error: text ? undefined : m.error || "A Keew não concluiu esta resposta.",
+      error: text ? undefined : m.error || "A Keen não concluiu esta resposta.",
     }));
   } catch (err) {
     if ((err as Error).name === "AbortError") {

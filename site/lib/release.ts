@@ -114,7 +114,7 @@ export async function getRelease(): Promise<Release> {
   }
 }
 
-/** "Keew IA Setup 1.0.0.exe" → "1.0.0" */
+/** "Keen IA Setup 1.0.0.exe" → "1.0.0" */
 export function versionOf(assets: Asset[]): string | null {
   for (const a of assets) {
     const m = a.name.match(/\b(\d+\.\d+\.\d+)\b/);

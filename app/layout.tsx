@@ -10,9 +10,9 @@ const SITE = process.env.NEXT_PUBLIC_APP_URL || "https://keew-ia.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
-  title: "Keew IA",
-  description: "Keew IA — your own intelligence. Chats, files and ideas, saved to your account.",
-  applicationName: "Keew IA",
+  title: "Keen IA",
+  description: "Keen IA — your own intelligence. Chats, files and ideas, saved to your account.",
+  applicationName: "Keen IA",
   authors: [{ name: "Veexdevs" }],
   manifest: "/manifest.webmanifest",
   icons: {
@@ -24,17 +24,17 @@ export const metadata: Metadata = {
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
   },
   openGraph: {
-    title: "Keew IA",
+    title: "Keen IA",
     description: "Your own intelligence.",
     url: SITE,
-    siteName: "Keew IA",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Keew IA" }],
+    siteName: "Keen IA",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Keen IA" }],
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Keew IA",
+    title: "Keen IA",
     description: "Your own intelligence.",
     images: ["/og.png"],
   },

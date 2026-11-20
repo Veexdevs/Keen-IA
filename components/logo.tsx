@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useT } from "@/lib/i18n/use";
 
 /**
- * A marca da Keew: três arcos em órbita formando um círculo aberto.
+ * A marca da Keen: três arcos em órbita formando um círculo aberto.
  *
  * Usa o SVG traçado da arte original (IoU 97,3% com o arquivo), então
  * escala sem perder qualidade em qualquer tamanho e nunca corta.
@@ -28,7 +28,7 @@ export function Logo({
       transition={spin ? { duration: 22, repeat: Infinity, ease: "linear" } : { duration: 0.3 }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/mark.svg" alt="Keew IA" width={size} height={size} style={{ display: "block" }} />
+      <img src="/mark.svg" alt="Keen IA" width={size} height={size} style={{ display: "block" }} />
     </motion.span>
   );
 }
@@ -48,7 +48,7 @@ export function Wordmark({ size = 24 }: { size?: number }) {
     <span dir="ltr" className="flex items-center gap-2.5">
       <Logo size={size} />
       <span className="text-[15px] font-extrabold tracking-wider text-fg">
-        Keew {t("brand.ia")}
+        Keen {t("brand.ia")}
       </span>
     </span>
   );

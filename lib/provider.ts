@@ -1,5 +1,5 @@
 /**
- * Keew IA — inference gateway.
+ * Keen IA — inference gateway.
  *
  * One interface, many providers. Server-side env always wins over a
  * client-supplied config (so the workspace owner keeps control of the keys).
@@ -39,7 +39,7 @@ export type StreamFrame =
   | { t: "done" };
 
 /**
- * Backends de raciocínio aceitos pelo motor da Keew.
+ * Backends de raciocínio aceitos pelo motor da Keen.
  * São detalhe de infraestrutura: nenhum nome daqui é exibido ao usuário, e o
  * modelo público é sempre "keew-1" (ver lib/keew-api.ts).
  */
@@ -50,7 +50,7 @@ type BackendPreset = { baseUrl: string; model: string; backend: Backend };
 const BACKENDS: Record<Backend, BackendPreset> = {
   deepseek: { baseUrl: "https://api.deepseek.com/v1", model: "deepseek-reasoner", backend: "deepseek" },
   "openai-compatible": { baseUrl: "http://127.0.0.1:8080/v1", model: "keew-local", backend: "openai-compatible" },
-  // modelo treinado do zero pela Keew (models/): roda no servidor da casa
+  // modelo treinado do zero pela Keen (models/): roda no servidor da casa
   "keew-lm": { baseUrl: "http://127.0.0.1:8080/v1", model: "keew-lm", backend: "keew-lm" },
   gemini: {
     baseUrl: "https://generativelanguage.googleapis.com/v1beta",
@@ -126,7 +126,7 @@ function backendOf(cfg: GatewayConfig): Backend {
 export function isConfigured(cfg: GatewayConfig): boolean {
   const backend = backendOf(cfg);
   if (backend === "none") return false;
-  // modelo próprio da Keew: roda no servidor da casa, não pede chave de terceiro
+  // modelo próprio da Keen: roda no servidor da casa, não pede chave de terceiro
   if (/^keew-lm/i.test(cfg.model)) return Boolean(cfg.baseUrl);
   // endpoints locais normalmente não exigem chave
   if (backend === "openai-compatible") {
@@ -237,14 +237,14 @@ function streamOpenAI(req: GatewayRequest): ReadableStream<Uint8Array> {
               usage = { in: json.usage.prompt_tokens, out: json.usage.completion_tokens };
             }
             const finish = json.choices?.[0]?.finish_reason;
-            if (finish === "error") emit({ t: "error", v: "A Keew não concluiu esta resposta." });
+            if (finish === "error") emit({ t: "error", v: "A Keen não concluiu esta resposta." });
           }
         }
         if (usage.in || usage.out) emit({ t: "usage", v: usage });
         emit({ t: "done" });
         controller.close();
       } catch (err) {
-        emit({ t: "error", v: "A Keew não alcançou o motor de raciocínio." });
+        emit({ t: "error", v: "A Keen não alcançou o motor de raciocínio." });
         emit({ t: "done" });
         controller.close();
       }
@@ -392,7 +392,7 @@ function streamAnthropic(req: GatewayRequest): ReadableStream<Uint8Array> {
 
 export function normalizeError(status: number, detail: string, cfg: GatewayConfig): string {
   const snippet = detail.replace(/\s+/g, " ").slice(0, 320);
-  // A voz é sempre da Keew: nada de nome de fornecedor, base URL ou modelo
+  // A voz é sempre da Keen: nada de nome de fornecedor, base URL ou modelo
   // interno. O usuário só precisa saber o que fazer a seguir.
   if (status === 401 || status === 403)
     return "A chave do motor foi recusada. Abra Configurações → Motor e confira a chave.";
