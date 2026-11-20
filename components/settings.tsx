@@ -73,7 +73,6 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
 
   /* In Arabic and Hebrew the pager runs the other way: the first section sits
      on the right, and a swipe to the left goes back, not forward. */
-  const rtl = useLocale((s) => s.language.rtl) === true;
 
   /* swiping left goes forward, right goes back — and never past the ends */
   const go = (delta: number) => {
@@ -137,7 +136,6 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
             exit={{ x: 34, opacity: 0 }}
             transition={{ type: "spring", stiffness: 420, damping: 36 }}
             onClick={(e) => e.stopPropagation()}
-            dir={rtl ? "rtl" : "ltr"}
             className="flex h-full w-full max-w-[560px] flex-col border-s border-border bg-bg shadow-2xl"
           >
             {/* head */}
@@ -162,7 +160,7 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
                 className="grid h-6 w-6 place-items-center rounded-md text-subtle transition-colors hover:bg-hover hover:text-fg disabled:opacity-25"
                 aria-label={tt("settings.prev")}
               >
-                <IconChevronLeft size={14} className={rtl ? "rotate-180" : undefined} />
+                <IconChevronLeft size={14} />
               </button>
               <span className="flex-1 text-center text-[10.5px] uppercase tracking-[0.08em] text-subtle">
                 {index + 1} / {order.length}
@@ -173,7 +171,7 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
                 className="grid h-6 w-6 place-items-center rounded-md text-subtle transition-colors hover:bg-hover hover:text-fg disabled:opacity-25"
                 aria-label={tt("settings.next")}
               >
-                <IconChevronLeft size={14} className={rtl ? undefined : "rotate-180"} />
+                <IconChevronLeft size={14} className="rotate-180" />
               </button>
             </div>
 
@@ -233,7 +231,7 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
                 const flick = Math.abs(dx) >= 24 && speed >= 0.5 && Math.abs(dx) >= Math.abs(dy);
                 if (!sideways && !flick) return;
                 /* finger moved left → next section; moved right → previous */
-                go((dx < 0 ? 1 : -1) * (rtl ? -1 : 1));
+                go(dx < 0 ? 1 : -1);
               }}
             >
               <AnimatePresence mode="wait" initial={false}>
@@ -786,13 +784,12 @@ function LanguageTab() {
             <button
               key={l.key}
               onClick={() => choose(l.value)}
-              dir={l.rtl ? "rtl" : "ltr"}
               className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${
                 on ? "border-accent/40 bg-accent/[0.06]" : "border-border bg-panel/50 hover:bg-hover"
               }`}
             >
               <Flag code={l.flag} size={30} />
-              <span className="min-w-0 flex-1" dir={l.rtl ? "rtl" : "ltr"}>
+              <span className="min-w-0 flex-1">
                 <span className="block truncate text-[13px] font-medium text-fg">{l.native}</span>
                 <span className="block truncate text-[11px] text-subtle">{l.name}</span>
               </span>

@@ -102,7 +102,8 @@ npm run installers # status of each installer target
 | --- | --- |
 | `auth` | signup and signin against a fake GoTrue: validation, existing account, wrong password, the rate limiter |
 | `i18n` | `/api/i18n` against a fake model: language resolution, aliases, cache, junk keys, the limiter |
-| `locale-store` | choosing a language: English until strings land, one request per batch, RTL, all 183 selectable |
+| `locale-store` | choosing a language: English until strings land, one request per batch, layout stays LTR, all 183 selectable |
+| `brand` | the two letters after "Keew" per language (IA, KI, ИИ, AI…), the mark without its plate, and the manifest never opening as an app |
 | `flags` | Arabic and Hebrew point at their own flags |
 
 ## Settings

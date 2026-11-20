@@ -3,7 +3,11 @@
  * Strategy: network-first for documents/API, cache-first for static assets.
  * The local reasoning core keeps working with no connection at all.
  */
-const VERSION = "keew-v1";
+/* Bumped whenever a shell file changes meaning. v2: the manifest moved from
+ * "standalone" to "browser", and anyone holding the v1 copy kept opening the
+ * site with no browser chrome. Bumping the name deletes the old cache on
+ * activate, which is the only way to unstick a visitor who already installed. */
+const VERSION = "keew-v2";
 const SHELL = ["/", "/manifest.webmanifest", "/mark.svg", "/icons/app-icon-512.png"];
 
 self.addEventListener("install", (event) => {
@@ -29,6 +33,23 @@ self.addEventListener("fetch", (event) => {
 
   // never cache the gateway or mutation endpoints
   if (url.pathname.startsWith("/api/") && !url.pathname.endsWith("/health")) return;
+
+  /* The manifest decides whether the site opens in a tab or as an app. Serving
+     it cache-first meant a corrected "display" never reached anyone who had
+     visited before — the browser kept reading the old one and kept going
+     fullscreen. It is 500 bytes: always ask the network, fall back to cache. */
+  if (url.pathname === "/manifest.webmanifest") {
+    event.respondWith(
+      fetch(request)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(VERSION).then((c) => c.put(request, copy));
+          return res;
+        })
+        .catch(() => caches.match(request)),
+    );
+    return;
+  }
 
   if (request.mode === "navigate" || request.destination === "document") {
     event.respondWith(
