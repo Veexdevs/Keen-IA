@@ -30,6 +30,7 @@ import {
   Menu,
   MessageCircle,
   MessagesSquare,
+  Mic,
   Moon,
   Paintbrush,
   Paperclip,
@@ -154,6 +155,17 @@ export const IconProfile = ({ size = 20, className, strokeWidth }: P) =>
 
 export const IconVoice = ({ size = 20, className, strokeWidth }: P) =>
   wrap(AudioLines, size, className, strokeWidth);
+
+/** Microfone do ditado — o traço do Lucide, o mesmo peso dos outros. */
+export const IconMic = ({ size = 20, className, strokeWidth }: P) =>
+  wrap(Mic, size, className, strokeWidth);
+
+/** Parar a gravação: quadrado cheio num disco, como um botão de câmera. */
+export const IconMicStop = ({ size = 20, className }: P) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+    <rect x="7" y="7" width="10" height="10" rx="2.5" />
+  </svg>
+);
 
 export const IconChatsEmpty = ({ size = 40, className, strokeWidth }: P) =>
   wrap(MessagesSquare, size, className, strokeWidth);

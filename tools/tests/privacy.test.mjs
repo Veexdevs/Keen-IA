@@ -50,7 +50,10 @@ check("só o Chat está ativo", /const soon = id !== "chat"/.test(tabs) && tabs.
 const composer = read("components/composer.tsx");
 check("composer em pílula", /rounded-full border bg-\[var\(--drawer-card\)\]/.test(composer));
 check("botão de enviar redondo e sempre azul", /rounded-full bg-accent text-white transition-all disabled:opacity-90/.test(composer));
-check("tem o botão de voz", composer.includes("IconVoice"));
+/* O botão do microfone deixou de ser decorativo: ele grava. A asserção
+   acompanha isso — o que importa não é o nome do ícone, é o ditado existir. */
+check("tem o botão de ditado", composer.includes("IconMic") && composer.includes("startRecording"));
+check("o ditado manda para a rota de voz", read("lib/voice.ts").includes('"/api/voice"'));
 
 console.log(`\n${pass} passaram, ${fail} falharam`);
 if (fail) process.exit(1);
