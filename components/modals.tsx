@@ -497,16 +497,10 @@ export function ProfileModal({
               className="w-full rounded-xl border border-border-strong bg-dark px-3.5 py-2.5 text-[14px] text-fg outline-none transition-all placeholder:text-subtle focus:border-accent focus:ring-2 focus:ring-accent/25"
             />
           </div>
-          <div>
-            <label className="mb-1.5 block text-[12px] font-semibold uppercase tracking-wider text-subtle">
-              {t("profile.email")}
-            </label>
-            <input
-              value={profile.email}
-              readOnly
-              className="w-full cursor-not-allowed rounded-xl border border-border bg-dark/50 px-3.5 py-2.5 text-[14px] text-muted outline-none"
-            />
-          </div>
+          {/* o endereço saiu daqui: ele mora na aba Conta, e este painel é
+              aberto pelo retrato no menu lateral, longe de qualquer intenção
+              de mexer em conta */}
+
         </div>
 
         <div className="mt-6 flex gap-2">

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { PendingTile } from "./attachments";
-import { IconArrowUp, IconPaperclip, IconStop } from "./icons";
+import { IconPlus, IconSendFill, IconStop, IconVoice } from "./icons";
 import { readAttachment, type Attachment } from "@/lib/attach";
 import { useStrings, useT } from "@/lib/i18n/use";
 import { usePrefs } from "@/lib/settings";
@@ -37,7 +37,7 @@ export function Composer({
   const enterToSend = usePrefs((s) => s.prefs.enterToSend);
   const t = useT();
 
-  useStrings(["attach.readingFile", "composer.attach", "composer.attachTitle", "composer.disclaimer", "composer.placeholder", "composer.send", "composer.stop"]);
+  useStrings(["attach.readingFile", "composer.attach", "composer.attachTitle", "composer.disclaimer", "composer.placeholder", "composer.send", "composer.stop", "composer.voice"]);
   const hint = placeholder ?? t("composer.placeholder");
 
   /* grows with the content, up to about five lines */
@@ -69,7 +69,7 @@ export function Composer({
   };
 
   return (
-    <div className="mx-auto w-full max-w-[760px] shrink-0 self-end px-4 pb-3 sm:px-0">
+    <div className="mx-auto w-full max-w-[760px] shrink-0 self-end px-3 pb-5 sm:px-0">
       <motion.div
         animate={dragging ? { scale: 1.008 } : { scale: 1 }}
         transition={{ type: "spring", stiffness: 420, damping: 32 }}
@@ -83,8 +83,8 @@ export function Composer({
           setDragging(false);
           void add(e.dataTransfer.files);
         }}
-        className={`rounded-[20px] border bg-panel px-2 py-1.5 shadow-[var(--shadow-soft)] transition-colors ${
-          dragging ? "border-accent/70" : "border-border-strong focus-within:border-accent/45"
+        className={`rounded-full border bg-panel px-2 py-2 shadow-[var(--shadow-soft)] transition-colors ${
+          dragging ? "border-accent/70" : "border-border-strong focus-within:border-border-strong"
         }`}
       >
         {/* attachments being prepared */}
@@ -113,17 +113,30 @@ export function Composer({
           )}
         </AnimatePresence>
 
-        <div className="flex items-end gap-1">
+        <div className="flex items-center gap-1">
+          {/* "+" num disco próprio, como na referência */}
           <motion.button
-            whileHover={{ scale: 1.07 }}
-            whileTap={{ scale: 0.93 }}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
             onClick={() => picker.current?.click()}
-            className="mb-[2px] grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-fg"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-raised text-fg transition-colors hover:bg-hover-strong"
             aria-label={t("composer.attach")}
             title={t("composer.attachTitle")}
           >
-            <IconPaperclip size={16} />
+            <IconPlus size={21} />
           </motion.button>
+
+          <span aria-hidden className="mx-1.5 h-7 w-px shrink-0 bg-[var(--border-strong)]" />
+
+          <button
+            type="button"
+            onClick={() => ref.current?.focus()}
+            className="grid h-10 w-8 shrink-0 place-items-center text-fg"
+            aria-label={t("composer.voice")}
+            title={t("composer.voice")}
+          >
+            <IconVoice size={19} />
+          </button>
           <input
             ref={picker}
             type="file"
@@ -162,7 +175,7 @@ export function Composer({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onStop}
-                className="mb-[2px] grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-hover-strong text-fg transition-colors hover:bg-raised"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-hover-strong text-fg transition-colors hover:bg-raised"
                 aria-label={t("composer.stop")}
               >
                 <IconStop size={12} />
@@ -177,19 +190,16 @@ export function Composer({
                 whileTap={canSend ? { scale: 0.95 } : undefined}
                 onClick={fire}
                 disabled={!canSend}
-                className="mb-[2px] grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent text-white transition-all disabled:bg-hover disabled:text-subtle"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent text-white transition-all disabled:opacity-90"
                 aria-label={t("composer.send")}
               >
-                <IconArrowUp size={16} />
+                <IconSendFill size={19} />
               </motion.button>
             )}
           </AnimatePresence>
         </div>
       </motion.div>
 
-      <p className="mt-2 text-center text-[10.5px] leading-relaxed text-subtle">
-        {t("composer.disclaimer")}
-      </p>
     </div>
   );
 }

@@ -196,3 +196,54 @@ export const IconChevronLeft = ({ size = 14, className }: P) => (
     <path d="m14.5 6-6 6 6 6" />
   </svg>
 );
+
+/* ── as abas do topo ────────────────────────────────────────────────────── */
+
+/** Projetos: uma pilha de pastas. */
+export const IconProjects = ({ size = 20, className }: P) => (
+  <svg {...base(size, className)}>
+    <path d="M3 8.6c0-1 .8-1.8 1.8-1.8h4l1.7 2h8.7c1 0 1.8.8 1.8 1.8v6.6c0 1-.8 1.8-1.8 1.8H4.8c-1 0-1.8-.8-1.8-1.8V8.6Z" />
+    <path d="M6.4 3.9h3.2l1.4 1.7" />
+  </svg>
+);
+
+/** Code: as duas barras e a diagonal. */
+export const IconCode = ({ size = 20, className }: P) => (
+  <svg {...base(size, className)}>
+    <path d="M8.8 6.8 4.3 12l4.5 5.2M15.2 6.8 19.7 12l-4.5 5.2" />
+  </svg>
+);
+
+/** Designer: um pincel de ponta fina. */
+export const IconDesigner = ({ size = 20, className }: P) => (
+  <svg {...base(size, className)}>
+    <path d="M15.9 3.9c1.3-.9 2.9-.7 3.8.3.9 1 .9 2.5-.1 3.7-1.6 2-5.2 4.4-7.3 5.4-.5.2-1 0-1.2-.4-.6-1.9.4-3.6 1.4-4.7" />
+    <path d="M9.6 13.2c-1.5.3-2.6 1.7-2.9 3.5-.2 1.1-.6 1.9-1.4 2.4 1.7.6 3.6.4 4.7-.6.8-.7 1.2-1.7 1.1-2.7" />
+  </svg>
+);
+
+/** Perfil: a cabeça e os ombros, num círculo. */
+export const IconProfile = ({ size = 20, className }: P) => (
+  <svg {...base(size, className)}>
+    <circle cx="12" cy="12" r="9" />
+    <circle cx="12" cy="9.9" r="2.7" />
+    <path d="M6.4 18.3a6 6 0 0 1 11.2 0" />
+  </svg>
+);
+
+/** Microfone: ondas para o ditado. */
+export const IconVoice = ({ size = 20, className }: P) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+    <rect x="9.1" y="3.2" width="1.9" height="17.6" rx=".95" />
+    <rect x="4.9" y="7.4" width="1.9" height="9.2" rx=".95" />
+    <rect x="13.3" y="8.4" width="1.9" height="7.2" rx=".95" />
+    <rect x="17.5" y="10.2" width="1.9" height="3.6" rx=".95" opacity=".55" />
+  </svg>
+);
+
+/** Enviar: a seta no disco, inclinada como um papel dobrado. */
+export const IconSendFill = ({ size = 20, className }: P) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+    <path d="M20.3 4.1c.4-.4.2-1-.4-1l-15 5.4c-.6.2-.6 1 0 1.2l6.2 2.4c.2.1.4.2.5.4l2.5 6.1c.2.6 1 .6 1.2 0l5.4-14.5Z" />
+  </svg>
+);
