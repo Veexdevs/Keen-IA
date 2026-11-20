@@ -149,7 +149,7 @@ export function Chat() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  <Wordmark size={21} fontSize={18.5} />
+                  <Wordmark size={24} fontSize={19} />
                 </motion.div>
               ) : (
                 <motion.h1

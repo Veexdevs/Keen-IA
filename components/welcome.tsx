@@ -38,7 +38,7 @@ export function Welcome({ name }: { name?: string }) {
           transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut" }}
           className="relative"
         >
-          <Logo size={108} spin />
+          <Logo size={86} spin />
         </motion.div>
       </motion.div>
 

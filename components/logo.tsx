@@ -28,7 +28,7 @@ export function Logo({
       transition={spin ? { duration: 22, repeat: Infinity, ease: "linear" } : { duration: 0.3 }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/mark.svg" alt="Keen IA" width={size} height={size} style={{ display: "block" }} />
+      <img src="/mark.svg" alt="Keen IA" width={size} height={size} style={{ display: "block", transform: "scale(1.15)" }} />
     </motion.span>
   );
 }
