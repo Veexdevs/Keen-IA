@@ -42,7 +42,7 @@ function Action({
       onClick={onClick}
       title={label}
       aria-label={label}
-      className={`grid h-6 w-6 place-items-center rounded-md transition-colors ${
+      className={`grid h-7 w-7 place-items-center rounded-md transition-colors sm:h-6 sm:w-6 ${
         active
           ? "text-accent-light"
           : danger
@@ -246,11 +246,13 @@ export const Message = memo(function Message({
             compartilhar), depois o que a transforma (regerar, editar) e por
             último o que a apaga — o único que pede um segundo toque. */}
         {showActions && (
+          /* Visíveis sempre. Elas nasceram escondidas atrás de :hover — o que
+             funciona num desktop e não existe no celular, onde a maior parte
+             das pessoas abre a Keen. No computador ficam um pouco mais fracas
+             e acendem com o ponteiro; no toque, já estão lá. */
           <div
-            className={`mt-1.5 flex items-center gap-0.5 transition-opacity duration-150 ${
-              isUser
-                ? "flex-row-reverse opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100"
-                : "opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100"
+            className={`mt-1.5 flex items-center gap-0.5 transition-opacity duration-150 opacity-100 md:opacity-60 md:hover:opacity-100 focus-within:opacity-100 ${
+              isUser ? "flex-row-reverse" : ""
             }`}
           >
             {isUser ? (
@@ -258,7 +260,7 @@ export const Message = memo(function Message({
                 {/* você: editar · copiar · apagar */}
                 {onEdit && (
                   <Action label={t("msg.edit")} onClick={() => onEdit(msg.content)}>
-                    <IconEdit size={13} />
+                    <IconEdit size={14} />
                   </Action>
                 )}
               </>
@@ -270,7 +272,7 @@ export const Message = memo(function Message({
                   onClick={speak}
                   active={speaking}
                 >
-                  <IconSpeak size={13} />
+                  <IconSpeak size={14} />
                 </Action>
               </>
             )}
@@ -284,7 +286,7 @@ export const Message = memo(function Message({
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.6, opacity: 0 }}
                   >
-                    <IconCheck size={13} />
+                    <IconCheck size={14} />
                   </motion.span>
                 ) : (
                   <motion.span
@@ -293,7 +295,7 @@ export const Message = memo(function Message({
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.6, opacity: 0 }}
                   >
-                    <IconCopy size={13} />
+                    <IconCopy size={14} />
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -301,19 +303,19 @@ export const Message = memo(function Message({
 
             {!isUser && onShare && (
               <Action label={t("msg.share")} onClick={onShare}>
-                <IconShare size={13} />
+                <IconShare size={14} />
               </Action>
             )}
 
             {!isUser && isLast && canRegenerate && onRegenerate && (
               <Action label={t("msg.regenerate")} onClick={onRegenerate}>
-                <IconRefresh size={13} />
+                <IconRefresh size={14} />
               </Action>
             )}
 
             {onDelete && (
               <Action label={t("msg.delete")} onClick={onDelete} danger>
-                <IconTrash size={13} />
+                <IconTrash size={14} />
               </Action>
             )}
           </div>
