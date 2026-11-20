@@ -40,14 +40,15 @@ export function Logo({
  * holandês, ИИ em russo, AI onde a sigla inglesa é a que as pessoas usam.
  * Estava fixo em "IA" e por isso a marca ficava errada em 14 dos 20 idiomas.
  */
-export function Wordmark({ size = 24 }: { size?: number }) {
+export function Wordmark({ size = 24, fontSize }: { size?: number; fontSize?: number }) {
   const t = useT();
+  const type = fontSize ?? Math.round((size * 19) / 26);
   return (
     /* dir="ltr": a marca é um nome próprio e nunca se inverte, mesmo que
        alguma tradução traga um trecho RTL para dentro do texto */
     <span dir="ltr" className="flex items-center gap-2.5">
       <Logo size={size} />
-      <span className="text-[19px] font-extrabold leading-none tracking-[-0.01em] text-fg">
+      <span className="font-extrabold leading-none tracking-[-0.01em] text-fg" style={{ fontSize: type }}>
         Keen <span className="text-accent">{t("brand.ia")}</span>
       </span>
     </span>

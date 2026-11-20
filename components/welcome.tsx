@@ -47,7 +47,7 @@ export function Welcome({ name }: { name?: string }) {
         variants={rise}
         initial="hidden"
         animate="show"
-        className="text-[30px] font-bold leading-tight tracking-[-0.025em] text-fg sm:text-[34px]"
+        className="text-[29px] font-bold leading-tight tracking-[-0.025em] text-fg sm:text-[31px]"
       >
         {name ? (
           <>
@@ -71,7 +71,7 @@ export function Welcome({ name }: { name?: string }) {
         variants={rise}
         initial="hidden"
         animate="show"
-        className="mt-3 max-w-[340px] text-[14px] leading-relaxed text-muted sm:max-w-sm sm:text-[14.5px]"
+        className="mt-3 max-w-[335px] text-[13.5px] leading-[1.45] text-muted sm:max-w-sm"
       >
         {t("welcome.subtitle")}
       </motion.p>

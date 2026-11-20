@@ -83,8 +83,8 @@ export function Composer({
           setDragging(false);
           void add(e.dataTransfer.files);
         }}
-        className={`rounded-full border bg-panel px-2 py-2 shadow-[var(--shadow-soft)] transition-colors ${
-          dragging ? "border-accent/70" : "border-border-strong focus-within:border-border-strong"
+        className={`rounded-full border bg-[var(--drawer-card)] px-[7px] py-[7px] transition-colors ${
+          dragging ? "border-accent/70" : "border-[rgba(255,255,255,0.07)] focus-within:border-[rgba(255,255,255,0.12)]"
         }`}
       >
         {/* attachments being prepared */}
@@ -119,14 +119,14 @@ export function Composer({
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.94 }}
             onClick={() => picker.current?.click()}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-raised text-fg transition-colors hover:bg-hover-strong"
+            className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-[var(--drawer-border)] text-fg transition-colors hover:bg-[var(--drawer-border-strong)]"
             aria-label={t("composer.attach")}
             title={t("composer.attachTitle")}
           >
-            <IconPlus size={21} />
+            <IconPlus size={22} />
           </motion.button>
 
-          <span aria-hidden className="mx-1.5 h-7 w-px shrink-0 bg-[var(--border-strong)]" />
+          <span aria-hidden className="mx-1 h-[26px] w-px shrink-0 bg-[rgba(255,255,255,0.13)]" />
 
           <button
             type="button"
@@ -135,7 +135,7 @@ export function Composer({
             aria-label={t("composer.voice")}
             title={t("composer.voice")}
           >
-            <IconVoice size={19} />
+            <IconVoice size={20} />
           </button>
           <input
             ref={picker}
@@ -162,7 +162,7 @@ export function Composer({
               }
             }}
             placeholder={hint}
-            className="scroll-thin max-h-[128px] flex-1 resize-none bg-transparent px-1 py-[7px] text-[14.5px] leading-[1.45] text-fg outline-none placeholder:text-subtle"
+            className="scroll-thin max-h-[128px] flex-1 resize-none border-l border-accent bg-transparent py-[7px] pl-2.5 pr-1 text-[14.5px] leading-[1.45] text-fg outline-none placeholder:text-[#8b8d94]"
           />
 
           <AnimatePresence mode="wait" initial={false}>
@@ -190,10 +190,10 @@ export function Composer({
                 whileTap={canSend ? { scale: 0.95 } : undefined}
                 onClick={fire}
                 disabled={!canSend}
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent text-white transition-all disabled:opacity-90"
+                className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-accent text-white transition-all disabled:opacity-90"
                 aria-label={t("composer.send")}
               >
-                <IconSendFill size={19} />
+                <IconSendFill size={21} />
               </motion.button>
             )}
           </AnimatePresence>

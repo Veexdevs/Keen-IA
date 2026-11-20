@@ -48,7 +48,7 @@ check("só o Chat está ativo", /const soon = id !== "chat"/.test(tabs) && tabs.
 
 /* ── o composer segue a referência ─────────────────────────────────────── */
 const composer = read("components/composer.tsx");
-check("composer em pílula", composer.includes("rounded-full border bg-panel"));
+check("composer em pílula", /rounded-full border bg-\[var\(--drawer-card\)\]/.test(composer));
 check("botão de enviar redondo e sempre azul", /rounded-full bg-accent text-white transition-all disabled:opacity-90/.test(composer));
 check("tem o botão de voz", composer.includes("IconVoice"));
 

@@ -2,7 +2,7 @@
 
 /** Ícones de traço, 1.75px, cantos redondos — um só conjunto. */
 
-type P = { size?: number; className?: string };
+type P = { size?: number; className?: string; strokeWidth?: number };
 
 const base = (size: number, className?: string) => ({
   width: size,
@@ -18,8 +18,8 @@ const base = (size: number, className?: string) => ({
 });
 
 export const IconMenu = ({ size = 20, className }: P) => (
-  <svg {...base(size, className)}>
-    <path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17" />
+  <svg {...base(size, className)} strokeWidth={2.1}>
+    <path d="M3.8 6.6h16.4M3.8 12h16.4M3.8 17.4h11.4" />
   </svg>
 );
 
@@ -89,8 +89,8 @@ export const IconTrash = ({ size = 16, className }: P) => (
   </svg>
 );
 
-export const IconClose = ({ size = 18, className }: P) => (
-  <svg {...base(size, className)}>
+export const IconClose = ({ size = 18, className, strokeWidth }: P) => (
+  <svg {...base(size, className)} {...(strokeWidth ? { strokeWidth } : {})}>
     <path d="M6 6l12 12M18 6 6 18" />
   </svg>
 );
@@ -170,8 +170,8 @@ export const IconFile = ({ size = 16, className }: P) => (
 );
 
 export const IconChat = ({ size = 15, className }: P) => (
-  <svg {...base(size, className)}>
-    <path d="M20.5 11.5a7.6 7.6 0 0 1-8.2 7.6 8.7 8.7 0 0 1-2.8-.5L4.5 20.5l1.4-4.2a7.4 7.4 0 0 1-1-3.9A7.6 7.6 0 0 1 12 4.5a7.6 7.6 0 0 1 8.5 7Z" />
+  <svg {...base(size, className)} strokeWidth={2.2}>
+    <path d="M20.6 11.9a8.4 8.4 0 0 1-8.7 8.3 9 9 0 0 1-3.1-.5c-1.4.7-3.2 1.2-4.9 1 .8-1 1.2-2.3 1.2-3.6a8.2 8.2 0 0 1-1-4A8.4 8.4 0 0 1 12.8 3.6a8.4 8.4 0 0 1 7.8 8.3Z" />
   </svg>
 );
 
@@ -201,24 +201,26 @@ export const IconChevronLeft = ({ size = 14, className }: P) => (
 
 /** Projetos: uma pilha de pastas. */
 export const IconProjects = ({ size = 20, className }: P) => (
-  <svg {...base(size, className)}>
-    <path d="M3 8.6c0-1 .8-1.8 1.8-1.8h4l1.7 2h8.7c1 0 1.8.8 1.8 1.8v6.6c0 1-.8 1.8-1.8 1.8H4.8c-1 0-1.8-.8-1.8-1.8V8.6Z" />
-    <path d="M6.4 3.9h3.2l1.4 1.7" />
+  <svg {...base(size, className)} strokeWidth={2.2}>
+    <path d="M9.2 2.9h5.6" />
+    <path d="M4.6 6.2h14.8v2.4H4.6z" />
+    <path d="M6.6 8.6h10.8v9.9a2.5 2.5 0 0 1-2.5 2.5H9.1a2.5 2.5 0 0 1-2.5-2.5V8.6Z" />
   </svg>
 );
 
 /** Code: as duas barras e a diagonal. */
 export const IconCode = ({ size = 20, className }: P) => (
-  <svg {...base(size, className)}>
-    <path d="M8.8 6.8 4.3 12l4.5 5.2M15.2 6.8 19.7 12l-4.5 5.2" />
+  <svg {...base(size, className)} strokeWidth={2.2}>
+    <path d="M8.6 6.6 3.6 12l5 5.4M15.4 6.6 20.4 12l-5 5.4" />
+    <path d="M13.4 4.4 10.6 19.6" />
   </svg>
 );
 
 /** Designer: um pincel de ponta fina. */
 export const IconDesigner = ({ size = 20, className }: P) => (
-  <svg {...base(size, className)}>
-    <path d="M15.9 3.9c1.3-.9 2.9-.7 3.8.3.9 1 .9 2.5-.1 3.7-1.6 2-5.2 4.4-7.3 5.4-.5.2-1 0-1.2-.4-.6-1.9.4-3.6 1.4-4.7" />
-    <path d="M9.6 13.2c-1.5.3-2.6 1.7-2.9 3.5-.2 1.1-.6 1.9-1.4 2.4 1.7.6 3.6.4 4.7-.6.8-.7 1.2-1.7 1.1-2.7" />
+  <svg {...base(size, className)} strokeWidth={2.2}>
+    <path d="m10.1 12.7 7.8-7.8a2.6 2.6 0 0 1 3.7 3.7l-7.8 7.8" />
+    <path d="M6.9 15.4c-1.6 0-2.9 1.3-2.9 3 0 1.2-2.3 1.4-1.9 1.9 1 1 2.3 1.9 3.8 1.9 2.1 0 3.8-1.7 3.8-3.8a2.9 2.9 0 0 0-2.8-3Z" />
   </svg>
 );
 
@@ -245,5 +247,97 @@ export const IconVoice = ({ size = 20, className }: P) => (
 export const IconSendFill = ({ size = 20, className }: P) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
     <path d="M20.3 4.1c.4-.4.2-1-.4-1l-15 5.4c-.6.2-.6 1 0 1.2l6.2 2.4c.2.1.4.2.5.4l2.5 6.1c.2.6 1 .6 1.2 0l5.4-14.5Z" />
+  </svg>
+);
+
+/* ── as formas exatas do menu lateral ───────────────────────────────────── */
+
+/** Dois balões sobrepostos, como no estado vazio do histórico. */
+export const IconChatsEmpty = ({ size = 40, className }: P) => (
+  <svg width={size} height={size} viewBox="0 0 32 32" fill="none"
+       stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+       className={className} aria-hidden>
+    {/* balão de trás */}
+    <path d="M11.5 7.5h11a3 3 0 0 1 3 3v6.2a3 3 0 0 1-3 3h-1.2v3.6l-3.9-3.6h-4.9" />
+    {/* balão da frente, com o rabicho embaixo à esquerda */}
+    <path d="M9.5 10.5h-2a3 3 0 0 0-3 3v5.4a3 3 0 0 0 3 3h.9v3.3l3.6-3.3h5.6a3 3 0 0 0 3-3v-5.4a3 3 0 0 0-3-3h-6.1" />
+  </svg>
+);
+
+/** Os três controles deslizantes, como no cartão de Configurações. */
+export const IconSlidersLines = ({ size = 22, className }: P) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth={2} strokeLinecap="round"
+       className={className} aria-hidden>
+    <path d="M3 6.5h5.2M12.6 6.5H21" />
+    <path d="M3 12h12.4M19.8 12H21" />
+    <path d="M3 17.5h3.4M10.8 17.5H21" />
+    <circle cx="10.3" cy="6.5" r="2.1" />
+    <circle cx="17.5" cy="12" r="2.1" />
+    <circle cx="8.5" cy="17.5" r="2.1" />
+  </svg>
+);
+
+/** Sol de oito raios. */
+export const IconSun = ({ size = 18, className }: P) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth={1.9} strokeLinecap="round"
+       className={className} aria-hidden>
+    <circle cx="12" cy="12" r="4.1" />
+    {Array.from({ length: 8 }).map((_, i) => {
+      const a = (i * Math.PI) / 4;
+      return <path key={i} d={`M${12 + Math.cos(a) * 6.6} ${12 + Math.sin(a) * 6.6}L${12 + Math.cos(a) * 8.9} ${12 + Math.sin(a) * 8.9}`} />;
+    })}
+  </svg>
+);
+
+/** Lua crescente cheia. */
+export const IconMoon = ({ size = 18, className }: P) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"
+       className={className} aria-hidden>
+    <path d="M20.2 14.6A8.6 8.6 0 0 1 9.4 3.8a8.9 8.9 0 1 0 10.8 10.8Z" />
+  </svg>
+);
+
+/** A seta da direita, como no cartão de conta. */
+export const IconChevronRight = ({ size = 18, className }: P) => (
+  <svg {...base(size, className)} strokeWidth={2}>
+    <path d="m9.5 5.5 6.5 6.5-6.5 6.5" />
+  </svg>
+);
+
+/* ── ícones das abas de Configurações ─────────────────────────────────── */
+
+/** tomada com cabo, para Conectores */
+export const IconPlug = ({ size = 18, className }: P) => (
+  <svg {...base(size, className)} strokeWidth={1.7}>
+    <path d="M9 2.6v4.2M15 2.6v4.2" />
+    <path d="M6.4 6.8h11.2v1.9a5.6 5.6 0 0 1-11.2 0Z" />
+    <path d="M12 14.3v7.1" />
+  </svg>
+);
+
+/** aro com meridianos, para Idioma */
+export const IconGlobe = ({ size = 18, className }: P) => (
+  <svg {...base(size, className)} strokeWidth={1.7}>
+    <circle cx="12" cy="12" r="9.1" />
+    <path d="M2.9 9.2h18.2M2.9 14.8h18.2" />
+    <path d="M12 2.9c2.6 2.6 3.9 5.7 3.9 9.1s-1.3 6.5-3.9 9.1c-2.6-2.6-3.9-5.7-3.9-9.1S9.4 5.5 12 2.9Z" />
+  </svg>
+);
+
+/** engrenagem, para Geral */
+export const IconGear = ({ size = 18, className }: P) => (
+  <svg {...base(size, className)} strokeWidth={1.7}>
+    <circle cx="12" cy="12" r="3.1" />
+    <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.35a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.65 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.1A1.7 1.7 0 0 0 15 4.65a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
+  </svg>
+);
+
+/** sol com raios de ponta redonda, para Aparência */
+export const IconSunRays = ({ size = 18, className }: P) => (
+  <svg {...base(size, className)} strokeWidth={1.7}>
+    <circle cx="12" cy="12" r="3.9" />
+    <path d="M12 1.9v2.4M12 19.7v2.4M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M1.9 12h2.4M19.7 12h2.4M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7" />
   </svg>
 );

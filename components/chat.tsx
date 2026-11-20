@@ -43,7 +43,7 @@ export function Chat() {
   const hydrateLocale = useLocale((s) => s.hydrate);
   const t = useT();
 
-  useStrings(["chat.clear", "chat.editing", "chat.menu", "chat.settings", "common.cancel", "common.close", "composer.placeholder", "composer.reply", "login.errCallback", "chat.emptyHistory", "chat.new", "chat.noMatch", "chat.searchChats", "chat.signInSave", "chat.signOut", "common.earlier", "common.remove", "common.today", "common.week", "msg.edit", "welcome.greeting", "welcome.subtitle", "composer.disclaimer", "tabs.label", "tabs.soon"]);
+  useStrings(["chat.clear", "chat.editing", "chat.menu", "chat.settings", "common.cancel", "common.close", "composer.placeholder", "composer.reply", "login.errCallback", "chat.emptyHistory", "chat.new", "chat.noMatch", "chat.searchChats", "chat.signInSave", "chat.signOut", "common.earlier", "common.remove", "common.today", "common.week", "msg.edit", "welcome.greeting", "welcome.guest", "welcome.subtitle", "composer.disclaimer", "tabs.label", "tabs.soon"]);
 
   const [drawer, setDrawer] = useState(false);
   const [login, setLogin] = useState(false);
@@ -131,14 +131,14 @@ export function Chat() {
 
       <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col">
         {/* cabeçalho: menu, marca, perfil */}
-        <header className="flex h-[58px] shrink-0 items-center justify-between gap-3 px-3 sm:px-4">
+        <header className="flex h-[51px] shrink-0 items-center justify-between gap-3 px-2 sm:px-4">
           <div className="flex min-w-0 items-center gap-2.5">
             <button
               onClick={() => setDrawer(true)}
               className="grid h-9 w-9 place-items-center rounded-lg text-fg transition-colors hover:bg-hover md:hidden"
               aria-label={t("chat.menu")}
             >
-              <IconMenu size={22} />
+              <IconMenu size={21} />
             </button>
 
             <AnimatePresence mode="wait" initial={false}>
@@ -149,7 +149,7 @@ export function Chat() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  <Wordmark size={30} />
+                  <Wordmark size={21} fontSize={18.5} />
                 </motion.div>
               ) : (
                 <motion.h1
@@ -212,7 +212,7 @@ export function Chat() {
                 exit={{ opacity: 0, y: -8, transition: { duration: 0.14 } }}
                 className="flex min-h-full flex-col justify-center"
               >
-                <Welcome name={user ? displayName : undefined} />
+                <Welcome name={displayName ?? t("welcome.guest")} />
               </motion.div>
             ) : (
               <motion.div

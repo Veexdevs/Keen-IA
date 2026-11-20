@@ -56,6 +56,17 @@
   --sidebar: #0d0d0d;
   --shadow-soft: 0 10px 36px -16px rgba(0, 0, 0, 0.95);
 
+  /* ── a gaveta e o painel de configurações, medidos na referência ──────
+     Fundo #030303, cartões #080808, bordas #1c1c1e. O azul é o mesmo da
+     marca (#0048f8), que na imagem aparece como #0036ff por compressão. */
+  --drawer: #030303;
+  --drawer-card: #080808;
+  --drawer-border: #1e1e20;
+  --drawer-border-strong: #2c2c2f;
+  --drawer-track: #101012;
+  --drawer-avatar: #2a2a2c;
+  --drawer-muted: #6f6f73;
+
   --r-sm: 8px;
   --r-md: 12px;
   --r-lg: 16px;
@@ -98,6 +109,14 @@
   --sidebar: #f3f1ea;
   --shadow-soft: 0 10px 30px -18px rgba(60, 55, 40, 0.35);
 
+  --drawer: #fbfaf7;
+  --drawer-card: #ffffff;
+  --drawer-border: #e6e3da;
+  --drawer-border-strong: #d5d1c5;
+  --drawer-track: #f0ede4;
+  --drawer-avatar: #ddd9cf;
+  --drawer-muted: #918d84;
+
   color-scheme: light;
 }
 
@@ -128,6 +147,14 @@
 
   --sidebar: #1d1d20;
   --shadow-soft: 0 10px 36px -16px rgba(0, 0, 0, 0.8);
+
+  --drawer: #131315;
+  --drawer-card: #1e1e21;
+  --drawer-border: #2b2b30;
+  --drawer-border-strong: #3a3a40;
+  --drawer-track: #26262a;
+  --drawer-avatar: #3a3a40;
+  --drawer-muted: #86868e;
 
   color-scheme: dark;
 }
