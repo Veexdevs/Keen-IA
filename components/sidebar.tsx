@@ -140,7 +140,7 @@ export function Sidebar({
   onProfile: () => void;
   onSettings: () => void;
   onSignOut: () => void;
-  user: { name: string; email: string; avatar: string } | null;
+  user: { name: string; avatar: string } | null;
 }) {
   const [query, setQuery] = useState("");
   const prefs = usePrefs((s) => s.prefs);
@@ -318,8 +318,9 @@ export function Sidebar({
                 </span>
               )}
               <span className="min-w-0 flex-1">
+                {/* sem o email: endereço não é assunto de tela de abertura.
+                    Ele vive na aba Conta, onde alguém vai de propósito. */}
                 <span className="block truncate text-[13px] font-semibold text-fg">{user.name}</span>
-                <span className="block truncate text-[11.5px] text-subtle">{user.email}</span>
               </span>
             </button>
             <button

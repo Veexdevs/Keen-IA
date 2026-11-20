@@ -5,12 +5,13 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import { Composer } from "./composer";
 import { Viewer } from "./attachments";
-import { IconMenu, IconSliders, IconTrash } from "./icons";
+import { IconMenu, IconProfile, IconTrash } from "./icons";
 import { Wordmark } from "./logo";
 import { Message } from "./message";
 import { LoginModal, ProfileModal } from "./modals";
 import { SettingsSheet } from "./settings";
 import { Sidebar } from "./sidebar";
+import { Tabs } from "./tabs";
 import { Welcome } from "./welcome";
 import type { Attachment } from "@/lib/attach";
 import { useLocale } from "@/lib/i18n/store";
@@ -42,7 +43,7 @@ export function Chat() {
   const hydrateLocale = useLocale((s) => s.hydrate);
   const t = useT();
 
-  useStrings(["chat.clear", "chat.editing", "chat.menu", "chat.settings", "common.cancel", "common.close", "composer.placeholder", "composer.reply", "login.errCallback", "chat.emptyHistory", "chat.new", "chat.noMatch", "chat.searchChats", "chat.signInSave", "chat.signOut", "common.earlier", "common.remove", "common.today", "common.week", "msg.edit", "welcome.greeting", "welcome.subtitle", "composer.disclaimer"]);
+  useStrings(["chat.clear", "chat.editing", "chat.menu", "chat.settings", "common.cancel", "common.close", "composer.placeholder", "composer.reply", "login.errCallback", "chat.emptyHistory", "chat.new", "chat.noMatch", "chat.searchChats", "chat.signInSave", "chat.signOut", "common.earlier", "common.remove", "common.today", "common.week", "msg.edit", "welcome.greeting", "welcome.subtitle", "composer.disclaimer", "tabs.label", "tabs.soon"]);
 
   const [drawer, setDrawer] = useState(false);
   const [login, setLogin] = useState(false);
@@ -99,7 +100,9 @@ export function Chat() {
     );
   }
 
-  const displayName = profile?.display_name || user?.email?.split("@")[0] || undefined;
+  /* O nome que a saudação mostra. Nunca o email: o perfil guarda o nome
+     escolhido; sem perfil, o store já usa o prefixo do endereço como nome. */
+  const displayName = profile?.display_name || undefined;
 
   return (
     <div className="fixed inset-0 flex overflow-hidden bg-bg" style={{ height: "100dvh" }}>
@@ -120,7 +123,6 @@ export function Chat() {
           user
             ? {
                 name: displayName ?? "You",
-                email: user.email ?? "",
                 avatar: profile?.avatar_url ?? "",
               }
             : null
@@ -128,15 +130,15 @@ export function Chat() {
       />
 
       <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col">
-        {/* header */}
-        <header className="flex h-[52px] shrink-0 items-center justify-between gap-3 px-3 sm:px-5">
-          <div className="flex min-w-0 items-center gap-2">
+        {/* cabeçalho: menu, marca, perfil */}
+        <header className="flex h-[58px] shrink-0 items-center justify-between gap-3 px-3 sm:px-4">
+          <div className="flex min-w-0 items-center gap-2.5">
             <button
               onClick={() => setDrawer(true)}
-              className="grid h-8 w-8 place-items-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-fg md:hidden"
+              className="grid h-9 w-9 place-items-center rounded-lg text-fg transition-colors hover:bg-hover md:hidden"
               aria-label={t("chat.menu")}
             >
-              <IconMenu size={18} />
+              <IconMenu size={22} />
             </button>
 
             <AnimatePresence mode="wait" initial={false}>
@@ -146,9 +148,8 @@ export function Chat() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="md:hidden"
                 >
-                  <Wordmark size={19} />
+                  <Wordmark size={30} />
                 </motion.div>
               ) : (
                 <motion.h1
@@ -182,18 +183,23 @@ export function Chat() {
               )}
             </AnimatePresence>
 
+            {/* o perfil: leva ao painel, onde o email tem seu lugar */}
             <motion.button
               whileHover={{ scale: 1.06 }}
               whileTap={{ scale: 0.94 }}
               onClick={() => setSettingsOpen(true)}
-              className="grid h-8 w-8 place-items-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-fg"
+              className="grid h-9 w-9 place-items-center rounded-lg text-fg transition-colors hover:bg-hover"
               aria-label={t("chat.settings")}
               title={t("chat.settings")}
             >
-              <IconSliders size={16} />
+              <IconProfile size={23} />
             </motion.button>
           </div>
         </header>
+
+        {/* as quatro seções, logo abaixo do cabeçalho */}
+        <Tabs active="chat" />
+
 
         {/* the stream — ends where the composer begins */}
         <div ref={stream} className="scroll-thin min-h-0 flex-1 overflow-y-auto overscroll-contain">

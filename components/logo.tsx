@@ -47,8 +47,8 @@ export function Wordmark({ size = 24 }: { size?: number }) {
        alguma tradução traga um trecho RTL para dentro do texto */
     <span dir="ltr" className="flex items-center gap-2.5">
       <Logo size={size} />
-      <span className="text-[15px] font-extrabold tracking-wider text-fg">
-        Keen {t("brand.ia")}
+      <span className="text-[19px] font-extrabold leading-none tracking-[-0.01em] text-fg">
+        Keen <span className="text-accent">{t("brand.ia")}</span>
       </span>
     </span>
   );

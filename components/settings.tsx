@@ -856,6 +856,8 @@ function AccountTab({ onDone }: { onDone: () => void }) {
             <p className="truncate text-[13px] font-semibold text-fg">
               {profile?.display_name || "You"}
             </p>
+            {/* este bloco JÁ é a aba Conta, então o endereço pode aparecer
+                aqui — é o único lugar onde ele existe na tela */}
             <p className="truncate text-[11.5px] text-subtle">{user.email}</p>
           </div>
         </div>
