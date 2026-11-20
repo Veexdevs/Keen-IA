@@ -162,7 +162,7 @@ export function Composer({
               }
             }}
             placeholder={hint}
-            className="scroll-thin max-h-[128px] flex-1 resize-none border-l border-accent bg-transparent py-[7px] pl-2.5 pr-1 text-[14.5px] leading-[1.45] text-fg outline-none placeholder:text-[#8b8d94]"
+            className="scroll-thin max-h-[128px] flex-1 resize-none bg-transparent px-1 py-[7px] text-[14.5px] leading-[1.45] text-fg outline-none placeholder:text-[#8b8d94]"
           />
 
           <AnimatePresence mode="wait" initial={false}>
