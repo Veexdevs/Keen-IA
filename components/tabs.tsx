@@ -27,10 +27,10 @@ export function Tabs({ active = "chat" }: { active?: TabId }) {
   const t = useT();
 
   return (
-    <div className="shrink-0 px-3 pt-1 sm:px-5">
+    <div className="shrink-0 px-[7px] sm:px-5">
       {/* max-w alinha com a coluna do chat; a pílula em si é o cartão */}
       <nav
-        className="mx-auto flex w-full max-w-[760px] items-stretch rounded-full border border-border-strong/70 bg-panel/40 p-1"
+        className="mx-auto flex w-full max-w-[760px] items-stretch rounded-[23px] border border-[rgba(255,255,255,0.10)] bg-[var(--drawer-card)] px-1"
         aria-label={t("tabs.label")}
       >
         {TABS.map(({ id, label, icon: Icon }) => {
@@ -43,18 +43,18 @@ export function Tabs({ active = "chat" }: { active?: TabId }) {
               disabled={soon}
               aria-current={on ? "page" : undefined}
               title={soon ? t("tabs.soon") : undefined}
-              className={`relative flex flex-1 flex-col items-center gap-[3px] rounded-full px-1 pb-1.5 pt-2 transition-colors ${
+              className={`relative flex flex-1 flex-col items-center justify-center gap-[1px] rounded-full px-1 pb-[10px] pt-[7px] transition-colors ${
                 on ? "text-accent" : soon ? "text-fg/55" : "text-muted hover:text-fg"
               } ${soon ? "cursor-default" : ""}`}
             >
-              <Icon size={21} />
-              <span className={`text-[11.5px] ${on ? "font-semibold" : "font-medium"}`}>{label}</span>
+              <Icon size={22} />
+              <span className={`text-[11px] leading-none ${on ? "font-semibold" : "font-medium"}`}>{label}</span>
 
               {on && (
                 /* a barra fina sob a aba ativa, colada no fundo da pílula */
                 <motion.span
                   layoutId="tab-underline"
-                  className="absolute -bottom-[5px] left-1/2 h-[3.5px] w-[70%] -translate-x-1/2 rounded-full bg-accent"
+                  className="absolute -bottom-px left-1/2 h-[3px] w-[68%] -translate-x-1/2 rounded-full bg-accent"
                   transition={{ type: "spring", stiffness: 420, damping: 34 }}
                 />
               )}

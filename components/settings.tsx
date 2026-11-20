@@ -13,6 +13,7 @@ import {
   WikipediaMark,
 } from "./brand-icons";
 import { Flag } from "./flags";
+import { Wordmark } from "./logo";
 import { Spinner } from "./modals";
 import {
   IconCheck,
@@ -25,6 +26,10 @@ import {
   IconTrash,
   IconUser,
   IconChevronLeft,
+  IconGlobe,
+  IconGear,
+  IconPlug,
+  IconSunRays,
 } from "./icons";
 import {
   CONNECTORS,
@@ -47,12 +52,12 @@ import { useApp } from "@/lib/store";
 
 type Tab = "connectors" | "appearance" | "language" | "account" | "about";
 
-const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-  { id: "connectors", label: "Connectors", icon: <PlugIcon /> },
-  { id: "appearance", label: "Appearance", icon: <ThemeIcon /> },
-  { id: "language", label: "Language", icon: <GlobeIcon /> },
-  { id: "account", label: "Account", icon: <IconUser size={15} /> },
-  { id: "about", label: "About", icon: <HeartIcon /> },
+const TABS: { id: Tab; icon: React.ReactNode }[] = [
+  { id: "connectors", icon: <IconPlug size={13} /> },
+  { id: "appearance", icon: <IconSunRays size={13} /> },
+  { id: "language", icon: <IconGlobe size={13} /> },
+  { id: "account", icon: <IconUser size={13} /> },
+  { id: "about", icon: <IconGear size={16} /> },
 ];
 
 /* ── the panel ─────────────────────────────────────────────────────────── */
@@ -136,83 +141,103 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
             exit={{ x: 34, opacity: 0 }}
             transition={{ type: "spring", stiffness: 420, damping: 36 }}
             onClick={(e) => e.stopPropagation()}
-            className="flex h-full w-full max-w-[560px] flex-col border-s border-border bg-bg shadow-2xl"
+            className="flex h-full w-full flex-col bg-bg"
           >
-            {/* head */}
-            <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
-              <h2 className="text-[15px] font-semibold text-fg">{tt("settings.title")}</h2>
+            {/* topo: a marca, como na referência */}
+            <div className="flex shrink-0 items-center justify-between pl-[17px] pr-6 pb-0 pt-[calc(env(safe-area-inset-top)+21px)]">
+              <Wordmark size={23} fontSize={17} />
               <motion.button
-                whileHover={{ rotate: 90, scale: 1.06 }}
                 whileTap={{ scale: 0.92 }}
                 onClick={onClose}
-                className="grid h-8 w-8 place-items-center rounded-lg text-subtle transition-colors hover:bg-hover hover:text-fg"
+                className="grid h-9 w-9 place-items-center rounded-full text-fg transition-colors hover:bg-hover"
                 aria-label={tt("common.close")}
               >
-                <IconClose size={17} />
+                <IconClose size={22} strokeWidth={2.2} />
               </motion.button>
             </div>
 
-            {/* arrows: the same move, without the gesture */}
-            <div className="flex shrink-0 items-center gap-1 border-b border-border px-3 py-1.5">
+            <div className="shrink-0 pl-[17px] pr-6 pt-[24px]">
+              <h2 className="text-[16.5px] font-bold leading-none tracking-[-0.005em] text-fg">
+                {tt("settings.title")}
+              </h2>
+            </div>
+
+            {/* pager: pílula com as setas nas pontas */}
+            <div className="mx-[17px] mt-[13px] flex h-[31px] shrink-0 items-center justify-between rounded-full border border-[var(--drawer-border)] bg-[var(--drawer-card)] px-3">
               <button
                 onClick={() => go(-1)}
                 disabled={index === 0}
-                className="grid h-6 w-6 place-items-center rounded-md text-subtle transition-colors hover:bg-hover hover:text-fg disabled:opacity-25"
+                className="grid h-7 w-7 place-items-center text-fg transition-opacity disabled:opacity-30"
                 aria-label={tt("settings.prev")}
               >
-                <IconChevronLeft size={14} />
+                <IconChevronLeft size={17} strokeWidth={2} />
               </button>
-              <span className="flex-1 text-center text-[10.5px] uppercase tracking-[0.08em] text-subtle">
+              <span className="text-[13.5px] font-medium tracking-[0.01em] text-fg">
                 {index + 1} / {order.length}
               </span>
               <button
                 onClick={() => go(1)}
                 disabled={index === order.length - 1}
-                className="grid h-6 w-6 place-items-center rounded-md text-subtle transition-colors hover:bg-hover hover:text-fg disabled:opacity-25"
+                className="grid h-7 w-7 place-items-center text-fg transition-opacity disabled:opacity-30"
                 aria-label={tt("settings.next")}
               >
-                <IconChevronLeft size={14} className="rotate-180" />
+                <IconChevronLeft size={17} strokeWidth={2} className="rotate-180" />
               </button>
             </div>
 
-            {/* tabs — scrolls on its own axis, so no drag handler here:
-                a horizontal drag would only fight the strip's own scrolling */}
+            {/* abas: pílula única com a seção ativa realçada e o fio azul embaixo */}
             <div
               ref={stripRef}
               role="tablist"
-              className="flex shrink-0 gap-0.5 overflow-x-auto border-b border-border px-2 py-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="mt-[12px] shrink-0 overflow-x-auto px-[15.5px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              {TABS.map((item) => (
-                <button
-                  key={item.id}
-                  data-tab={item.id}
-                  role="tab"
-                  aria-selected={tab === item.id}
-                  onClick={() => jump(item.id)}
-                  className={`relative flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12.5px] font-medium transition-colors ${
-                    tab === item.id ? "text-fg" : "text-muted hover:text-fg"
-                  }`}
-                >
-                  {tab === item.id && (
-                    <motion.span
-                      layoutId="settings-tab"
-                      className="absolute inset-0 rounded-lg bg-hover-strong"
-                      transition={{ type: "spring", stiffness: 480, damping: 36 }}
-                    />
-                  )}
-                  <span className="relative flex shrink-0 items-center gap-1.5 whitespace-nowrap">
-                    {item.icon}
-                    {tt(`settings.tab.${item.id}`)}
-                  </span>
-                </button>
-              ))}
+              <div className="flex h-[38px] w-max min-w-full items-stretch rounded-full border border-[var(--drawer-border)] px-[2px]">
+                {TABS.map((item) => {
+                  const on = tab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      data-tab={item.id}
+                      role="tab"
+                      aria-selected={on}
+                      onClick={() => jump(item.id)}
+                      className={`relative flex shrink-0 items-center justify-center gap-[3px] px-[3.5px] text-[11.5px] transition-colors ${
+                        on ? "font-semibold text-fg" : "font-medium text-muted hover:text-fg"
+                      }`}
+                    >
+                      {on && (
+                        <motion.span
+                          layoutId="settings-tab"
+                          className="absolute inset-x-0 inset-y-0 rounded-full bg-[var(--drawer-card)] shadow-[inset_0_0_0_1px_var(--drawer-border-strong)]"
+                          transition={{ type: "spring", stiffness: 480, damping: 36 }}
+                        />
+                      )}
+                      <span
+                        className={`relative flex shrink-0 items-center gap-1.5 whitespace-nowrap ${
+                          on ? "" : ""
+                        }`}
+                      >
+                        <span className={on ? "text-accent" : ""}>{item.icon}</span>
+                        {tt(`settings.tab.${item.id}`)}
+                      </span>
+                      {on && (
+                        <motion.span
+                          layoutId="settings-tab-line"
+                          className="absolute inset-x-1 -bottom-[1px] h-[2px] rounded-full bg-accent"
+                          transition={{ type: "spring", stiffness: 480, damping: 36 }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* body — the only place that votes on a swipe. A short move with
                 real speed (a flick) counts too, which is how a phone scrolls. */}
             <div
               ref={paneRef}
-              className="scroll-thin relative flex-1 overflow-y-auto overscroll-contain px-5 py-5"
+              className="scroll-thin relative flex-1 overflow-y-auto overscroll-contain px-[17px] pb-8 pt-[27px]"
               onTouchStart={(e) => {
                 const t = e.touches[0];
                 touch.current = { x: t.clientX, y: t.clientY, at: Date.now() };
@@ -593,62 +618,90 @@ function AppearanceTab() {
   const { prefs, set } = usePrefs();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-[17px]">
       <div>
-        <p className="mb-2 text-[12px] font-semibold text-fg">{tt("appearance.theme")}</p>
-        <div className="grid grid-cols-3 gap-2">
+        <p className="mb-3 text-[15px] font-semibold leading-[1.15] text-fg">{tt("appearance.theme")}</p>
+        <div className="grid grid-cols-3 gap-[8px]">
           {(
             [
-              { id: "dark", label: tt("appearance.dark"), bg: "#0a0a0a", panel: "#1b1b1a", fg: "#f0efed" },
-              { id: "light", label: tt("appearance.light"), bg: "#fbfaf7", panel: "#ffffff", fg: "#1e1d1a" },
-              { id: "gray", label: tt("appearance.gray"), bg: "#1a1a1c", panel: "#26262a", fg: "#ececef" },
-            ] as { id: Theme; label: string; bg: string; panel: string; fg: string }[]
-          ).map((t) => (
-            <motion.button
-              key={t.id}
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => set("theme", t.id)}
-              className={`overflow-hidden rounded-xl border p-2 text-left transition-colors ${
-                prefs.theme === t.id ? "border-accent ring-1 ring-accent/40" : "border-border hover:border-border-strong"
-              }`}
-            >
-              <span
-                className="mb-2 flex h-12 flex-col justify-end gap-1 rounded-lg p-1.5"
-                style={{ background: t.bg }}
+              {
+                id: "dark",
+                label: tt("appearance.dark"),
+                bg: "#0c0c0d",
+                line1: "#7e7f88",
+                line2: "#6f707a",
+                accent: "#0054ff",
+              },
+              {
+                id: "light",
+                label: tt("appearance.light"),
+                bg: "#ecedf2",
+                line1: "#d3d4db",
+                line2: "#c3c4cc",
+                accent: "#0070ff",
+              },
+              {
+                id: "gray",
+                label: tt("appearance.gray"),
+                bg: "#1a1d24",
+                line1: "#3a4152",
+                line2: "#59637a",
+                accent: "#0062ff",
+              },
+            ] as { id: Theme; label: string; bg: string; line1: string; line2: string; accent: string }[]
+          ).map((t) => {
+            const on = prefs.theme === t.id;
+            return (
+              <motion.button
+                key={t.id}
+                whileTap={{ scale: 0.985 }}
+                onClick={() => set("theme", t.id)}
+                className={`text-left transition-colors ${
+                  on
+                    ? "rounded-[19px] border-[1.5px] border-[#0054ff] p-[6px]"
+                    : "rounded-[19px] border border-[rgba(255,255,255,0.085)] p-[6.5px]"
+                }`}
               >
-                <span className="h-1.5 w-2/3 rounded-full" style={{ background: t.panel }} />
-                <span className="h-1.5 w-1/2 rounded-full" style={{ background: t.fg, opacity: 0.5 }} />
-                <span className="h-1 w-8 rounded-full bg-[#0048f8]" />
-              </span>
-              <span className="flex items-center justify-between px-0.5">
-                <span className="text-[11.5px] font-medium text-fg">{t.label}</span>
-                {prefs.theme === t.id && <IconCheck size={12} className="text-accent-light" />}
-              </span>
-            </motion.button>
-          ))}
+                <span
+                  className="flex h-[42px] flex-col justify-center gap-[6px] overflow-hidden rounded-[6px] px-[9px]"
+                  style={{ background: t.bg }}
+                >
+                  <span className="h-[4.5px] w-[27px] rounded-full" style={{ background: t.line1 }} />
+                  <span className="h-[4.5px] w-[17px] rounded-full" style={{ background: t.line2 }} />
+                  <span className="h-[4.5px] w-[27px] rounded-full" style={{ background: t.accent }} />
+                </span>
+                <span className="mt-[4px] flex items-center justify-between px-[3px] leading-none">
+                  <span className="text-[13px] font-medium leading-none text-fg">{t.label}</span>
+                  {on && <IconCheck size={16} strokeWidth={2.6} className="text-accent" />}
+                </span>
+              </motion.button>
+            );
+          })}
         </div>
       </div>
 
       <Row label={tt("appearance.textSize")} hint={tt("appearance.textSizeHint")}>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-[3.1px]">
           {[
-            { v: 0.9, l: "A", size: "text-[12px]" },
-            { v: 1, l: "A", size: "text-[14px]" },
-            { v: 1.1, l: "A", size: "text-[16px]" },
-            { v: 1.2, l: "A", size: "text-[18px]" },
-          ].map((s) => (
-            <button
-              key={s.v}
-              onClick={() => set("textScale", s.v)}
-              className={`grid h-8 w-8 place-items-center rounded-lg font-medium transition-colors ${s.size} ${
-                prefs.textScale === s.v ? "bg-accent text-white" : "text-muted hover:bg-hover hover:text-fg"
-              }`}
-              aria-label={`Text size ${s.v}`}
-            >
-              {s.l}
-            </button>
-          ))}
+            { v: 0.9, size: "text-[12.5px]" },
+            { v: 1, size: "text-[14.5px]" },
+            { v: 1.1, size: "text-[16.5px]" },
+            { v: 1.2, size: "text-[18.5px]" },
+          ].map((s) => {
+            const on = prefs.textScale === s.v;
+            return (
+              <button
+                key={s.v}
+                onClick={() => set("textScale", s.v)}
+                className={`grid h-[30px] w-[30px] place-items-center rounded-[9px] font-medium transition-colors ${s.size} ${
+                  on ? "bg-accent text-white" : "text-muted hover:bg-hover hover:text-fg"
+                }`}
+                aria-label={`Text size ${s.v}`}
+              >
+                A
+              </button>
+            );
+          })}
         </div>
       </Row>
 
@@ -674,7 +727,7 @@ function AppearanceTab() {
         />
       </Row>
 
-      <div className="space-y-1">
+      <div>
         <Toggle
           label={tt("appearance.showTimes")}
           hint={tt("appearance.showTimesHint")}
@@ -970,10 +1023,10 @@ function Row({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4">
+    <div className="flex items-center justify-between gap-3">
       <div className="min-w-0">
-        <p className="text-[12px] font-medium text-fg">{label}</p>
-        {hint && <p className="mt-0.5 text-[11px] leading-relaxed text-subtle">{hint}</p>}
+        <p className="text-[14.5px] font-medium leading-[1.18] text-fg">{label}</p>
+        {hint && <p className="mt-[2px] max-w-[186px] text-[11px] leading-[1.25] text-[#a9a9ae]">{hint}</p>}
       </div>
       <div className="shrink-0">{children}</div>
     </div>
@@ -990,21 +1043,23 @@ function Segmented({
   options: { value: string; label: string }[];
 }) {
   return (
-    <div className="flex gap-0.5 rounded-lg border border-border bg-panel p-0.5">
+    <div className="flex h-[31px] items-stretch rounded-full border border-[var(--drawer-border)] bg-[var(--drawer-card)] p-[2px]">
       {options.map((o) => (
         <button
           key={o.value}
           onClick={() => onChange(o.value)}
-          className="relative rounded-md px-2.5 py-1 text-[11.5px] font-medium transition-colors"
+          className="relative rounded-full px-[13px] text-[13.5px] font-medium transition-colors"
         >
           {value === o.value && (
             <motion.span
               layoutId={`seg-${options.map((x) => x.value).join("-")}`}
-              className="absolute inset-0 rounded-md bg-hover-strong"
+              className="absolute inset-0 rounded-full bg-[var(--drawer-border-strong)]"
               transition={{ type: "spring", stiffness: 480, damping: 36 }}
             />
           )}
-          <span className={`relative ${value === o.value ? "text-fg" : "text-muted"}`}>{o.label}</span>
+          <span className={`relative ${value === o.value ? "font-semibold text-fg" : "text-muted"}`}>
+            {o.label}
+          </span>
         </button>
       ))}
     </div>
@@ -1023,15 +1078,15 @@ function Toggle({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg px-1 py-2.5">
+    <div className="flex items-center justify-between gap-3 py-[9px]">
       <div className="min-w-0">
-        <p className="text-[12px] font-medium text-fg">{label}</p>
-        {hint && <p className="mt-0.5 text-[11px] leading-relaxed text-subtle">{hint}</p>}
+        <p className="text-[14.5px] font-medium leading-[1.18] text-fg">{label}</p>
+        {hint && <p className="mt-[2px] max-w-[205px] text-[11px] leading-[1.25] text-[#a9a9ae]">{hint}</p>}
       </div>
       <button
         onClick={() => onChange(!value)}
-        className={`relative h-[22px] w-[38px] shrink-0 rounded-full transition-colors ${
-          value ? "bg-accent" : "bg-border-strong"
+        className={`relative h-[23px] w-[41px] shrink-0 rounded-full transition-colors ${
+          value ? "bg-accent" : "bg-[var(--drawer-border-strong)]"
         }`}
         role="switch"
         aria-checked={value}
@@ -1040,8 +1095,8 @@ function Toggle({
         <motion.span
           layout
           transition={{ type: "spring", stiffness: 520, damping: 32 }}
-          className={`absolute top-[3px] h-4 w-4 rounded-full bg-white shadow ${
-            value ? "left-[19px]" : "left-[3px]"
+          className={`absolute top-[3px] h-[17px] w-[17px] rounded-full bg-white shadow ${
+            value ? "left-[21px]" : "left-[3px]"
           }`}
         />
       </button>

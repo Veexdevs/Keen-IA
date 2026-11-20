@@ -3,11 +3,68 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-import { IconClose, IconEdit, IconLogout, IconPlus, IconSearch, IconSliders, IconTrash, IconUser } from "./icons";
+import {
+  IconChatsEmpty,
+  IconChevronRight,
+  IconClose,
+  IconEdit,
+  IconLogout,
+  IconMoon,
+  IconPlus,
+  IconSearch,
+  IconSliders,
+  IconSlidersLines,
+  IconSun,
+  IconTrash,
+  IconUser,
+} from "./icons";
 import { Wordmark } from "./logo";
 import { useStrings, useT } from "@/lib/i18n/use";
 import { usePrefs } from "@/lib/settings";
 import type { Chat } from "@/lib/store";
+
+/* ── o seletor de tema do rodapé ───────────────────────────────────────── */
+
+/**
+ * Sol e lua numa pílula; o que está valendo ganha um anel azul.
+ *
+ * É o mesmo controle que a aba Aparência oferece com três cartões, reduzido a
+ * dois estados porque no celular cabe isso. O tema "cinza" continua acessível
+ * em Aparência.
+ */
+function ThemeSwitch() {
+  const theme = usePrefs((s) => s.prefs.theme);
+  const set = usePrefs((s) => s.set);
+  const escuro = theme !== "light";
+
+  return (
+    <div
+      role="group"
+      className="flex shrink-0 items-center gap-0.5 rounded-full border border-[var(--drawer-border)] bg-[var(--drawer-track)] p-[2.5px]"
+    >
+      <button
+        onClick={() => set("theme", "light")}
+        aria-label="Claro"
+        aria-pressed={!escuro}
+        className={`grid h-[24px] w-[24px] place-items-center rounded-full transition-colors ${
+          !escuro ? "bg-accent text-white" : "text-[#9a9a9e]"
+        }`}
+      >
+        <IconSun size={15} />
+      </button>
+      <button
+        onClick={() => set("theme", "dark")}
+        aria-label="Escuro"
+        aria-pressed={escuro}
+        className={`grid h-[24px] w-[24px] place-items-center rounded-full border-[1.5px] transition-colors ${
+          escuro ? "border-accent bg-[var(--drawer-track)] text-accent" : "border-transparent text-[#9a9a9e]"
+        }`}
+      >
+        <IconMoon size={14} />
+      </button>
+    </div>
+  );
+}
 
 /* ── uma conversa na lista ─────────────────────────────────────────────── */
 
@@ -171,59 +228,66 @@ export function Sidebar({
   })();
 
   const content = (
-    <div className="flex h-full flex-col">
-      {/* marca */}
-      <div className="flex h-16 shrink-0 items-center justify-between px-5">
-        <Wordmark size={22} />
+    <div className="flex h-full flex-col bg-[var(--drawer)]">
+      {/* cabeçalho: a marca e o X */}
+      <div className="flex h-[85px] shrink-0 items-center justify-between pl-[17px] pr-6">
+        <Wordmark size={26} fontSize={19} />
         <button
           onClick={onClose}
-          className="grid h-8 w-8 place-items-center rounded-lg text-subtle transition-colors hover:bg-hover hover:text-fg md:hidden"
+          className="grid h-9 w-9 place-items-center text-fg transition-opacity hover:opacity-70 md:hidden"
           aria-label={t("common.close")}
         >
-          <IconClose size={17} />
+          <IconClose size={22} />
         </button>
       </div>
 
-      {/* nova conversa */}
-      <div className="px-3">
+      {/* Adicionar chat: um cartão com a barra azul colada na borda esquerda */}
+      <div className="px-[9px]">
         <motion.button
-          whileHover={{ scale: 1.015 }}
-          whileTap={{ scale: 0.985 }}
+          whileTap={{ scale: 0.99 }}
           onClick={() => {
             onNew();
             onClose();
           }}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium text-fg transition-colors hover:bg-hover"
+          className="relative flex h-[57px] w-full items-center gap-4 overflow-hidden rounded-[22px] border border-[var(--drawer-border)] bg-[var(--drawer-card)] pl-6 pr-5 text-left transition-colors hover:border-[var(--drawer-border-strong)]"
         >
-          <IconPlus size={16} className="text-muted" />
-          {t("chat.new")}
+          {/* a barra é a própria borda do cartão, não um enfeite por dentro */}
+          <span aria-hidden className="absolute left-0 top-0 h-full w-[5px] bg-accent" />
+          <IconPlus size={21} className="shrink-0 text-fg" />
+          <span className="truncate text-[13px] font-semibold text-fg">{t("chat.new")}</span>
         </motion.button>
       </div>
 
-      {/* search over the history */}
-      <div className="px-3 pb-1 pt-2">
-        <div className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[12.5px] text-subtle transition-colors focus-within:bg-hover hover:bg-hover">
-          <IconSearch size={13} />
+      {/* Buscar chats */}
+      <div className="px-[9px] pt-2">
+        <label className="flex h-[57px] items-center gap-4 rounded-[22px] px-6 transition-colors focus-within:bg-[var(--drawer-card)] hover:bg-[var(--drawer-card)]">
+          <IconSearch size={21} className="shrink-0 text-fg" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("chat.searchChats")}
-            className="w-full bg-transparent text-fg outline-none placeholder:text-subtle"
+            className="w-full bg-transparent text-[13px] text-fg outline-none placeholder:font-medium placeholder:text-fg"
           />
-        </div>
+        </label>
       </div>
 
+      {/* a linha que separa a busca do histórico */}
+      <div className="mx-6 mt-1 h-px bg-[var(--drawer-border)]" />
+
       {/* histórico */}
-      <nav className="scroll-thin mt-2 flex-1 overflow-y-auto px-3 pb-3">
+      <nav className="scroll-thin mt-1 flex-1 overflow-y-auto px-3 pb-3">
         {groups.length === 0 ? (
-          <motion.p
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="px-3 pt-6 text-[12.5px] leading-relaxed text-subtle"
+            transition={{ delay: 0.16 }}
+            className="flex flex-col items-center px-4 pt-[34px] text-center"
           >
-            {query ? t("chat.noMatch") : t("chat.emptyHistory")}
-          </motion.p>
+            <IconChatsEmpty size={44} className="text-[var(--drawer-muted)]" />
+            <p className="mt-4 text-[13px] leading-snug text-[var(--drawer-muted)]">
+              {query ? t("chat.noMatch") : t("chat.emptyHistory")}
+            </p>
+          </motion.div>
         ) : (
           <AnimatePresence initial={false}>
             {groups.map((g) => (
@@ -261,88 +325,55 @@ export function Sidebar({
         )}
       </nav>
 
-      {/* footer */}
-      <div className="shrink-0 border-t border-border p-2.5">
-        {/* settings + quick theme */}
-        <div className="mb-1 flex items-center gap-1">
+      {/* rodapé: dois cartões redondos */}
+      <div className="shrink-0 space-y-2 px-[9px] pb-3">
+        {/* Configurações, com o seletor de tema à direita */}
+        <div className="flex h-[57px] items-center gap-1 rounded-[22px] border border-[var(--drawer-border)] bg-[var(--drawer-card)] pl-[15px] pr-[6px]">
           <button
             onClick={() => {
               onSettings();
               onClose();
             }}
-            className="flex flex-1 items-center gap-2.5 rounded-lg px-2 py-1.5 text-[12.5px] text-muted transition-colors hover:bg-hover hover:text-fg"
+            className="flex min-w-0 flex-1 items-center gap-3.5 text-left"
           >
-            <IconSliders size={14} />
-            {t("chat.settings")}
+            <IconSlidersLines size={21} className="shrink-0 text-fg" />
+            <span className="min-w-0 whitespace-nowrap text-[13px] font-semibold tracking-[-0.02em] text-fg">{t("chat.settings")}</span>
           </button>
 
-          <div className="flex items-center gap-0.5 rounded-lg bg-hover p-0.5">
-            {([
-              { id: "light", label: "Light", swatch: "#fbfaf7" },
-              { id: "dark", label: "Dark", swatch: "#0a0a0a" },
-              { id: "gray", label: "Gray", swatch: "#1a1a1c" },
-            ] as const).map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setPref("theme", t.id)}
-                title={`${t.label} theme`}
-                aria-label={`${t.label} theme`}
-                className={`grid h-5 w-5 place-items-center rounded-md transition-transform hover:scale-110 ${
-                  prefs.theme === t.id ? "ring-1 ring-accent" : ""
-                }`}
-              >
-                <span
-                  className="h-3 w-3 rounded-full border border-border-strong"
-                  style={{ background: t.swatch }}
-                />
-              </button>
-            ))}
-          </div>
+          <ThemeSwitch />
         </div>
 
-        {user ? (
-          <div className="space-y-0.5">
-            <button
-              onClick={() => {
-                onProfile();
-                onClose();
-              }}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-hover"
-            >
-              {user.avatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.avatar} alt="" className="h-8 w-8 rounded-full object-cover" />
-              ) : (
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent/15 text-accent-light">
-                  <IconUser size={15} />
-                </span>
-              )}
-              <span className="min-w-0 flex-1">
-                {/* sem o email: endereço não é assunto de tela de abertura.
-                    Ele vive na aba Conta, onde alguém vai de propósito. */}
-                <span className="block truncate text-[13px] font-semibold text-fg">{user.name}</span>
-              </span>
-            </button>
-            <button
-              onClick={onSignOut}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-[12.5px] text-subtle transition-colors hover:bg-hover hover:text-fg"
-            >
-              <IconLogout size={14} />
-              {t("chat.signOut")}
-            </button>
-          </div>
-        ) : (
-          <motion.button
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.985 }}
-            onClick={() => {
-              onLogin();
-              onClose();
-            }}
-            className="w-full rounded-lg border border-border-strong py-2 text-[12.5px] font-semibold text-fg transition-colors hover:border-accent/50 hover:bg-accent/[0.07]"
+        {/* conta: retrato, nome e a seta */}
+        <button
+          onClick={() => {
+            if (user) onProfile();
+            else onLogin();
+            onClose();
+          }}
+          className="flex h-[57px] w-full items-center gap-3.5 rounded-[22px] border border-[var(--drawer-border)] bg-[var(--drawer-card)] pl-4 pr-4 text-left transition-colors hover:border-[var(--drawer-border-strong)]"
+        >
+          {user?.avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={user.avatar} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
+          ) : (
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--drawer-avatar)] text-[#8a8a8c]">
+              <IconUser size={19} />
+            </span>
+          )}
+          <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-fg">
+            {user ? user.name : t("drawer.noAccount")}
+          </span>
+          <IconChevronRight size={20} className="shrink-0 text-fg" />
+        </button>
+
+        {user && (
+          <button
+            onClick={onSignOut}
+            className="flex w-full items-center gap-2 px-5 py-1 text-[13px] text-[var(--drawer-muted)] transition-colors hover:text-fg"
           >
-            {t("chat.signInSave")}
-          </motion.button>
+            <IconLogout size={14} />
+            {t("chat.signOut")}
+          </button>
         )}
       </div>
     </div>
@@ -366,11 +397,11 @@ export function Sidebar({
               className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm md:hidden"
             />
             <motion.aside
-              initial={{ x: -284 }}
+              initial={{ x: -244 }}
               animate={{ x: 0 }}
-              exit={{ x: -284 }}
+              exit={{ x: -244 }}
               transition={{ type: "spring", stiffness: 420, damping: 38 }}
-              className="fixed left-0 top-0 z-50 h-full w-[264px] border-r border-border bg-[var(--sidebar)] md:hidden"
+              className="fixed left-0 top-0 z-50 h-full w-[232px] border-r border-[var(--drawer-border)] bg-[var(--drawer)] md:hidden"
             >
               {content}
             </motion.aside>
