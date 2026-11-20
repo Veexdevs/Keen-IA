@@ -89,14 +89,21 @@ npm run dev        # development server on 0.0.0.0:3000
 npm run build      # production build
 npm start          # production server
 npm run typecheck  # tsc --noEmit
+npm test           # auth routes, translation, locale store, flags
 npm run installers # status of each installer target
 ```
 
 ## Tests
 
-```bash
-node tools/installers.mjs
-```
+`npm test` runs four plain-Node suites against the real modules, through
+`tools/tests/loader.mjs` — no framework, no build step:
+
+| suite | what it pins down |
+| --- | --- |
+| `auth` | signup and signin against a fake GoTrue: validation, existing account, wrong password, the rate limiter |
+| `i18n` | `/api/i18n` against a fake model: language resolution, aliases, cache, junk keys, the limiter |
+| `locale-store` | choosing a language: English until strings land, one request per batch, RTL, all 183 selectable |
+| `flags` | Arabic and Hebrew point at their own flags |
 
 ## Settings
 
@@ -106,6 +113,32 @@ ignores accents and accepts the language's own name, its English name, its regio
 a Portuguese alias ("japão", "alemão", "rússia"). Appearance switches light / gray / dark with
 a cross-fade of the whole frame (View Transitions; instant where unsupported, off when motion
 is reduced).
+
+## Languages
+
+The list has **183 languages**, and they are translated in two different ways:
+
+- **20 have hand-written dictionaries** in `lib/i18n/dict.ts`. Complete, instant, offline.
+- **The other 163 are translated on demand.** `app/api/i18n` asks the model for the strings a
+  screen is about to draw, caches them in `i18n_strings` in Supabase, and returns them. Until a
+  string arrives the English one shows, so a freshly chosen language looks half-translated for a
+  moment and then settles. Chat replies were never in question: the model answers in whatever
+  language the message is written in.
+
+Translation needs a model key. It can come from `KEEW_MODEL_API_KEY` in the environment, or be
+stored once through `POST /api/i18n/setup`:
+
+```bash
+curl -X POST https://keew-ia.vercel.app/api/i18n/setup \
+  -H 'content-type: application/json' \
+  -d '{"key":"sk-…"}'
+```
+
+The first call wins; after a key exists the route refuses to replace it unless `KEEW_SETUP_TOKEN`
+is set and sent in `x-keew-setup-token`. The key lives in `private.app_config` — a schema
+PostgREST does not expose, so the anon key cannot read it.
+
+The download page is its own project in `site/`, deployed as `keew-get.vercel.app`.
 
 ## Structure
 
@@ -127,7 +160,9 @@ lib/
   local-engine.ts   the deterministic reasoning core
   knowledge.ts      knowledge base and retrieval
   supabase/         browser client, server client, row types
-supabase/schema.sql tables, triggers and RLS policies
+supabase/schema.sql       tables, triggers and RLS policies
+supabase/schema-i18n.sql  translation cache and the server-only config table
+site/                     the download page: its own Next project
 public/             mark, icons, manifest, OG image
 ```
 

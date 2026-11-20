@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import { IconClose, IconEye, IconEyeOff, IconGoogle, IconUser } from "./icons";
 import { Logo } from "./logo";
-import { useT } from "@/lib/i18n/use";
+import { useStrings, useT } from "@/lib/i18n/use";
 import { isSupabaseConfigured, supabaseBrowser } from "@/lib/supabase/client";
 
 /* ── casca comum ───────────────────────────────────────────────────────── */
@@ -73,6 +73,8 @@ function Shell({
 
 function Header({ title, subtitle, onClose }: { title: string; subtitle?: string; onClose: () => void }) {
   const t = useT();
+
+  useStrings(["common.cancel", "common.close", "login.create", "login.createLink", "login.email", "login.errEmail", "login.errGoogle", "login.errGoogleProvider", "login.errGoogleRedirect", "login.errGoogleUrl", "login.errNoDb", "login.errPw", "login.errSignIn", "login.errUnavailable", "login.google", "login.googleNote", "login.haveAccount", "login.hidePw", "login.newHere", "login.noDb", "login.or", "login.password", "login.passwordHint", "login.showPw", "login.signIn", "login.signInLink", "login.signInSub", "login.signUp", "login.signUpSub", "login.welcome", "profile.avatarUrl", "profile.email", "profile.name", "profile.namePlaceholder", "profile.remove", "profile.save", "profile.subtitle", "profile.title", "profile.upload", "share.copied", "share.copy", "share.note", "share.subtitle", "share.title"]);
   return (
     <div className="flex items-start justify-between gap-4 border-b border-border px-6 pb-5 pt-6">
       <div>

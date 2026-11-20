@@ -38,7 +38,8 @@ import {
   type ConnectorId,
   type ConnectorState,
 } from "@/lib/connectors";
-import { LOCALE_META, LOCALES, detectLocale, type Locale } from "@/lib/i18n";
+import { LANGUAGE_BY_TAG, detectLocale } from "@/lib/i18n";
+import { languageRows } from "@/lib/i18n/languages";
 import { useLocale } from "@/lib/i18n/store";
 import { useT } from "@/lib/i18n/use";
 import { usePrefs, type Density, type Theme } from "@/lib/settings";
@@ -72,7 +73,7 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
 
   /* In Arabic and Hebrew the pager runs the other way: the first section sits
      on the right, and a swipe to the left goes back, not forward. */
-  const rtl = LOCALE_META[locale]?.rtl === true;
+  const rtl = useLocale((s) => s.language.rtl) === true;
 
   /* swiping left goes forward, right goes back — and never past the ends */
   const go = (delta: number) => {
@@ -697,30 +698,29 @@ function AppearanceTab() {
 
 function LanguageTab() {
   const tt = useT();
-  const { locale, auto, choose } = useLocale();
+  const { tag, auto, choose, translating } = useLocale();
   const [query, setQuery] = useState("");
 
   const detected = detectLocale();
 
   /* Search over what a person would actually type: the language in its own
-     name, its English name, its region, the locale code, or one of its
-     aliases. Accents are folded both ways, so "russia" finds "Rússia" and
-     "japao" finds "Japão" — nobody types the accent when searching. */
+     name, its English name, the code, and — for the 181 languages nobody can
+     list from memory — the country it is usually attached to. Accents are
+     folded both ways, so "russia" finds "Русский" and "japao" finds "日本語". */
   const needle = fold(query.trim());
   const list = useMemo(() => {
-    if (!needle) return LOCALES;
-    return LOCALES.filter((l) => {
-      const m = LOCALE_META[l];
-      return (
-        fold(l).includes(needle) ||
-        fold(m.name).includes(needle) ||
-        fold(m.native).includes(needle) ||
-        fold(m.region).includes(needle) ||
-        m.flag.includes(needle) ||
-        fold(m.aliases ?? "").includes(needle)
-      );
-    });
+    const rows = languageRows();
+    if (!needle) return rows;
+    return rows.filter(
+      (l) =>
+        fold(l.name).includes(needle) ||
+        fold(l.native).includes(needle) ||
+        fold(l.tag).includes(needle) ||
+        fold(l.flag ?? "").includes(needle),
+    );
   }, [needle]);
+
+  const detectedLanguage = LANGUAGE_BY_TAG.get(detected);
 
   return (
     <div className="space-y-4">
@@ -749,6 +749,15 @@ function LanguageTab() {
         )}
       </div>
 
+      {/* The list is 181 rows long and most of them are not translated yet.
+          Saying so up front is more honest than letting someone pick Yoruba and
+          wonder why the buttons are still English. */}
+      {translating && (
+        <p className="rounded-lg border border-border bg-panel/50 px-3 py-2 text-[11.5px] leading-relaxed text-subtle">
+          {tt("language.translating")}
+        </p>
+      )}
+
       <div className="space-y-1.5">
         {/* automatic — the fallback that always exists */}
         {!needle && (
@@ -764,7 +773,7 @@ function LanguageTab() {
             <span className="min-w-0 flex-1">
               <span className="block text-[13px] font-medium text-fg">{tt("language.auto")}</span>
               <span className="block truncate text-[11px] text-subtle">
-                {tt("language.autoDetected", { lang: LOCALE_META[detected].native })}
+                {tt("language.autoDetected", { lang: detectedLanguage?.native ?? "English" })}
               </span>
             </span>
             {auto && <IconCheck size={15} className="shrink-0 text-accent-light" />}
@@ -772,30 +781,23 @@ function LanguageTab() {
         )}
 
         {list.map((l) => {
-          const meta = LOCALE_META[l];
-          const on = !auto && locale === l;
+          const on = !auto && tag === l.tag;
           return (
-            <motion.button
-              key={l}
-              layout
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.14 }}
-              onClick={() => choose(l)}
-              dir={meta.rtl ? "rtl" : "ltr"}
+            <button
+              key={l.key}
+              onClick={() => choose(l.value)}
+              dir={l.rtl ? "rtl" : "ltr"}
               className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${
                 on ? "border-accent/40 bg-accent/[0.06]" : "border-border bg-panel/50 hover:bg-hover"
               }`}
             >
-              <Flag code={meta.flag} size={30} />
-              <span className="min-w-0 flex-1" dir={meta.rtl ? "rtl" : "ltr"}>
-                <span className="block truncate text-[13px] font-medium text-fg">{meta.native}</span>
-                <span className="block truncate text-[11px] text-subtle">
-                  {meta.name} · {meta.region}
-                </span>
+              <Flag code={l.flag} size={30} />
+              <span className="min-w-0 flex-1" dir={l.rtl ? "rtl" : "ltr"}>
+                <span className="block truncate text-[13px] font-medium text-fg">{l.native}</span>
+                <span className="block truncate text-[11px] text-subtle">{l.name}</span>
               </span>
               {on && <IconCheck size={15} className="shrink-0 text-accent-light" />}
-            </motion.button>
+            </button>
           );
         })}
 

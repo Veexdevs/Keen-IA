@@ -72,8 +72,13 @@ const BACKENDS: Record<Backend, BackendPreset> = {
  * durável: guardar a chave em `process.env` numa função serverless faria o
  * usuário ver "conectado" e continuar sem resposta no pedido seguinte.
  */
-export function resolveConfig(callerKey?: string): GatewayConfig {
-  const envBase = (process.env.KEEW_MODEL_BASE_URL || "").trim();
+export function resolveConfig(
+  callerKey?: string,
+  storedBase?: string,
+  storedModel?: string,
+): GatewayConfig {
+  const envBase = ((storedBase || "").trim() || process.env.KEEW_MODEL_BASE_URL || "").trim();
+  const model = (storedModel || "").trim();
   const envKey = (process.env.KEEW_MODEL_API_KEY || "").trim();
   const envModel = (process.env.KEEW_MODEL_NAME || "").trim();
   const envKind = (process.env.KEEW_MODEL_PROVIDER || "").trim();
@@ -104,7 +109,7 @@ export function resolveConfig(callerKey?: string): GatewayConfig {
     // o "kind" público é sempre keew; o backend real fica em baseUrl/model
     kind: "keew",
     baseUrl: envBase || preset.baseUrl,
-    model: envModel || preset.model,
+    model: envModel || model || preset.model,
     apiKey: key || undefined,
   };
 }

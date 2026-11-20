@@ -30,6 +30,15 @@ export type MessageRow = {
   created_at: string;
 };
 
+/** Cached interface translations, one row per language and key. */
+export type I18nRow = {
+  lang: string;
+  locale: string;
+  key: string;
+  value: string;
+  updated_at: string;
+};
+
 type Insert<T, R extends keyof T> = Omit<T, R> & Partial<Pick<T, R>>;
 
 export type Database = {
@@ -51,6 +60,12 @@ export type Database = {
         Row: MessageRow;
         Insert: Insert<MessageRow, "id" | "sources" | "attachments" | "created_at">;
         Update: Partial<MessageRow>;
+        Relationships: [];
+      };
+      i18n_strings: {
+        Row: I18nRow;
+        Insert: Insert<I18nRow, "updated_at">;
+        Update: Partial<I18nRow>;
         Relationships: [];
       };
     };
