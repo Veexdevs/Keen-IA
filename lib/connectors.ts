@@ -38,7 +38,7 @@ export type Connector = {
   id: ConnectorId;
   name: string;
   blurb: string;
-  /** what Keew can actually do once this is on */
+  /** what Keen can actually do once this is on */
   does: string[];
   /** no key: works as soon as it is switched on */
   keyless?: boolean;
@@ -94,7 +94,7 @@ export const CONNECTORS: Connector[] = [
         label: "Personal access token",
         placeholder: "ghp_… or github_pat_…",
         secret: true,
-        hint: "A fine-grained token with read-only access to the repositories you want Keew to see. Never share it anywhere else.",
+        hint: "A fine-grained token with read-only access to the repositories you want Keen to see. Never share it anywhere else.",
         link: { label: "Create a token", href: "https://github.com/settings/tokens" },
       },
     ],
@@ -111,7 +111,7 @@ export const CONNECTORS: Connector[] = [
         label: "Access token",
         placeholder: "vercel token",
         secret: true,
-        hint: "Read-only is enough. This call goes through Keew's server because Vercel does not allow direct browser calls.",
+        hint: "Read-only is enough. This call goes through Keen's server because Vercel does not allow direct browser calls.",
         link: { label: "Create a token", href: "https://vercel.com/account/tokens" },
       },
     ],

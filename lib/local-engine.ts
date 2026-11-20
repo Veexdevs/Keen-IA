@@ -1,7 +1,7 @@
 /**
- * Keew IA — local reasoning core
+ * Keen IA — local reasoning core
  *
- * What Keew runs on its own, without calling anything external: symbolic
+ * What Keen runs on its own, without calling anything external: symbolic
  * analysis, exact arithmetic, unit conversion, dates, extractive summaries,
  * text transforms and retrieval over the knowledge base.
  *
@@ -177,7 +177,7 @@ export function tryMath(text: string): EngineResult | null {
       (Number.isInteger(value)
         ? "Exact result."
         : `Rounded: ${parseFloat(value.toFixed(4)).toLocaleString("en-US", { maximumFractionDigits: 4 })}.`) +
-      "\n\n> Computed locally by Keew's reasoning core — deterministic, no external call.",
+      "\n\n> Computed locally by Keen's reasoning core — deterministic, no external call.",
   };
 }
 
@@ -252,7 +252,7 @@ export function tryConversion(text: string): EngineResult | null {
       terminal: true,
       confidence: 0.99,
       reasoning: "Applied the exact temperature formula (not a linear factor).",
-      answer: `**${fmtNum(v)} °${from.toUpperCase()} = ${fmtNum(out)} °${to.toUpperCase()}**\n\n> Converted locally by Keew's core.`,
+      answer: `**${fmtNum(v)} °${from.toUpperCase()} = ${fmtNum(out)} °${to.toUpperCase()}**\n\n> Converted locally by Keen's core.`,
     };
   }
 
@@ -273,7 +273,7 @@ export function tryConversion(text: string): EngineResult | null {
     terminal: true,
     confidence: 0.98,
     reasoning: `Converted to the ${from.dim} base unit and then to the target (factor ${fmtNum(from.toBase / to.toBase)}).`,
-    answer: `**${fmtNum(value)} ${from.label} = ${fmtNum(out)} ${to.label}**\n\n> Converted locally by Keew's core.`,
+    answer: `**${fmtNum(value)} ${from.label} = ${fmtNum(out)} ${to.label}**\n\n> Converted locally by Keen's core.`,
   };
 }
 
@@ -773,7 +773,7 @@ export function trySocial(text: string): EngineResult | null {
       confidence: 0.95,
       reasoning: "Greeting recognized — short reply from the local core.",
       answer:
-        `${mood}. Keew IA here — local core active.\n\n` +
+        `${mood}. Keen IA here — local core active.\n\n` +
         `I handle **calculations**, **unit conversions**, **dates and deadlines**, **summaries**, ` +
         `**JSON/base64/slug** and **search over the knowledge base** right away. Open-ended conversation ` +
         `needs a language engine connected.\n\n` +
@@ -792,7 +792,7 @@ export function trySocial(text: string): EngineResult | null {
   }
 
   // "what is the exchange rate" or "weather in Tokyo" is a connector question,
-  // not a request to know what Keew is — never answer those with the identity blurb
+  // not a request to know what Keen is — never answer those with the identity blurb
   if (
     /\b(weather|temperature|forecast|exchange rate|currency|convert .* (usd|eur|brl|gbp)|who is |what is the .* rate)\b/i.test(
       text,
@@ -821,7 +821,7 @@ export function trySocial(text: string): EngineResult | null {
         "| `what day is it` · `days between 01/01/2026 and 03/31/2026` | dates, deadlines, ISO week |\n" +
         "| paste a text and say `summarize` | extractive summary with keywords |\n" +
         "| `slug of Café com Leite` · `encode in base64: keew` · `validate this json` | text transforms |\n" +
-        "| `who is Keew IA` · questions about your documents | knowledge base |\n\n" +
+        "| `who is Keen IA` · questions about your documents | knowledge base |\n\n" +
         "**Connectors** are separate: open Settings → Connectors to switch on Weather, " +
         "Exchange rates, Wikipedia, Hacker News, and your GitHub, Vercel or Supabase account. " +
         "Once on, they answer live inside this chat.\n\n" +
@@ -834,11 +834,11 @@ export function trySocial(text: string): EngineResult | null {
       skill: "social",
       terminal: true,
       confidence: 0.95,
-      reasoning: "Keew's identity lives in the native corpus.",
+      reasoning: "Keen's identity lives in the native corpus.",
       answer:
-        "I'm **Keew IA** — an artificial intelligence built and owned by Veexdevs.\n\n" +
+        "I'm **Keen IA** — an artificial intelligence built and owned by Veexdevs.\n\n" +
         "| | |\n| --- | --- |\n" +
-        "| Core | Keew Core — deterministic reasoning: math, dates, units, summaries, knowledge |\n" +
+        "| Core | Keen Core — deterministic reasoning: math, dates, units, summaries, knowledge |\n" +
         "| Account | Chats, messages and your profile, saved to your own database |\n" +
         "| Interface | Web, installable to the home screen |\n\n" +
         "I'm honest about my limits: without a language engine connected I do the deterministic work " +
@@ -900,7 +900,7 @@ export function fallback(query: string): EngineResult {
     reasoning: "Beyond the deterministic core, and no language engine is connected.",
     answer:
       `I can't answer that.\n\n` +
-      `**"${topic}"** is an open-ended language question, and the Keew running here is deterministic: it ` +
+      `**"${topic}"** is an open-ended language question, and the Keen running here is deterministic: it ` +
       `does arithmetic, dates, unit conversion, text transforms and search over your documents — it does ` +
       `not write or interpret free text.\n\n` +
       `Answering anything would need a language engine connected to this app. Until then I'd rather tell ` +
@@ -911,7 +911,7 @@ export function fallback(query: string): EngineResult {
       `| unit conversion | \`180 lb to kg\` |\n` +
       `| dates and deadlines | \`how many days until 12/25/2026\` |\n` +
       `| text | \`slug of Café com Leite\` · \`summarize: <text>\` |\n` +
-      `| your documents | ask about anything in Keew's knowledge base |`,
+      `| your documents | ask about anything in Keen's knowledge base |`,
   };
 }
 
@@ -926,7 +926,7 @@ export function reason(query: string, docs: KnowledgeDoc[] = [], now = new Date(
 
   // When the user pastes a document and asks for a summary, that document is
   // the subject. Searching the built-in corpus first would answer with an
-  // unrelated Keew page that happens to share a word — which is what used to
+  // unrelated Keen page that happens to share a word — which is what used to
   // happen with pasted text mentioning Postgres or migration.
   const summary = summarize(query);
   if (summary) return summary;

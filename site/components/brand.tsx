@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * "Keew IA" — with the two letters in the visitor's language.
+ * "Keen IA" — with the two letters in the visitor's language.
  *
- * The page is static, so the server always emits the English default ("Keew
+ * The page is static, so the server always emits the English default ("Keen
  * AI") and this swaps in the local initialism after hydration if the app has
  * left its language cookie. The swap is two characters wide, so it cannot
  * cause a visible layout shift.
@@ -22,7 +22,7 @@ export function Brand({ className = "" }: { className?: string }) {
 
   return (
     <span className={className}>
-      Keew <span suppressHydrationWarning>{suffix ?? "AI"}</span>
+      Keen <span suppressHydrationWarning>{suffix ?? "AI"}</span>
     </span>
   );
 }

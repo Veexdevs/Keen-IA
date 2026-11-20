@@ -148,7 +148,7 @@ export const Message = memo(function Message({
       {/* body */}
       <div className={`flex min-w-0 flex-1 flex-col ${isUser ? "items-end" : "items-start"}`}>
         <span className="mb-1 flex items-center gap-1.5 text-[11.5px] font-semibold tracking-wide text-subtle">
-          {isUser ? t("common.you") : "Keew IA"}
+          {isUser ? t("common.you") : "Keen IA"}
           {!isUser && msg.live && (
             <span className="flex items-center gap-1 rounded-full bg-emerald-500/12 px-1.5 py-px text-[9.5px] font-semibold uppercase tracking-wider text-emerald-400">
               <span className="h-1 w-1 rounded-full bg-emerald-400" />

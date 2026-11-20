@@ -1,8 +1,8 @@
 /**
- * Keew IA — retrieval layer (RAG) without external infrastructure.
+ * Keen IA — retrieval layer (RAG) without external infrastructure.
  *
  * Hybrid lexical search: BM25-ish scoring over the user's knowledge documents
- * plus the built-in Keew corpus. Pure TypeScript, edge-runtime safe, and
+ * plus the built-in Keen corpus. Pure TypeScript, edge-runtime safe, and
  * deterministic — a passed-in document set always yields the same context,
  * which keeps answers grounded and testable.
  */
@@ -116,18 +116,18 @@ export function toContext(docs: IndexedDoc[], maxChars = 6000): string {
   return out.trim();
 }
 
-/* ─────────────────────────────────────────────────── built-in Keew corpus */
+/* ─────────────────────────────────────────────────── built-in Keen corpus */
 
 export const KEEW_CORPUS: KnowledgeDoc[] = [
   {
     id: "keew-identity",
-    title: "What Keew IA is",
+    title: "What Keen IA is",
     content:
-      "Keew IA is an artificial intelligence built and owned by Veexdevs. It runs on its own infrastructure, in the " +
-      "browser and as an installable app. It works in two integrated layers: the Keew Core, deterministic, which " +
+      "Keen IA is an artificial intelligence built and owned by Veexdevs. It runs on its own infrastructure, in the " +
+      "browser and as an installable app. It works in two integrated layers: the Keen Core, deterministic, which " +
       "resolves mathematics, dates, unit conversions, text transforms and knowledge retrieval without depending on " +
-      "the network; and the Keew Reason, the deeper reasoning that carries open conversation, code and analysis when " +
-      "an engine is connected. The mark is a broken triple arc in blue #0048F8. Keew is objective, technical and " +
+      "the network; and the Keen Reason, the deeper reasoning that carries open conversation, code and analysis when " +
+      "an engine is connected. The mark is a broken triple arc in blue #0048F8. Keen is objective, technical and " +
       "direct: no filler, code that actually runs, verifiable steps. The interface is in English.",
     createdAt: 0,
     updatedAt: 0,
@@ -135,7 +135,7 @@ export const KEEW_CORPUS: KnowledgeDoc[] = [
   },
   {
     id: "keew-architecture",
-    title: "How the Keew IA platform is built",
+    title: "How the Keen IA platform is built",
     content:
       "The platform has four layers. 1) Client: Next.js 15 with the App Router and React 19, running in the browser " +
       "and installable to the home screen as a PWA. 2) Engine: a single endpoint, /api/chat, streams answers over SSE " +
@@ -149,9 +149,9 @@ export const KEEW_CORPUS: KnowledgeDoc[] = [
   },
   {
     id: "keew-code-style",
-    title: "Keew code standard",
+    title: "Keen code standard",
     content:
-      "When writing code, Keew follows: strict TypeScript, small named functions, no unnecessary dependencies, " +
+      "When writing code, Keen follows: strict TypeScript, small named functions, no unnecessary dependencies, " +
       "explicit error handling, accessibility (aria attributes, visible focus), mobile-first responsiveness, and " +
       "comments only where the why is not obvious. In Python: type hints, pathlib, no globals. It always delivers the " +
       "complete file when the result is going to be pasted, and explains the diff when editing something that exists.",
@@ -163,7 +163,7 @@ export const KEEW_CORPUS: KnowledgeDoc[] = [
     id: "keew-privacy",
     title: "Privacy and your data",
     content:
-      "Your account, your chats and your messages live in the Keew database, in rows that only your account can read. " +
+      "Your account, your chats and your messages live in the Keen database, in rows that only your account can read. " +
       "Deleting a chat deletes its messages. When no account is signed in, chats are stored only in that browser and " +
       "never leave the device. Nothing is sent to a third party beyond what the answer needs. Secrets stay in server " +
       "environment variables, never in logs and never in the browser bundle.",
@@ -173,12 +173,12 @@ export const KEEW_CORPUS: KnowledgeDoc[] = [
   },
   {
     id: "keew-limits",
-    title: "What Keew can and cannot do",
+    title: "What Keen can and cannot do",
     content:
-      "Keew answers with certainty on: arithmetic and percentages, unit and temperature conversion, dates, deadlines " +
+      "Keen answers with certainty on: arithmetic and percentages, unit and temperature conversion, dates, deadlines " +
       "and weekdays, extractive summaries of long texts, text transforms (slug, base64, JSON validation, word counts) " +
       "and questions about what is written in its knowledge base. Open-ended writing, free-form analysis and topics " +
-      "outside that set need a language engine connected to the app. When it has none, Keew says so instead of " +
+      "outside that set need a language engine connected to the app. When it has none, Keen says so instead of " +
       "inventing an answer. This limit is deliberate: an honest refusal is worth more than a confident guess.",
     createdAt: 0,
     updatedAt: 0,

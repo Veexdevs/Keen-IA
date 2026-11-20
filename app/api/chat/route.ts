@@ -5,7 +5,7 @@
  *
  *   1. núcleo local — conta, data, unidade, texto e conhecimento, instantâneo
  *   2. motor — quando há um modelo conectado, a resposta é transmitida
- *   3. honestidade — sem motor, a Keew diz o que não consegue fazer, em vez de
+ *   3. honestidade — sem motor, a Keen diz o que não consegue fazer, em vez de
  *      inventar. Foi a lição mais importante do projeto.
  *
  * Resposta: SSE com frames { t: "text" | "sources" | "error" | "done" }.
@@ -165,12 +165,12 @@ export async function POST(req: NextRequest) {
 
 function buildSystem(context: string, local: ReturnType<typeof reason>) {
   const parts = [
-    "You are Keew IA, the artificial intelligence built and owned by Veexdevs.",
+    "You are Keen IA, the artificial intelligence built and owned by Veexdevs.",
     "Answer in English, directly, without filler and without introducing yourself in every message.",
     "Markdown format. Short headings, lists and tables when they help. Code in fenced blocks with a language.",
     "Never invent facts, numbers or sources. If you do not know, say exactly what is missing.",
   ];
-  if (context) parts.push(`Documents from the Keew knowledge base:\n\n${context}`);
+  if (context) parts.push(`Documents from the Keen knowledge base:\n\n${context}`);
   if (local.answer && !local.terminal) parts.push(`Context from the local core:\n${local.answer}`);
   return parts.join("\n\n");
 }

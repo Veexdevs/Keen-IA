@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Keew IA — estado da aplicação.
+ * Keen IA — estado da aplicação.
  *
  * Um único store. Guarda quem está logado, as conversas e o estado do
  * streaming. Quando há conta, tudo vive no Supabase; sem conta, vive no

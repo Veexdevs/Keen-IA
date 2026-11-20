@@ -1,5 +1,5 @@
 /**
- * Keew IA — fontes.
+ * Keen IA — fontes.
  *
  * Depois que a resposta é montada, colhemos as origens que realmente
  * sustentam o texto: documentos da base de conhecimento, links que o modelo

@@ -4,13 +4,13 @@ import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Baixar a Keew — Android, iPhone, Windows, macOS e Linux",
+  title: "Baixar a Keen — Android, iPhone, Windows, macOS e Linux",
   description:
-    "Baixe a Keew para Android, iPhone, Windows, macOS e Linux.",
-  applicationName: "Keew",
+    "Baixe a Keen para Android, iPhone, Windows, macOS e Linux.",
+  applicationName: "Keen",
   metadataBase: new URL("https://keew-get.vercel.app"),
   openGraph: {
-    title: "Baixar a Keew",
+    title: "Baixar a Keen",
     description: "Android · iPhone · Windows · macOS · Linux.",
     type: "website",
     locale: "pt_BR",

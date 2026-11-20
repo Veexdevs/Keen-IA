@@ -1,5 +1,5 @@
 /**
- * Keew IA — the language catalogue.
+ * Keen IA — the language catalogue.
  *
  * Every language CLDR lists, each with its own name written in itself. A
  * person browsing the list should recognise their language without reading

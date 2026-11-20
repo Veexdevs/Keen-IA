@@ -58,7 +58,30 @@ check("marca lê do dicionário", /t\("brand\.ia"\)/.test(logo));
 /* ── the opening screen uses a mark with no plate ──────────────────────── */
 const svg = readFileSync(new URL("public/mark.svg", ROOT), "utf8");
 check("mark.svg não tem retângulo de fundo", !/<rect/.test(svg));
-check("mark.svg recortado no desenho", svg.includes('viewBox="63.6 61.2 294 294"'), svg.slice(0, 90));
+/* O recorte tem de CONTER o desenho, não caber dentro dele. Numa rodada
+   anterior o viewBox foi apertado para 63.6–357 enquanto o path ia de 3 a 418,
+   e a marca virou quatro pedaços soltos na página de download. */
+const vb = svg.match(/viewBox="([^"]+)"/)?.[1].split(/[\s,]+/).map(Number);
+const path = svg.match(/d="([^"]+)"/)?.[1] ?? "";
+const nums = (path.match(/-?\d+\.?\d*/g) ?? []).map(Number);
+const xs = nums.filter((_, i) => i % 2 === 0);
+const ys = nums.filter((_, i) => i % 2 === 1);
+check("mark.svg declara viewBox", Boolean(vb && vb.length === 4), svg.slice(0, 80));
+/* Pontos de controle de Bézier ficam fora da curva desenhada, então o quadro
+   pode ser excedido em poucos por cento sem nada sumir. Cortar de verdade,
+   como o 63.6–357 de antes, erra por 30%. */
+const tol = vb ? Math.max(vb[2], vb[3]) * 0.06 : 0;
+check(
+  "mark.svg contém o desenho inteiro (nada cortado)",
+  vb && Math.min(...xs) >= vb[0] - tol && Math.max(...xs) <= vb[0] + vb[2] + tol &&
+       Math.min(...ys) >= vb[1] - tol && Math.max(...ys) <= vb[1] + vb[3] + tol,
+  `viewBox ${vb} · desenho x ${Math.min(...xs)}–${Math.max(...xs)} y ${Math.min(...ys)}–${Math.max(...ys)}`,
+);
+check(
+  "mark.svg não sobra muito (o desenho preenche o quadro)",
+  vb && (Math.max(...xs) - Math.min(...xs)) / vb[2] > 0.85,
+  `preenche ${(((Math.max(...xs) - Math.min(...xs)) / vb[2]) * 100).toFixed(0)}%`,
+);
 
 const manifest = JSON.parse(readFileSync(new URL("public/manifest.webmanifest", ROOT), "utf8"));
 const any512 = manifest.icons.find((i) => i.sizes === "512x512" && i.purpose === "any");

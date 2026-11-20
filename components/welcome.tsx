@@ -48,9 +48,9 @@ export function Welcome({ name }: { name?: string }) {
         ) : (
           <>
             {/* text-fg, não text-white: no tema claro o branco puro sumia
-                contra o fundo e sobrava só o "Keew" na tela. As letras vêm do
+                contra o fundo e sobrava só o "Keen" na tela. As letras vêm do
                 idioma — AI, KI, ИИ… */}
-            Keew <span className="text-fg">{t("brand.ia")}</span>
+            Keen <span className="text-fg">{t("brand.ia")}</span>
           </>
         )}
       </motion.h1>

@@ -118,7 +118,7 @@ function rememberCookie(tag: string) {
  * The direction is always LTR, on purpose. Ten of the 183 languages are
  * right-to-left (Arabic, Hebrew, Persian, Urdu…), and flipping the document
  * was making the whole interface mirror: the mark jumped to the right of the
- * wordmark, turning "Keew IA" into "IA Keew", and the language list reversed
+ * wordmark, turning "Keen IA" into "IA Keen", and the language list reversed
  * row by row. A page can only be properly mirrored if every margin, icon,
  * shadow and animation has an RTL counterpart, and this one has none — so the
  * flip was half a mirror, which reads as broken.
