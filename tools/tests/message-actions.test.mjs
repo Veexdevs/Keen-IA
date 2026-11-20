@@ -214,5 +214,10 @@ check("a página pública fica fora do índice", /robots:\s*\{\s*index:\s*false/
 const view = readFileSync(new URL("components/shared-view.tsx", ROOT), "utf8");
 check("a página não mostra o email de ninguém", !view.includes("email"));
 
+/* ── 5 · as ações aparecem no celular, onde não existe hover ─────────────── */
+const msg = readFileSync(new URL("components/message.tsx", ROOT), "utf8");
+check("ações não dependem de hover para aparecer", !/opacity-0[^"]*group-hover/.test(msg), "escondidas atrás de :hover");
+check("alvo de toque maior no celular", /h-7 w-7[^`]*sm:h-6 sm:w-6/.test(msg), "24px em todo lugar");
+
 console.log(`\n${pass} passaram, ${fail} falharam`);
 process.exit(fail ? 1 : 0);
